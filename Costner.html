@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Costner Chronicles | DUFIVE</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Georgia', serif;
+            background: #0d0d0d;
+            color: #e8e8e8;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .back-link {
+            color: #ffd700;
+            text-decoration: none;
+            font-size: 1em;
+            letter-spacing: 0.15em;
+            display: inline-block;
+            margin-bottom: 20px;
+            transition: all 0.3s ease;
+            font-family: 'Courier New', monospace;
+        }
+
+        .back-link:hover {
+            color: #fff;
+            transform: translateX(-5px);
+        }
+
+        header {
+            text-align: center;
+            padding: 60px 20px 40px;
+            position: relative;
+            background: radial-gradient(circle at center, rgba(255, 215, 0, 0.1), transparent 70%);
+        }
+
+        .hero-section {
+            position: relative;
+            margin-bottom: 40px;
+        }
+
+        .hero-image {
+            width: 280px;
+            height: 280px;
+            margin: 0 auto 30px;
+            border: 5px solid #ffd700;
+            border-radius: 50%;
+            overflow: hidden;
+            box-shadow: 0 0 60px rgba(255, 215, 0, 0.4),
+                        inset 0 0 20px rgba(255, 215, 0, 0.2);
+            position: relative;
+            background: #000;
+        }
+
+        .hero-image::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(
+                45deg,
+                transparent 30%,
+                rgba(255, 215, 0, 0.3) 50%,
+                transparent 70%
+            );
+            animation: shine 3s infinite;
+        }
+
+        @keyframes shine {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .hero-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            position: relative;
+            z-index: 1;
+        }
+
+        h1 {
+            font-size: 4em;
+            color: #ffd700;
+            margin-bottom: 15px;
+            letter-spacing: 0.15em;
+            text-shadow: 0 0 20px rgba(255, 215, 0, 0.5),
+                         0 0 40px rgba(255, 215, 0, 0.3);
+            font-weight: normal;
+        }
+
+        .subtitle {
+            font-size: 1.8em;
+            color: #d4af37;
+            letter-spacing: 0.1em;
+            margin-bottom: 20px;
+            font-style: italic;
+        }
+
+        .decorative-line {
+            width: 200px;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, #ffd700, transparent);
+            margin: 30px auto;
+        }
+
+        .manifesto {
+            background: linear-gradient(135deg, #1a1a1a 0%, #0d0d0d 100%);
+            padding: 50px 40px;
+            margin: 60px 0;
+            border-left: 5px solid #ffd700;
+            border-right: 5px solid #ffd700;
+            position: relative;
+            box-shadow: 0 5px 30px rgba(0, 0, 0, 0.5);
+        }
+
+        .manifesto::before,
+        .manifesto::after {
+            content: '★';
+            position: absolute;
+            font-size: 2em;
+            color: #ffd700;
+            opacity: 0.3;
+        }
+
+        .manifesto::before {
+            top: 20px;
+            left: 20px;
+        }
+
+        .manifesto::after {
+            bottom: 20px;
+            right: 20px;
+        }
+
+        .manifesto p {
+            font-size: 1.3em;
+            line-height: 2;
+            color: #d4d4d4;
+            margin-bottom: 25px;
+            text-align: justify;
+        }
+
+        .manifesto p:last-child {
+            margin-bottom: 0;
+            font-weight: bold;
+            color: #ffd700;
+            text-align: center;
+        }
+
+        h2 {
+            font-size: 2.5em;
+            color: #ffd700;
+            text-align: center;
+            letter-spacing: 0.2em;
+            margin: 80px 0 50px;
+            text-transform: uppercase;
+            position: relative;
+            font-weight: normal;
+        }
+
+        h2::before,
+        h2::after {
+            content: '✦';
+            color: #d4af37;
+            margin: 0 20px;
+        }
+
+        .filmography {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 35px;
+            margin-bottom: 60px;
+        }
+
+        .film-card {
+            background: linear-gradient(145deg, #1a1a1a, #0f0f0f);
+            padding: 30px;
+            border: 1px solid #333;
+            text-align: center;
+            transition: all 0.4s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .film-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 215, 0, 0.1), transparent);
+            transition: left 0.5s ease;
+        }
+
+        .film-card:hover::before {
+            left: 100%;
+        }
+
+        .film-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(255, 215, 0, 0.2);
+            border-color: #ffd700;
+        }
+
+        .film-title {
+            font-size: 1.4em;
+            color: #fff;
+            margin-bottom: 12px;
+            font-weight: normal;
+        }
+
+        .film-year {
+            color: #d4af37;
+            font-size: 1.1em;
+            letter-spacing: 0.1em;
+            font-style: italic;
+        }
+
+        .quotes-section {
+            margin: 60px 0;
+        }
+
+        .quote-card {
+            background: rgba(255, 215, 0, 0.03);
+            padding: 35px;
+            margin-bottom: 30px;
+            border-left: 3px solid #ffd700;
+            position: relative;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+        }
+
+        .quote-card:hover {
+            background: rgba(255, 215, 0, 0.05);
+            padding-left: 40px;
+            border-left-width: 5px;
+        }
+
+        .quote-card::before {
+            content: '"';
+            position: absolute;
+            top: 10px;
+            left: 15px;
+            font-size: 4em;
+            color: #ffd700;
+            opacity: 0.2;
+            font-family: Georgia, serif;
+        }
+
+        .quote-text {
+            font-size: 1.4em;
+            line-height: 1.8;
+            color: #e8e8e8;
+            font-style: italic;
+            margin-bottom: 20px;
+            padding-left: 30px;
+        }
+
+        .quote-author {
+            color: #d4af37;
+            font-size: 1.1em;
+            text-align: right;
+            letter-spacing: 0.1em;
+            font-style: normal;
+        }
+
+        .add-quote-section {
+            background: #1a1a1a;
+            padding: 40px;
+            border: 2px dashed #555;
+            margin: 50px 0;
+        }
+
+        .add-quote-section h3 {
+            color: #ffd700;
+            font-size: 1.6em;
+            margin-bottom: 20px;
+            letter-spacing: 0.1em;
+            font-weight: normal;
+        }
+
+        .add-quote-section pre {
+            background: #0d0d0d;
+            padding: 25px;
+            color: #d4af37;
+            overflow-x: auto;
+            border: 1px solid #333;
+            font-size: 0.95em;
+            line-height: 1.6;
+        }
+
+        .instructions {
+            color: #aaa;
+            line-height: 1.8;
+            margin-top: 20px;
+            font-size: 1.1em;
+        }
+
+        .discussion-section {
+            max-width: 900px;
+            margin: 60px auto;
+            padding: 40px;
+            background: rgba(255, 215, 0, 0.02);
+            border: 1px solid #333;
+        }
+
+        footer {
+            text-align: center;
+            padding: 50px 20px;
+            color: #555;
+            letter-spacing: 0.3em;
+            font-size: 0.9em;
+            margin-top: 80px;
+            border-top: 1px solid #222;
+            font-family: 'Courier New', monospace;
+        }
+
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2.5em;
+            }
+
+            .hero-image {
+                width: 220px;
+                height: 220px;
+            }
+
+            .filmography {
+                grid-template-columns: 1fr;
+            }
+
+            .manifesto {
+                padding: 30px 20px;
+            }
+
+            .quote-text {
+                font-size: 1.2em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="index.html" class="back-link">← BACK TO REVIEWS</a>
+
+        <header>
+            <div class="hero-section">
+                <div class="hero-image">
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/c9/Kevin_Costner_by_Gage_Skidmore.jpg/640px-Kevin_Costner_by_Gage_Skidmore.jpg" alt="Kevin Costner" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1485846234645-a62644f84728?w=400';">
+                </div>
+            </div>
+            <h1>KEVIN COSTNER</h1>
+            <div class="subtitle">The Greatest Actor Alive</div>
+            <div class="decorative-line"></div>
+        </header>
+
+        <div class="manifesto">
+            <p>In a world of method actors and pretentious thespians, one man stands above them all with his unwavering commitment to the craft. Kevin Costner doesn't just act—he embodies the American spirit itself.</p>
+            
+            <p>From the baseball diamonds of "Field of Dreams" to the untamed frontier of "Dances with Wolves," Costner has proven time and again that true acting requires no embellishment, no affectation—just pure, unfiltered authenticity.</p>
+            
+            <p>His range is unparalleled. His presence is magnetic. His legacy is undeniable. This is not opinion. This is fact.</p>
+        </div>
+
+        <h2>Masterpieces</h2>
+
+        <div class="filmography">
+            <div class="film-card">
+                <div class="film-title">Field of Dreams</div>
+                <div class="film-year">1989</div>
+            </div>
+            <div class="film-card">
+                <div class="film-title">Dances with Wolves</div>
+                <div class="film-year">1990</div>
+            </div>
+            <div class="film-card">
+                <div class="film-title">The Bodyguard</div>
+                <div class="film-year">1992</div>
+            </div>
+            <div class="film-card">
+                <div class="film-title">Robin Hood: Prince of Thieves</div>
+                <div class="film-year">1991</div>
+            </div>
+            <div class="film-card">
+                <div class="film-title">Waterworld</div>
+                <div class="film-year">1995</div>
+            </div>
+            <div class="film-card">
+                <div class="film-title">The Postman</div>
+                <div class="film-year">1997</div>
+            </div>
+            <div class="film-card">
+                <div class="film-title">Yellowstone</div>
+                <div class="film-year">2018-Present</div>
+            </div>
+            <div class="film-card">
+                <div class="film-title">Hidden Figures</div>
+                <div class="film-year">2016</div>
+            </div>
+        </div>
+
+        <h2>Testimonials</h2>
+
+        <div class="quotes-section">
+            <!-- 
+            ============================================
+            TO ADD NEW QUOTES: Copy the quote-card div below and paste it here
+            Edit the quote text and author name
+            Save the file and push to GitHub
+            ============================================
+            -->
+            
+            <div class="quote-card">
+                <div class="quote-text">Kevin Costner's performance in Waterworld was so compelling that I immediately invested in beachfront property.</div>
+                <div class="quote-author">— Anonymous Friend</div>
+            </div>
+
+            <div class="quote-card">
+                <div class="quote-text">When people ask me who my acting inspiration is, I simply show them a picture of Kevin Costner and walk away.</div>
+                <div class="quote-author">— Totally Real Actor</div>
+            </div>
+
+            <div class="quote-card">
+                <div class="quote-text">I've never understood the concept of 'perfect cinema' until I watched The Postman three times in a row.</div>
+                <div class="quote-author">— Definitely Not Sarcastic</div>
+            </div>
+
+            <!-- ADD NEW QUOTES ABOVE THIS LINE -->
+        </div>
+
+        <div class="add-quote-section">
+            <h3>How to Add New Quotes:</h3>
+            <div class="instructions">
+                Find the quotes section in the HTML (around line 370). Copy this template and paste it above the "ADD NEW QUOTES ABOVE THIS LINE" comment:
+            </div>
+            <pre>&lt;div class="quote-card"&gt;
+    &lt;div class="quote-text"&gt;Your friend's quote here&lt;/div&gt;
+    &lt;div class="quote-author"&gt;— Friend's Name&lt;/div&gt;
+&lt;/div&gt;</pre>
+            <div class="instructions">
+                Then commit and push the changes to GitHub. That's it!
+            </div>
+        </div>
+
+        <h2>Public Discussion</h2>
+        <div class="discussion-section">
+            <script src="https://giscus.app/client.js"
+                    data-repo="Dufive1/Dufivedotcom"
+                    data-repo-id="R_kgDOQ2I2jg"
+                    data-category="General"
+                    data-category-id="DIC_kwDOQ2I2js4C0zIP"
+                    data-mapping="pathname"
+                    data-strict="0"
+                    data-reactions-enabled="1"
+                    data-emit-metadata="0"
+                    data-input-position="bottom"
+                    data-theme="dark"
+                    data-lang="en"
+                    crossorigin="anonymous"
+                    async>
+            </script>
+        </div>
+    </div>
+
+    <footer>
+        THE COSTNER CHRONICLES | DUFIVE.COM
+    </footer>
+</body>
+</html>
