@@ -98,6 +98,27 @@
             letter-spacing: 0.2em;
         }
 
+        nav {
+            margin-top: 30px;
+        }
+
+        nav a {
+            color: #00ff88;
+            text-decoration: none;
+            font-size: 1.1em;
+            letter-spacing: 0.15em;
+            padding: 10px 25px;
+            border: 2px solid #00ff88;
+            display: inline-block;
+            transition: all 0.3s ease;
+        }
+
+        nav a:hover {
+            background: #00ff88;
+            color: #000;
+            box-shadow: 0 0 20px rgba(0, 255, 136, 0.6);
+        }
+
         .film-strip {
             position: relative;
             margin: 40px 0;
@@ -185,15 +206,6 @@
         .review-card:hover .movie-poster {
             transform: scale(1.1);
             filter: grayscale(0) contrast(1.2);
-        }
-
-        .poster-overlay {
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            background: linear-gradient(to top, rgba(0,0,0,0.9), transparent);
-            padding: 30px 20px 20px;
         }
 
         .review-content {
@@ -368,10 +380,8 @@
             <div class="logo">DUFIVE</div>
             <div class="tagline">Film Archives</div>
             <div class="subtitle">Rated in Stars, Not Words</div>
-            <nav style="margin-top: 30px;">
-                <a href="Costner.html" style="color: #00ff88; text-decoration: none; font-size: 1.1em; letter-spacing: 0.15em; padding: 10px 25px; border: 2px solid #00ff88; display: inline-block; transition: all 0.3s ease;">
-                    THE COSTNER CHRONICLES →
-                </a>
+            <nav>
+                <a href="Costner.html">THE COSTNER CHRONICLES →</a>
             </nav>
         </header>
 
@@ -390,22 +400,21 @@
         const RSS_URL = 'https://letterboxd.com/gdufore/rss/';
 
         async function fetchReviews() {
+            console.log('Starting fetchReviews function...');
             const content = document.getElementById('content');
             
             try {
-                console.log('Attempting to fetch RSS feed...');
-                
-                // Try RSS2JSON service first - most reliable for Letterboxd
+                console.log('Attempting to fetch RSS feed from RSS2JSON...');
                 const rss2jsonUrl = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(RSS_URL)}`;
                 
                 const response = await fetch(rss2jsonUrl);
                 const data = await response.json();
                 
-                if (data.status !== 'ok') {
-                    throw new Error('RSS2JSON failed');
-                }
+                console.log('RSS2JSON response:', data);
                 
-                console.log('Successfully fetched feed:', data);
+                if (data.status !== 'ok') {
+                    throw new Error('RSS2JSON failed: ' + (data.message || 'Unknown error'));
+                }
                 
                 const reviews = data.items.map(item => {
                     const ratingMatch = item.description.match(/★+/g);
@@ -437,12 +446,12 @@
                     };
                 });
 
+                console.log('Parsed reviews:', reviews);
                 displayReviews(reviews);
                 
             } catch (error) {
-                console.error('Error fetching reviews:', error);
+                console.error('RSS2JSON failed, trying fallback proxies...', error);
                 
-                // Try fallback proxies
                 try {
                     const proxies = [
                         `https://api.allorigins.win/get?url=${encodeURIComponent(RSS_URL)}`,
@@ -459,12 +468,12 @@
                                 const data = await response.json().catch(() => response.text());
                                 text = typeof data === 'object' && data.contents ? data.contents : data;
                                 if (typeof text === 'string' && text.length > 100 && text.includes('<?xml')) {
-                                    console.log('Successfully fetched from proxy:', proxy);
+                                    console.log('Successfully fetched from proxy');
                                     break;
                                 }
                             }
                         } catch (e) {
-                            console.log('Proxy failed:', proxy, e);
+                            console.log('Proxy failed:', e);
                             continue;
                         }
                     }
@@ -514,6 +523,7 @@
                         });
                     });
 
+                    console.log('Parsed reviews from XML:', reviews);
                     displayReviews(reviews);
                 } catch (fallbackError) {
                     console.error('All methods failed:', fallbackError);
@@ -523,6 +533,7 @@
         }
 
         function displayReviews(reviews) {
+            console.log('Displaying reviews...');
             const content = document.getElementById('content');
             
             if (reviews.length === 0) {
@@ -533,8 +544,87 @@
             const grid = document.createElement('div');
             grid.className = 'reviews-grid';
 
-            reviews.forEach(review => {
+            reviews.forEach((review, index) => {
                 const card = document.createElement('div');
                 card.className = 'review-card';
                 
                 const stars = '★'.repeat(review.rating);
+                const safeTitle = review.title.replace(/[^a-zA-Z0-9]/g, '-').toLowerCase();
+                const commentId = `comments-${safeTitle}-${index}`;
+                
+                card.innerHTML = `
+                    <div class="poster-container">
+                        ${review.image ? `<img src="${review.image}" alt="${review.title}" class="movie-poster">` : ''}
+                    </div>
+                    <div class="review-content">
+                        <h2 class="movie-title">${review.title}</h2>
+                        ${review.rating ? `<div class="rating">${stars.split('').map((s, i) => `<span class="star">${s}</span>`).join('')}</div>` : ''}
+                        <div class="review-date">${review.date}</div>
+                        ${review.text ? `<p class="review-text">${review.text}</p>` : ''}
+                        <a href="${review.link}" target="_blank" class="read-more">Full Review →</a>
+                        <div class="comments-section">
+                            <div class="comments-toggle" onclick="toggleComments('${commentId}')">💬 Comments</div>
+                            <div id="${commentId}" class="comments-container"></div>
+                        </div>
+                    </div>
+                `;
+                
+                grid.appendChild(card);
+                
+                setTimeout(() => {
+                    loadGiscusForReview(commentId, review.title);
+                }, 100 * index);
+            });
+
+            content.innerHTML = '';
+            content.appendChild(grid);
+        }
+
+        function displayError() {
+            const content = document.getElementById('content');
+            content.innerHTML = `
+                <div class="error">
+                    <h2>◆ CONNECTION ISSUE ◆</h2>
+                    <p>Unable to load reviews from Letterboxd at the moment.</p>
+                    <p style="margin-top: 15px;">This may be due to CORS restrictions. The feed will work once deployed to your domain.</p>
+                    <p style="margin-top: 15px;">Visit <a href="https://letterboxd.com/gdufore/" target="_blank" style="color: #00d4ff;">Letterboxd Profile</a> directly.</p>
+                </div>
+            `;
+        }
+
+        function toggleComments(commentId) {
+            const container = document.getElementById(commentId);
+            container.classList.toggle('active');
+        }
+
+        function loadGiscusForReview(containerId, movieTitle) {
+            const container = document.getElementById(containerId);
+            if (!container || container.dataset.loaded) return;
+            
+            const script = document.createElement('script');
+            script.src = 'https://giscus.app/client.js';
+            script.setAttribute('data-repo', 'Dufive1/Dufivedotcom');
+            script.setAttribute('data-repo-id', 'R_kgDOQ2I2jg');
+            script.setAttribute('data-category', 'General');
+            script.setAttribute('data-category-id', 'DIC_kwDOQ2I2js4C0zIP');
+            script.setAttribute('data-mapping', 'specific');
+            script.setAttribute('data-term', movieTitle);
+            script.setAttribute('data-strict', '0');
+            script.setAttribute('data-reactions-enabled', '1');
+            script.setAttribute('data-emit-metadata', '0');
+            script.setAttribute('data-input-position', 'bottom');
+            script.setAttribute('data-theme', 'dark');
+            script.setAttribute('data-lang', 'en');
+            script.setAttribute('crossorigin', 'anonymous');
+            script.async = true;
+            
+            container.appendChild(script);
+            container.dataset.loaded = 'true';
+        }
+
+        // Start fetching reviews when page loads
+        console.log('Page loaded, calling fetchReviews...');
+        fetchReviews();
+    </script>
+</body>
+</html>
