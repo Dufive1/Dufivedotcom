@@ -386,32 +386,35 @@
 
         async function fetchReviews() {
             try {
-                // Try multiple CORS proxy methods
+                // Try multiple CORS proxy methods in order
                 const proxies = [
+                    `https://api.allorigins.win/get?url=${encodeURIComponent(RSS_URL)}`,
                     `https://corsproxy.io/?${encodeURIComponent(RSS_URL)}`,
-                    `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(RSS_URL)}`,
-                    `https://api.allorigins.win/raw?url=${encodeURIComponent(RSS_URL)}`
+                    `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(RSS_URL)}`
                 ];
 
-                let response = null;
                 let text = null;
 
                 for (const proxy of proxies) {
                     try {
-                        response = await fetch(proxy);
+                        const response = await fetch(proxy);
                         if (response.ok) {
-                            text = await response.text();
-                            if (text && text.length > 100) {
+                            const data = await response.json().catch(() => response.text());
+                            // Handle allorigins format
+                            text = typeof data === 'object' && data.contents ? data.contents : data;
+                            if (typeof text === 'string' && text.length > 100 && text.includes('<?xml')) {
+                                console.log('Successfully fetched from:', proxy);
                                 break;
                             }
                         }
                     } catch (e) {
+                        console.log('Proxy failed:', proxy, e);
                         continue;
                     }
                 }
 
-                if (!text) {
-                    throw new Error('Unable to fetch RSS feed');
+                if (!text || !text.includes('<?xml')) {
+                    throw new Error('Unable to fetch RSS feed from any proxy');
                 }
 
                 const parser = new DOMParser();
