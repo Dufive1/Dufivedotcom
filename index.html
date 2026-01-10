@@ -284,6 +284,36 @@
             box-shadow: 0 0 20px rgba(0, 255, 136, 0.6);
         }
 
+        .comments-section {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #333;
+        }
+
+        .comments-toggle {
+            color: #00d4ff;
+            cursor: pointer;
+            font-size: 0.9em;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 15px;
+            display: inline-block;
+            transition: color 0.3s ease;
+        }
+
+        .comments-toggle:hover {
+            color: #00ff88;
+        }
+
+        .comments-container {
+            display: none;
+            margin-top: 15px;
+        }
+
+        .comments-container.active {
+            display: block;
+        }
+
         .error {
             background: #1a1a1a;
             border: 2px solid #00ff88;
@@ -337,7 +367,7 @@
         <header>
             <div class="logo">DUFIVE</div>
             <div class="tagline">Film Archives</div>
-            <div class="subtitle">Rated in Stars, Not Words</div>
+            <div class="subtitle">Where Stars Do The Talking</div>
         </header>
 
         <div class="film-strip">
@@ -448,40 +478,3 @@
                 card.className = 'review-card';
                 
                 const stars = '★'.repeat(review.rating);
-                
-                card.innerHTML = `
-                    <div class="poster-container">
-                        ${review.image ? `<img src="${review.image}" alt="${review.title}" class="movie-poster">` : ''}
-                    </div>
-                    <div class="review-content">
-                        <h2 class="movie-title">${review.title}</h2>
-                        ${review.rating ? `<div class="rating">${stars.split('').map((s, i) => `<span class="star">${s}</span>`).join('')}</div>` : ''}
-                        <div class="review-date">${review.date}</div>
-                        ${review.text ? `<p class="review-text">${review.text}</p>` : ''}
-                        <a href="${review.link}" target="_blank" class="read-more">Full Review →</a>
-                    </div>
-                `;
-                
-                grid.appendChild(card);
-            });
-
-            content.innerHTML = '';
-            content.appendChild(grid);
-        }
-
-        function displayError() {
-            const content = document.getElementById('content');
-            content.innerHTML = `
-                <div class="error">
-                    <h2>◆ CONNECTION ISSUE ◆</h2>
-                    <p>Unable to load reviews from Letterboxd at the moment.</p>
-                    <p style="margin-top: 15px;">This may be due to CORS restrictions. The feed will work once deployed to your domain.</p>
-                    <p style="margin-top: 15px;">Visit <a href="https://letterboxd.com/gdufore/" target="_blank" style="color: #00d4ff;">Letterboxd Profile</a> directly.</p>
-                </div>
-            `;
-        }
-
-        fetchReviews();
-    </script>
-</body>
-</html>
