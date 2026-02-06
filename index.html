@@ -1104,30 +1104,34 @@
       }
     }
 
-    async function loadArchive(preserveScroll = false) {
-      setError('');
-      const scrollY = preserveScroll ? window.scrollY : 0;
-      
-      clearGridToLoader('Consulting the archives...');
-      
-      try {
-        const [peerMap, gregItems, reactions, notesMap] = await Promise.all([
-          fetchPeerRatings(),
-          fetchGregRssItems(),
-          fetchReactions(),
-          fetchNotes()
-        ]);
+async function loadArchive(preserveScroll = false) {
+  setError('');
+  const scrollY = preserveScroll ? window.scrollY : 0;
+  
+  // Only show loader on initial load, not on refreshes
+  if (!preserveScroll) {
+    clearGridToLoader('Consulting the archives...');
+  }
+  
+  try {
+    const [peerMap, gregItems, reactions, notesMap] = await Promise.all([
+      fetchPeerRatings(),
+      fetchGregRssItems(),
+      fetchReactions(),
+      fetchNotes()
+    ]);
 
-        renderLedger(gregItems, peerMap, reactions, notesMap);
-        
-        if (preserveScroll) {
-          setTimeout(() => window.scrollTo(0, scrollY), 50);
-        }
-      } catch (e) {
-        setError(e?.message || String(e));
-        console.error('Error:', e);
-      }
+    renderLedger(gregItems, peerMap, reactions, notesMap);
+    
+    if (preserveScroll) {
+      // Restore scroll position immediately
+      window.scrollTo(0, scrollY);
     }
+  } catch (e) {
+    setError(e?.message || String(e));
+    console.error('Error:', e);
+  }
+}
 
     async function submitRating(movieKey, movieTitle) {
       if (currentUser !== 'peer') return;
