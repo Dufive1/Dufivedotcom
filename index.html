@@ -66,12 +66,8 @@
     const SB_URL = 'https://brgxorrpfberfcyeugzq.supabase.co';
     const SB_KEY = 'sb_publishable_VbVFBh-gtIBAbr9Qtp240w_GS8Kn4Jf';
 
-    const GREG_RSS = 'https://letterboxd.com/gdufore/rss/'; // always 50 max
+    const GREG_RSS = 'https://letterboxd.com/gdufore/rss/';
     const PEER_PASS = 'cinema2026';
-
-    // CORS proxy for static sites (no backend). If this proxy ever flakes,
-    // the “best” long-term solution is your own Supabase Edge Function proxy.
-    const CORS_PROXY = 'https://api.allorigins.win/raw?url=';
 
     const supabaseClient = window.supabase.createClient(SB_URL, SB_KEY);
 
@@ -115,19 +111,6 @@
       return '—';
     }
 
-    function firstText(parent, tagNames) {
-      for (const name of tagNames) {
-        const el = parent.getElementsByTagName(name)[0];
-        if (el && el.textContent) return el.textContent.trim();
-      }
-      return '';
-    }
-
-    function extractPosterUrlFromDescription(html) {
-      const m = String(html || '').match(/<img[^>]+src="([^">]+)"/i);
-      return m && m[1] ? m[1] : '';
-    }
-
     async function fetchPeerRatings() {
       const { data, error } = await supabaseClient
         .from('ratings')
@@ -143,35 +126,39 @@
     }
 
     async function fetchGregRssItems() {
-      const url = CORS_PROXY + encodeURIComponent(GREG_RSS);
+      // Use rss2json free tier (no count param needed - RSS already limited to 50)
+      const url = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(GREG_RSS)}`;
       const res = await fetch(url);
+      
       if (!res.ok) throw new Error('RSS Fetch Error: HTTP ' + res.status);
 
-      const xmlText = await res.text();
-      const doc = new DOMParser().parseFromString(xmlText, 'text/xml');
+      const data = await res.json();
+      if (data.status !== 'ok') {
+        throw new Error('RSS2JSON Error: ' + (data.message || 'Unknown error'));
+      }
 
-      const items = Array.from(doc.getElementsByTagName('item'));
-      return items.map(item => {
-        // Prefer the explicit Letterboxd tags (they’re in the RSS you posted)
-        const filmTitle = firstText(item, ['letterboxd:filmTitle']);
-        const memberRating = firstText(item, ['letterboxd:memberRating']); // e.g. "4.0"
-        const watchedDate = firstText(item, ['letterboxd:watchedDate']);   // e.g. "2026-02-04"
+      return data.items.map(item => {
+        // Extract rating from description (count ★ symbols, check for ½)
+        const desc = item.description || '';
+        const ratingMatch = desc.match(/★/g);
+        const starCount = ratingMatch ? ratingMatch.length : 0;
+        const hasHalf = desc.includes('½');
+        const gregRating = starCount + (hasHalf ? 0.5 : 0);
 
-        const link = firstText(item, ['link']); // film URL
-        const descEl = item.getElementsByTagName('description')[0];
-        const descHtml = descEl ? descEl.textContent : '';
-        const posterUrl = extractPosterUrlFromDescription(descHtml);
+        // Extract poster image URL
+        const imgMatch = desc.match(/<img[^>]+src="([^">]+)"/);
+        const posterUrl = imgMatch ? imgMatch[1] : '';
 
-        // Fallback if tags ever missing:
-        const titleFallback = firstText(item, ['title']); // often "Film, YEAR - ★★★★"
-        const title = filmTitle || titleFallback || 'Untitled';
+        // Clean title: rss2json includes rating suffix like "Film, 2020 - ★★★★"
+        // Remove everything from " - ★" onwards
+        const title = (item.title || 'Untitled').replace(/\s*-\s*★.*$/, '').trim();
 
         return {
           title,
-          watchedDate,
-          gregRating: memberRating ? Number(memberRating) : null,
+          watchedDate: item.pubDate || '',
+          gregRating: gregRating || null,
           posterUrl,
-          link
+          link: item.link || '#'
         };
       });
     }
@@ -264,7 +251,6 @@
         return;
       }
 
-      // NOTE: this expects movie_title to be UNIQUE (or primary key) in Supabase
       const { error } = await supabaseClient
         .from('ratings')
         .upsert({ movie_title: movieTitle, rating: num }, { onConflict: 'movie_title' });
