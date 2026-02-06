@@ -11,43 +11,28 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
     <style>
-        :root {
-            --bg: #ffffff;
-            --text: #111111;
-            --muted: #888;
-            --accent: #008CFF; 
-            --border: #eee;
-        }
-
+        :root { --bg: #ffffff; --text: #111111; --muted: #888; --accent: #008CFF; --border: #eee; }
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); -webkit-font-smoothing: antialiased; }
         .container { max-width: 1400px; margin: 0 auto; padding: 0 40px; }
-
         nav { display: flex; justify-content: space-between; align-items: center; padding: 40px 0; border-bottom: 1px solid var(--border); margin-bottom: 60px; }
         .brand { font-weight: 800; font-size: 1.4rem; text-decoration: none; color: var(--text); letter-spacing: -0.04em; }
-        
         .login-trigger { cursor: pointer; font-size: 0.7rem; font-weight: 800; letter-spacing: 0.2em; color: var(--muted); transition: color 0.3s; }
         .login-trigger:hover { color: var(--accent); }
         .login-trigger.active { color: var(--accent); }
-
         .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 60px 40px; }
-        .entry { text-decoration: none; color: inherit; }
         .poster-frame { aspect-ratio: 2/3; background: #f9f9f9; overflow: hidden; margin-bottom: 20px; border: 1px solid var(--border); }
         .poster-frame img { width: 100%; height: 100%; object-fit: cover; }
-
-        .entry-title { font-weight: 800; font-size: 1.2rem; margin-bottom: 15px; }
-
+        .entry-title { font-weight: 800; font-size: 1.1rem; margin-bottom: 15px; min-height: 2.4em; line-height: 1.2; }
         .rating-box { border-top: 1px solid var(--border); padding-top: 12px; }
         .row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
-        .label { font-size: 0.65rem; font-weight: 800; letter-spacing: 0.1em; color: var(--muted); }
+        .label { font-size: 0.65rem; font-weight: 800; color: var(--muted); letter-spacing: 0.05em; }
         .val { font-size: 0.9rem; font-weight: 700; }
-
-        .p-val.editable { color: var(--accent); cursor: pointer; border-bottom: 1px dashed var(--accent); }
-        
+        .p-val.editable { color: var(--accent); cursor: pointer; text-decoration: underline; }
         #loader { grid-column: 1/-1; text-align: center; padding: 100px 0; font-family: 'Playfair Display'; font-style: italic; font-size: 2rem; }
-
+        #error-log { position: fixed; bottom: 10px; left: 10px; font-size: 10px; color: red; background: rgba(255,255,255,0.9); padding: 5px; z-index: 100; }
         @media (max-width: 900px) { .grid { grid-template-columns: 1fr 1fr; } }
-        @media (max-width: 600px) { .grid { grid-template-columns: 1fr; } }
+        @media (max-width: 600px) { .grid { grid-template-columns: 1fr; .container { padding: 0 20px; } }
     </style>
 </head>
 <body>
@@ -57,35 +42,39 @@
             <a href="index.html" class="brand">DUFIVE</a>
             <div id="auth-btn" class="login-trigger" onclick="togglePeerAccess()">GREG VS PEER • UNLOCKED?</div>
         </nav>
-
         <header style="margin-bottom: 80px;">
             <h1 style="font-family: 'Playfair Display'; font-size: clamp(3rem, 8vw, 6rem); line-height: 1;">The Ledger.</h1>
         </header>
-
         <main class="grid" id="ledger-grid">
             <div id="loader">Consulting the archives...</div>
         </main>
     </div>
+    <div id="error-log"></div>
 
     <script>
-        // --- 1. SETTINGS ---
         const SB_URL = 'https://brgxorrpfberfcyeugzq.supabase.co';
         const SB_KEY = 'sb_publishable_VbVFBh-gtIBAbr9Qtp240w_GS8Kn4Jf'; 
         const GREG_RSS = 'https://letterboxd.com/gdufore/rss/';
-        const PEER_PASS = 'dufiveisdufore!'; 
+        const PEER_PASS = 'cinema2026'; 
 
         const supabase = supabase.createClient(SB_URL, SB_KEY);
         let isPeerAuthenticated = false;
 
-        // --- 2. LOAD DATA ---
         async function loadArchive() {
             try {
-                const [rssRes, { data: pRatings }] = await Promise.all([
-                    fetch(`https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(GREG_RSS)}&count=50`),
-                    supabase.from('ratings').select('*')
-                ]);
+                const log = document.getElementById('error-log');
+                
+                // 1. Fetch Peer Ratings from Supabase
+                const { data: pRatings, error: sbError } = await supabase.from('ratings').select('*');
+                if (sbError) {
+                    log.innerText = "Supabase Error: " + sbError.message;
+                    console.error(sbError);
+                }
 
+                // 2. Fetch Greg's Data
+                const rssRes = await fetch(`https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(GREG_RSS)}&count=50`);
                 const gregData = await rssRes.json();
+
                 const peerMap = {};
                 if (pRatings) pRatings.forEach(r => peerMap[r.movie_title] = r.rating);
 
@@ -95,17 +84,19 @@
                 gregData.items.forEach(item => {
                     const gStars = (item.description.match(/★/g) || []).length;
                     const gHalf = item.description.includes('½') ? '½' : '';
-                    const gRating = '★'.repeat(gStars) + gHalf;
+                    const gRating = '★'.repeat(gStars) + gHalf || '—';
 
                     const pRatingRaw = peerMap[item.title];
                     const pRatingDisplay = pRatingRaw ? '★'.repeat(pRatingRaw) : '—';
-
                     const img = item.description.match(/<img[^>]+src="([^">]+)"/)?.[1] || '';
+
+                    // Escape single quotes for the onclick function
+                    const safeTitle = item.title.replace(/'/g, "\\'");
 
                     const el = document.createElement('div');
                     el.className = 'entry';
                     el.innerHTML = `
-                        <div class="poster-frame"><img src="${img}" loading="lazy"></div>
+                        <div class="poster-frame"><img src="${img}" alt="${item.title}"></div>
                         <h2 class="entry-title">${item.title}</h2>
                         <div class="rating-box">
                             <div class="row">
@@ -115,27 +106,35 @@
                             <div class="row">
                                 <span class="label">PEER</span>
                                 <span class="val p-val ${isPeerAuthenticated ? 'editable' : ''}" 
-                                      onclick="submitRating('${item.title}')">${pRatingDisplay}</span>
+                                      onclick="submitRating('${safeTitle}')">${pRatingDisplay}</span>
                             </div>
                         </div>
                     `;
                     grid.appendChild(el);
                 });
-            } catch (err) { console.error(err); }
+            } catch (err) {
+                document.getElementById('error-log').innerText = "Script Error: " + err.message;
+            }
         }
 
-        // --- 3. PEER RATING LOGIC ---
         async function submitRating(movieTitle) {
             if (!isPeerAuthenticated) return;
-
-            const score = prompt(`Enter rating for ${movieTitle} (1-5):`);
+            const score = prompt(`Rate "${movieTitle}" (1-5):`);
             if (score !== null) {
-                const { error } = await supabase
-                    .from('ratings')
-                    .upsert({ movie_title: movieTitle, rating: parseInt(score) }, { onConflict: 'movie_title' });
-                
-                if (!error) loadArchive();
-                else alert("Save failed. Make sure your Supabase table is named 'ratings' and RLS is set to 'true'.");
+                const numScore = parseInt(score);
+                if (numScore >= 1 && numScore <= 5) {
+                    const { error } = await supabase
+                        .from('ratings')
+                        .upsert({ movie_title: movieTitle, rating: numScore }, { onConflict: 'movie_title' });
+                    
+                    if (!error) {
+                        loadArchive();
+                    } else {
+                        alert("Database Save Error: " + error.message);
+                    }
+                } else if (score !== "") {
+                    alert("Please enter a number between 1 and 5.");
+                }
             }
         }
 
@@ -143,10 +142,11 @@
             const attempt = prompt("Enter Peer Access Key:");
             if (attempt === PEER_PASS) {
                 isPeerAuthenticated = true;
-                document.getElementById('auth-btn').innerText = "PEER ACCESS: GRANTED";
-                document.getElementById('auth-btn').classList.add('active');
+                const btn = document.getElementById('auth-btn');
+                btn.innerText = "PEER ACCESS: GRANTED";
+                btn.classList.add('active');
                 loadArchive(); 
-            } else {
+            } else if (attempt !== null) {
                 alert("Access Denied.");
             }
         }
