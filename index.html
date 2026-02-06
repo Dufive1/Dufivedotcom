@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>DUFIVE | The Ledger - G & P</title>
+  <title>DUFIVE Movie Reviews | The Ledger - G & P</title>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;500;800&family=Playfair+Display:ital,wght@0,700;1,700&display=swap" rel="stylesheet">
@@ -52,12 +52,12 @@
 <body>
   <div class="container">
     <nav>
-      <a href="index.html" class="brand">DUFIVE</a>
+      <a href="index.html" class="brand">DUFIVE - Movie Reviews</a>
       <div id="auth-btn" class="login-trigger">GREG VS PEER • UNLOCKED?</div>
     </nav>
 
     <header>
-      <h1 class="page-title">The Ledger — G & P</h1>
+      <h1 class="page-title">The Ledger</h1>
       <p class="tagline">Rated in Stars, not words.</p>
     </header>
 
@@ -114,8 +114,10 @@
 
     function peerStars(n) {
       const num = Number(n);
-      if (Number.isInteger(num) && num >= 1 && num <= 5) return '★'.repeat(num);
-      return '—';
+      if (!Number.isFinite(num) || num <= 0) return '—';
+      const full = Math.floor(num);
+      const half = (num - full) >= 0.5 ? '½' : '';
+      return '★'.repeat(full) + half;
     }
 
     async function fetchPeerRatings() {
@@ -281,13 +283,37 @@
     async function submitRating(movieTitle) {
       if (!isPeerAuthenticated) return;
 
-      const score = prompt(`Rate "${movieTitle}" (1-5):`);
-      if (score === null) return;
-      if (score.trim() === '') return;
+      const score = prompt(`Rate "${movieTitle}"\n\n0 = Remove rating\n0.5 to 5 (half-stars allowed, e.g. 3.5):`);
+      if (score === null) return; // User cancelled
+      if (score.trim() === '') return; // Empty input
 
-      const num = parseInt(score, 10);
-      if (!Number.isInteger(num) || num < 1 || num > 5) {
-        alert('Please enter a whole number between 1 and 5.');
+      const num = parseFloat(score);
+
+      // Special case: 0 means delete/remove the rating
+      if (num === 0) {
+        const { error } = await supabaseClient
+          .from('ratings')
+          .delete()
+          .eq('movie_title', movieTitle);
+
+        if (error) {
+          alert('Database Delete Error: ' + error.message);
+          return;
+        }
+
+        await loadArchive();
+        return;
+      }
+
+      // Validate: must be between 0.5 and 5, in 0.5 increments
+      if (!Number.isFinite(num) || num < 0.5 || num > 5) {
+        alert('Please enter a number between 0.5 and 5 (or 0 to remove).');
+        return;
+      }
+
+      // Check if it's a valid half-star increment (0.5, 1, 1.5, 2, etc.)
+      if ((num * 2) % 1 !== 0) {
+        alert('Please use half-star increments (e.g., 3.5, 4, 4.5).');
         return;
       }
 
