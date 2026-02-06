@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DUFIVE | Timeline</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:ital,wght@0,600;0,700;1,600&display=swap" rel="stylesheet">
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <style>
+    :root, [data-theme="light"] {
+      --bg: #fafafa; --bg-secondary: #f5f5f5; --card-bg: #ffffff;
+      --text: #0a0a0a; --text-secondary: #737373; --text-muted: #a3a3a3;
+      --accent: #2563eb; --accent-hover: #1d4ed8;
+      --border: #e5e5e5; --border-light: #f5f5f5;
+      --greg: #ea580c; --greg-bg: rgba(234, 88, 12, 0.08);
+      --peer: #2563eb; --peer-bg: rgba(37, 99, 235, 0.08);
+      --shadow: 0 1px 3px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.02);
+      --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.06), 0 4px 6px -2px rgba(0,0,0,0.03);
+      --radius: 8px; --transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      --overlay-bg: rgba(0, 0, 0, 0.6);
+      --timeline-line: #e5e5e5;
+    }
+    [data-theme="dark"] {
+      --bg: #0a0a0a; --bg-secondary: #171717; --card-bg: #1c1c1e;
+      --text: #f5f5f5; --text-secondary: #a3a3a3; --text-muted: #6b7280;
+      --accent: #3b82f6; --accent-hover: #60a5fa;
+      --border: #2d2d2d; --border-light: #1f1f1f;
+      --greg: #fb923c; --greg-bg: rgba(251, 146, 60, 0.12);
+      --peer: #60a5fa; --peer-bg: rgba(96, 165, 250, 0.12);
+      --shadow: 0 1px 3px rgba(0,0,0,0.3), 0 1px 2px rgba(0,0,0,0.2);
+      --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.4), 0 4px 6px -2px rgba(0,0,0,0.3);
+      --overlay-bg: rgba(0, 0, 0, 0.8);
+      --timeline-line: #2d2d2d;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--bg); color: var(--text);
+      -webkit-font-smoothing: antialiased; line-height: 1.6;
+      transition: background 0.3s ease, color 0.3s ease;
+    }
+
+    .container { max-width: 800px; margin: 0 auto; padding: 0 32px; }
+
+    nav {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 32px 0; border-bottom: 1px solid var(--border); margin-bottom: 48px;
+    }
+
+    .brand {
+      font-weight: 800; font-size: 1.5rem; text-decoration: none;
+      color: var(--text); letter-spacing: -0.03em;
+    }
+
+    .nav-controls { display: flex; gap: 12px; align-items: center; }
+
+    .nav-link {
+      font-size: 0.8125rem; font-weight: 600; color: var(--text-secondary);
+      text-decoration: none; padding: 8px 12px; border-radius: 6px;
+      transition: var(--transition); white-space: nowrap;
+    }
+    .nav-link:hover { color: var(--accent); background: var(--border-light); }
+    .nav-link.active { color: var(--accent); }
+
+    .theme-toggle {
+      cursor: pointer; padding: 8px; border-radius: 6px; font-size: 1.125rem;
+      transition: var(--transition); user-select: none; border: none;
+      background: none; color: var(--text-secondary);
+      display: flex; align-items: center; justify-content: center;
+    }
+    .theme-toggle:hover { background: var(--border-light); color: var(--text); }
+
+    header { margin-bottom: 40px; }
+
+    .page-title {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(2rem, 5vw, 3.5rem); line-height: 1.1;
+      margin-bottom: 8px; font-weight: 700; letter-spacing: -0.02em;
+    }
+
+    .tagline { font-size: 1rem; color: var(--text-secondary); font-weight: 400; }
+
+    /* ───── Filter Tabs ───── */
+    .timeline-filters {
+      display: flex; gap: 8px; margin-bottom: 32px; flex-wrap: wrap;
+    }
+
+    .tl-filter {
+      padding: 6px 16px; border: 1px solid var(--border); border-radius: 20px;
+      font-size: 0.75rem; font-weight: 600; color: var(--text-secondary);
+      cursor: pointer; transition: var(--transition); user-select: none;
+      background: var(--card-bg); white-space: nowrap;
+    }
+    .tl-filter:hover { border-color: var(--accent); color: var(--accent); }
+    .tl-filter.active { background: var(--accent); color: white; border-color: var(--accent); }
+
+    /* ───── Timeline ───── */
+    .timeline {
+      position: relative;
+      padding-left: 40px;
+    }
+
+    .timeline::before {
+      content: '';
+      position: absolute;
+      left: 15px;
+      top: 0;
+      bottom: 0;
+      width: 2px;
+      background: var(--timeline-line);
+      border-radius: 1px;
+    }
+
+    .timeline-day {
+      margin-bottom: 32px;
+    }
+
+    .timeline-date {
+      font-size: 0.6875rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-bottom: 16px;
+      position: relative;
+    }
+
+    .timeline-date::before {
+      content: '';
+      position: absolute;
+      left: -33px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 10px;
+      height: 10px;
+      background: var(--accent);
+      border-radius: 50%;
+      border: 2px solid var(--bg);
+      box-shadow: 0 0 0 2px var(--accent);
+    }
+
+    .timeline-item {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px 20px;
+      margin-bottom: 12px;
+      box-shadow: var(--shadow);
+      transition: var(--transition);
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+      position: relative;
+      opacity: 0;
+      animation: fadeSlideIn 0.3s ease forwards;
+    }
+    .timeline-item:hover { box-shadow: var(--shadow-lg); }
+
+    @keyframes fadeSlideIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .timeline-item::before {
+      content: '';
+      position: absolute;
+      left: -29px;
+      top: 22px;
+      width: 6px;
+      height: 6px;
+      background: var(--border);
+      border-radius: 50%;
+    }
+
+    .tl-avatar {
+      width: 32px; height: 32px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.75rem; font-weight: 800; color: white; flex-shrink: 0;
+    }
+    .tl-avatar.greg { background: var(--greg); }
+    .tl-avatar.peer { background: var(--peer); }
+    .tl-avatar.system { background: var(--text-muted); }
+
+    .tl-body { flex: 1; min-width: 0; }
+
+    .tl-action {
+      font-size: 0.9375rem;
+      line-height: 1.5;
+      color: var(--text);
+    }
+
+    .tl-action strong { font-weight: 700; }
+    .tl-action .tl-movie { font-weight: 700; color: var(--accent); }
+    .tl-action .tl-stars { color: #f59e0b; }
+    .tl-action .tl-emoji { font-size: 1.125rem; }
+
+    .tl-note-text {
+      margin-top: 8px;
+      padding: 10px 14px;
+      background: var(--bg-secondary);
+      border-radius: 6px;
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+      line-height: 1.5;
+      border-left: 3px solid var(--border);
+    }
+
+    .tl-time {
+      font-size: 0.6875rem;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    /* ───── Empty / Loading ───── */
+    .timeline-loading {
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--text-secondary);
+      font-family: 'Playfair Display', serif;
+      font-style: italic;
+      font-size: 1.25rem;
+    }
+
+    .timeline-empty {
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--text-secondary);
+    }
+    .timeline-empty-icon { font-size: 2.5rem; margin-bottom: 12px; opacity: 0.4; }
+    .timeline-empty-text { font-size: 1rem; font-weight: 600; }
+
+    /* ───── Responsive ───── */
+    @media (max-width: 600px) {
+      .container { padding: 0 16px; }
+      nav { flex-direction: column; gap: 16px; align-items: flex-start; padding: 20px 0; margin-bottom: 24px; }
+      .nav-controls { width: 100%; justify-content: space-between; flex-wrap: wrap; gap: 8px; }
+      .brand { font-size: 1.25rem; }
+      header { margin-bottom: 24px; }
+      .page-title { font-size: 1.75rem; }
+      .timeline { padding-left: 32px; }
+      .timeline::before { left: 11px; }
+      .timeline-date::before { left: -25px; width: 8px; height: 8px; }
+      .timeline-item::before { left: -25px; width: 5px; height: 5px; }
+      .timeline-item { padding: 14px 16px; gap: 12px; }
+      .tl-avatar { width: 28px; height: 28px; font-size: 0.6875rem; }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <nav>
+      <a href="index.html" class="brand">DUFIVE</a>
+      <div class="nav-controls">
+        <a href="index.html" class="nav-link">The Ledger</a>
+        <a href="timeline.html" class="nav-link active">Timeline</a>
+        <button id="theme-toggle" class="theme-toggle" title="Toggle dark mode" aria-label="Toggle dark mode">
+          <span id="theme-icon">&#9790;</span>
+        </button>
+      </div>
+    </nav>
+
+    <header>
+      <h1 class="page-title">Timeline</h1>
+      <p class="tagline">Every rating, reaction, and note — in order.</p>
+    </header>
+
+    <div class="timeline-filters">
+      <div class="tl-filter active" data-filter="all">All Activity</div>
+      <div class="tl-filter" data-filter="ratings">Ratings</div>
+      <div class="tl-filter" data-filter="reactions">Reactions</div>
+      <div class="tl-filter" data-filter="notes">Notes</div>
+      <div class="tl-filter" data-filter="greg">Greg Only</div>
+      <div class="tl-filter" data-filter="peer">Peer Only</div>
+    </div>
+
+    <div class="timeline" id="timeline">
+      <div class="timeline-loading">Loading activity...</div>
+    </div>
+  </div>
+
+  <script>
+    const SB_URL = 'https://brgxorrpfberfcyeugzq.supabase.co';
+    const SB_KEY = 'sb_publishable_VbVFBh-gtIBAbr9Qtp240w_GS8Kn4Jf';
+    const EDGE_FUNCTION_URL = 'https://brgxorrpfberfcyeugzq.supabase.co/functions/v1/fetch-letterboxd-rss';
+
+    const REACTIONS_MAP = { fire: '\u{1F525}', agree: '\u{1F91D}', disagree: '\u{1F914}' };
+
+    const supabaseClient = window.supabase.createClient(SB_URL, SB_KEY);
+    const elTimeline = document.getElementById('timeline');
+    let allEvents = [];
+    let activeFilter = 'all';
+
+    /* ── Dark mode ── */
+    function getTheme() { return localStorage.getItem('dufive-theme') || 'light'; }
+    function setTheme(t) {
+      document.documentElement.setAttribute('data-theme', t);
+      localStorage.setItem('dufive-theme', t);
+      document.getElementById('theme-icon').innerHTML = t === 'dark' ? '&#9788;' : '&#9790;';
+    }
+    setTheme(getTheme());
+    document.getElementById('theme-toggle').addEventListener('click', () => {
+      setTheme(getTheme() === 'light' ? 'dark' : 'light');
+    });
+
+    /* ── Helpers ── */
+    function starsFromNumeric(n) {
+      const num = Number(n);
+      if (!Number.isFinite(num) || num <= 0) return null;
+      const full = Math.floor(num);
+      const half = (num - full) >= 0.5 ? '\u00BD' : '';
+      return '\u2605'.repeat(full) + half;
+    }
+
+    function decodeHtml(html) {
+      const t = document.createElement('textarea');
+      t.innerHTML = html;
+      return t.value;
+    }
+
+    function formatDate(dateStr) {
+      const d = new Date(dateStr);
+      const now = new Date();
+      const diff = Math.floor((now - d) / 86400000);
+      if (diff === 0) return 'Today';
+      if (diff === 1) return 'Yesterday';
+      if (diff < 7) return `${diff} days ago`;
+      return d.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+    }
+
+    function formatTime(dateStr) {
+      return new Date(dateStr).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+    }
+
+    function dateKey(dateStr) {
+      return new Date(dateStr).toLocaleDateString('en-US');
+    }
+
+    /* ── Data Fetching ── */
+    async function fetchAllActivity() {
+      const events = [];
+
+      // Peer ratings (with timestamps if available)
+      try {
+        const { data: ratings } = await supabaseClient.from('ratings').select('*');
+        (ratings || []).forEach(r => {
+          if (r.rating > 0) {
+            events.push({
+              type: 'rating',
+              author: 'peer',
+              movieKey: r.movie_key,
+              movieTitle: r.movie_title || r.movie_key,
+              value: r.rating,
+              date: r.updated_at || r.created_at || new Date().toISOString()
+            });
+          }
+        });
+      } catch (e) { console.error('Ratings fetch error:', e); }
+
+      // Reactions
+      try {
+        const { data: reactions } = await supabaseClient.from('rating_reactions').select('*');
+        (reactions || []).forEach(r => {
+          events.push({
+            type: 'reaction',
+            author: r.reactor,
+            movieKey: r.movie_key,
+            movieTitle: r.movie_key,
+            value: r.reaction,
+            date: r.created_at || new Date().toISOString()
+          });
+        });
+      } catch (e) { console.error('Reactions fetch error:', e); }
+
+      // Notes
+      try {
+        const { data: notes } = await supabaseClient.from('film_arguments').select('*');
+        (notes || []).forEach(n => {
+          events.push({
+            type: 'note',
+            author: n.author,
+            movieKey: n.movie_key,
+            movieTitle: n.movie_key,
+            value: n.argument,
+            date: n.created_at
+          });
+        });
+      } catch (e) { console.error('Notes fetch error:', e); }
+
+      // Try to enrich movie titles from RSS
+      try {
+        const res = await fetch(EDGE_FUNCTION_URL);
+        if (res.ok) {
+          const data = await res.json();
+          const titleMap = {};
+          (data.films || []).forEach(f => {
+            const key = f.link ? f.link.split('/film/')[1]?.replace('/', '') : f.title;
+            titleMap[key] = decodeHtml(f.title);
+          });
+          events.forEach(ev => {
+            if (titleMap[ev.movieKey]) ev.movieTitle = titleMap[ev.movieKey];
+          });
+        }
+      } catch (e) { console.error('RSS fetch error:', e); }
+
+      // Sort newest first
+      events.sort((a, b) => new Date(b.date) - new Date(a.date));
+      return events;
+    }
+
+    /* ── Render ── */
+    function renderTimeline(events) {
+      elTimeline.innerHTML = '';
+
+      // Apply filter
+      let filtered = events;
+      if (activeFilter === 'ratings') filtered = events.filter(e => e.type === 'rating');
+      else if (activeFilter === 'reactions') filtered = events.filter(e => e.type === 'reaction');
+      else if (activeFilter === 'notes') filtered = events.filter(e => e.type === 'note');
+      else if (activeFilter === 'greg') filtered = events.filter(e => e.author === 'greg');
+      else if (activeFilter === 'peer') filtered = events.filter(e => e.author === 'peer');
+
+      if (filtered.length === 0) {
+        elTimeline.innerHTML = `
+          <div class="timeline-empty">
+            <div class="timeline-empty-icon">\u{1F39E}</div>
+            <div class="timeline-empty-text">No activity found</div>
+          </div>`;
+        return;
+      }
+
+      // Group by day
+      const days = {};
+      filtered.forEach(ev => {
+        const dk = dateKey(ev.date);
+        if (!days[dk]) days[dk] = { label: formatDate(ev.date), events: [] };
+        days[dk].events.push(ev);
+      });
+
+      let animIndex = 0;
+
+      Object.values(days).forEach(day => {
+        const dayEl = document.createElement('div');
+        dayEl.className = 'timeline-day';
+
+        const dateEl = document.createElement('div');
+        dateEl.className = 'timeline-date';
+        dateEl.textContent = day.label;
+        dayEl.appendChild(dateEl);
+
+        day.events.forEach(ev => {
+          const item = document.createElement('div');
+          item.className = 'timeline-item';
+          item.style.animationDelay = `${Math.min(animIndex * 0.04, 0.5)}s`;
+          animIndex++;
+
+          const avatar = document.createElement('div');
+          avatar.className = `tl-avatar ${ev.author}`;
+          avatar.textContent = ev.author === 'greg' ? 'G' : 'P';
+
+          const body = document.createElement('div');
+          body.className = 'tl-body';
+
+          const action = document.createElement('div');
+          action.className = 'tl-action';
+
+          const authorName = ev.author === 'greg' ? 'Greg' : 'Peer';
+          const movieSpan = `<span class="tl-movie">${ev.movieTitle}</span>`;
+
+          if (ev.type === 'rating') {
+            const stars = starsFromNumeric(ev.value);
+            action.innerHTML = `<strong>${authorName}</strong> rated ${movieSpan} <span class="tl-stars">${stars || ev.value}</span>`;
+          } else if (ev.type === 'reaction') {
+            const emoji = REACTIONS_MAP[ev.value] || ev.value;
+            action.innerHTML = `<strong>${authorName}</strong> reacted <span class="tl-emoji">${emoji}</span> to ${movieSpan}`;
+          } else if (ev.type === 'note') {
+            action.innerHTML = `<strong>${authorName}</strong> posted a note on ${movieSpan}`;
+
+            const noteText = document.createElement('div');
+            noteText.className = 'tl-note-text';
+            noteText.textContent = ev.value;
+            body.appendChild(action);
+            body.appendChild(noteText);
+          }
+
+          if (ev.type !== 'note') {
+            body.appendChild(action);
+          }
+
+          const time = document.createElement('div');
+          time.className = 'tl-time';
+          time.textContent = formatTime(ev.date);
+          body.appendChild(time);
+
+          item.appendChild(avatar);
+          item.appendChild(body);
+          dayEl.appendChild(item);
+        });
+
+        elTimeline.appendChild(dayEl);
+      });
+    }
+
+    /* ── Filter chips ── */
+    document.querySelectorAll('.tl-filter').forEach(chip => {
+      chip.addEventListener('click', () => {
+        document.querySelectorAll('.tl-filter').forEach(c => c.classList.remove('active'));
+        chip.classList.add('active');
+        activeFilter = chip.dataset.filter;
+        renderTimeline(allEvents);
+      });
+    });
+
+    /* ── Init ── */
+    async function init() {
+      try {
+        allEvents = await fetchAllActivity();
+        renderTimeline(allEvents);
+      } catch (e) {
+        elTimeline.innerHTML = `<div class="timeline-empty"><div class="timeline-empty-text">Error loading activity: ${e.message}</div></div>`;
+      }
+    }
+
+    init();
+  </script>
+</body>
+</html>
