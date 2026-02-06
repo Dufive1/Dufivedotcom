@@ -688,8 +688,10 @@
     let sessionToken = localStorage.getItem('session_token');
     let selectedReviewer = null;
 
-    function setError(msg) { elError.textContent = msg || ''; }
-
+function setError(msg) { 
+  elError.textContent = msg || ''; 
+  elError.style.display = msg ? 'block' : 'none';  // ← Add this line
+}
     function setAuthUI() {
       if (currentUser) {
         elAuthBtn.textContent = `${currentUser.toUpperCase()} • Online`;
@@ -729,7 +731,11 @@
       if (seconds < 604800) return `${Math.floor(seconds / 86400)}d ago`;
       return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
     }
-
+function decodeHtml(html) {
+  const txt = document.createElement('textarea');
+  txt.innerHTML = html;
+  return txt.value;
+}
     async function fetchPeerRatings() {
       const { data, error } = await supabaseClient.from('ratings').select('movie_key,movie_title,rating');
       if (error) throw new Error('Ratings Error: ' + error.message);
@@ -795,7 +801,7 @@
 
         const h2 = document.createElement('h2');
         h2.className = 'entry-title';
-        h2.textContent = title;
+        h2.textContent = decodeHtml(title); 
 
         const ratingsContainer = document.createElement('div');
         ratingsContainer.className = 'ratings-container';
