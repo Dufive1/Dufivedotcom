@@ -633,7 +633,6 @@
     </nav>
 
     <header>
-      <h1 class="page-title">The Ledger</h1>
       <p class="tagline">Rated in stars, not words.</p>
     </header>
 
@@ -983,17 +982,19 @@ if (gregReactionToPeer && REACTIONS[gregReactionToPeer]) {
       const picker = document.createElement('div');
       picker.className = 'reaction-picker';
 
-      const currentReaction = triggerElement?.textContent;
-      if (currentReaction && Object.values(REACTIONS).includes(currentReaction)) {
-        const removeOpt = document.createElement('span');
-        removeOpt.className = 'reaction-option';
-        removeOpt.textContent = '✕';
-        removeOpt.onclick = (e) => {
-          e.stopPropagation();
-          deleteReaction(movieKey, reactor);
-        };
-        picker.appendChild(removeOpt);
-      }
+const triggerText = triggerElement?.textContent || '';
+const hasExistingReaction = Object.values(REACTIONS).some(emoji => triggerText.startsWith(emoji));
+
+if (hasExistingReaction) {
+  const removeOpt = document.createElement('span');
+  removeOpt.className = 'reaction-option';
+  removeOpt.textContent = '✕';
+  removeOpt.onclick = (e) => {
+    e.stopPropagation();
+    deleteReaction(movieKey, reactor);
+  };
+  picker.appendChild(removeOpt);
+}
 
       Object.entries(REACTIONS).forEach(([key, emoji]) => {
         const opt = document.createElement('span');
