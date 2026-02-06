@@ -806,19 +806,20 @@
           <span class="rating-label">Greg</span>
           <span class="rating-value">${starsFromNumeric(entry.gregRating)}</span>
         `;
-        const gregReaction = reactions[movieKey]?.greg;
-        if (gregReaction && REACTIONS[gregReaction]) {
-          const reactionSpan = document.createElement('span');
-          reactionSpan.className = 'reaction' + (currentUser === 'greg' ? ' clickable' : '');
-          reactionSpan.textContent = REACTIONS[gregReaction];
-          if (currentUser === 'greg') {
-            reactionSpan.onclick = (e) => {
-              e.stopPropagation();
-              showReactionPicker(movieKey, 'greg', reactionSpan);
-            };
-          }
-          gregRow.querySelector('.rating-value').appendChild(reactionSpan);
-        }
+const peerReactionToGreg = reactions[movieKey]?.peer;
+if (peerReactionToGreg && REACTIONS[peerReactionToGreg]) {
+  const reactionSpan = document.createElement('span');
+  reactionSpan.className = 'reaction' + (currentUser === 'peer' ? ' clickable' : '');
+  reactionSpan.innerHTML = REACTIONS[peerReactionToGreg] + '<sup style="font-size:0.6em;opacity:0.7;margin-left:1px">P</sup>';
+  reactionSpan.title = 'Peer\'s reaction';
+  if (currentUser === 'peer') {
+    reactionSpan.onclick = (e) => {
+      e.stopPropagation();
+      showReactionPicker(movieKey, 'peer', reactionSpan);
+    };
+  }
+  gregRow.querySelector('.rating-value').appendChild(reactionSpan);
+}
         ratingsContainer.appendChild(gregRow);
 
         // Peer rating row
@@ -832,17 +833,20 @@
         if (currentUser === 'peer') {
           peerRating.onclick = () => submitRating(movieKey, title);
         }
-        const peerReaction = reactions[movieKey]?.peer;
-        if (peerReaction && REACTIONS[peerReaction]) {
-          const reactionSpan = document.createElement('span');
-          reactionSpan.className = 'reaction' + (currentUser === 'peer' ? ' clickable' : '');
-          reactionSpan.textContent = REACTIONS[peerReaction];
-          if (currentUser === 'peer') {
-            reactionSpan.onclick = (e) => {
-              e.stopPropagation();
-              showReactionPicker(movieKey, 'peer', reactionSpan);
-            };
-          }
+        const gregReactionToPeer = reactions[movieKey]?.greg;
+if (gregReactionToPeer && REACTIONS[gregReactionToPeer]) {
+  const reactionSpan = document.createElement('span');
+  reactionSpan.className = 'reaction' + (currentUser === 'greg' ? ' clickable' : '');
+  reactionSpan.innerHTML = REACTIONS[gregReactionToPeer] + '<sup style="font-size:0.6em;opacity:0.7;margin-left:1px">G</sup>';
+  reactionSpan.title = 'Greg\'s reaction';
+  if (currentUser === 'greg') {
+    reactionSpan.onclick = (e) => {
+      e.stopPropagation();
+      showReactionPicker(movieKey, 'greg', reactionSpan);
+    };
+  }
+  peerRating.appendChild(reactionSpan);
+}
           peerRating.appendChild(reactionSpan);
         }
         peerRow.innerHTML = '<span class="rating-label">Peer</span>';
@@ -853,7 +857,7 @@
         content.appendChild(ratingsContainer);
 
         // React triggers
-        if (currentUser === 'peer' && !peerReaction) {
+        if (currentUser === 'peer' && !peerReactionToGreg)  {
           const reactBtn = document.createElement('div');
           reactBtn.className = 'react-trigger';
           reactBtn.textContent = 'React to Greg rating';
@@ -863,7 +867,7 @@
           };
           content.appendChild(reactBtn);
         }
-        if (currentUser === 'greg' && !gregReaction) {
+        if (currentUser === 'greg' && !gregReactionToPeer) {
           const reactBtn = document.createElement('div');
           reactBtn.className = 'react-trigger';
           reactBtn.textContent = 'React to Peer rating';
