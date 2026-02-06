@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DUFIVE // Perspective in Film</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;700&family=Playfair+Display:ital,wght@0,700;1,700&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --bg: #ffffff;
+            --text: #1a1a1a;
+            --muted: #757575;
+            --accent: #000000;
+            --border: #eeeeee;
+            --venmo-blue: #008CFF;
+        }
+
+        /* Reset & Base */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background-color: var(--bg);
+            color: var(--text);
+            font-family: 'Montserrat', sans-serif;
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .container { max-width: 1100px; margin: 0 auto; padding: 0 24px; }
+
+        /* --- NAVIGATION --- */
+        nav {
+            padding: 40px 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 80px;
+        }
+
+        .brand {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.8rem;
+            text-decoration: none;
+            color: var(--text);
+            letter-spacing: -1px;
+        }
+
+        .nav-links a {
+            text-decoration: none;
+            color: var(--text);
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            transition: opacity 0.3s;
+        }
+
+        .nav-links a:hover { opacity: 0.5; }
+
+        /* --- HERO SECTION --- */
+        header { text-align: center; margin-bottom: 100px; }
+        header h1 {
+            font-family: 'Playfair Display', serif;
+            font-size: clamp(3rem, 10vw, 6rem);
+            line-height: 0.9;
+            margin-bottom: 20px;
+        }
+        header p {
+            text-transform: uppercase;
+            letter-spacing: 5px;
+            font-size: 0.8rem;
+            color: var(--muted);
+        }
+
+        /* --- REVIEW GRID --- */
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(12, 1fr);
+            gap: 60px 40px;
+            margin-bottom: 100px;
+        }
+
+        .entry {
+            grid-column: span 6; /* Default: 2 columns */
+            text-decoration: none;
+            color: inherit;
+        }
+
+        .entry-image-wrap {
+            aspect-ratio: 16/9;
+            overflow: hidden;
+            background: #f7f7f7;
+            margin-bottom: 24px;
+            position: relative;
+        }
+
+        .entry-image-wrap img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.8s cubic-bezier(0.19, 1, 0.22, 1);
+        }
+
+        .entry:hover .entry-image-wrap img { transform: scale(1.05); }
+
+        .entry-meta {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: var(--muted);
+            margin-bottom: 12px;
+            display: flex;
+            gap: 15px;
+        }
+
+        .entry-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.8rem;
+            line-height: 1.2;
+            margin-bottom: 15px;
+        }
+
+        .entry-excerpt {
+            font-size: 0.9rem;
+            color: #444;
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            font-weight: 300;
+        }
+
+        /* --- VENMO FLOATING BADGE --- */
+        .support-trigger {
+            position: fixed;
+            bottom: 40px;
+            right: 40px;
+            background: var(--text);
+            color: #fff;
+            padding: 15px 25px;
+            text-decoration: none;
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            border-radius: 0; /* Professional sharp edges */
+            z-index: 100;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .support-trigger:hover {
+            background: var(--venmo-blue);
+            transform: translateY(-5px);
+        }
+
+        /* Mobile Adjustments */
+        @media (max-width: 768px) {
+            .entry { grid-column: span 12; }
+            header h1 { font-size: 3.5rem; }
+            .support-trigger { bottom: 20px; right: 20px; padding: 12px 20px; }
+        }
+
+        #loader {
+            grid-column: span 12;
+            text-align: center;
+            padding: 100px 0;
+            font-style: italic;
+            font-family: 'Playfair Display', serif;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <nav>
+            <a href="#" class="brand">DUFIVE</a>
+            <div class="nav-links">
+                <a href="Costner.html">The Costner Chronicles</a>
+            </div>
+        </nav>
+
+        <header>
+            <p>Archive & Critique</p>
+            <h1>Cinema Reviewed.</h1>
+        </header>
+
+        <main class="grid" id="feed-container">
+            <div id="loader">Curating archives...</div>
+        </main>
+
+        <footer style="padding: 100px 0 60px; text-align: center; border-top: 1px solid var(--border);">
+            <p style="font-size: 0.7rem; color: var(--muted); letter-spacing: 2px;">&copy; 2026 DUFIVE PRODUCTIONS</p>
+        </footer>
+    </div>
+
+    <a href="https://venmo.com/Greg-Dufore" target="_blank" class="support-trigger">
+        <span style="font-size: 1.2rem;">$</span> Support the Archive
+    </a>
+
+    <script>
+        const RSS_URL = 'https://letterboxd.com/gdufore/rss/';
+
+        async function loadReviews() {
+            try {
+                const response = await fetch(`https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(RSS_URL)}`);
+                const data = await response.json();
+                
+                const container = document.getElementById('feed-container');
+                container.innerHTML = '';
+
+                data.items.forEach(item => {
+                    // Extract Rating
+                    const stars = (item.description.match(/★/g) || []).length;
+                    const half = item.description.includes('½') ? '½' : '';
+                    
+                    // Extract Image
+                    const img = item.description.match(/<img[^>]+src="([^">]+)"/)?.[1] || '';
+                    
+                    // Clean content
+                    let text = item.description.replace(/<[^>]*>/g, '').replace(/★|½/g, '').trim();
+                    text = text.substring(0, 150) + '...';
+
+                    const article = document.createElement('a');
+                    article.className = 'entry';
+                    article.href = item.link;
+                    article.target = '_blank';
+                    
+                    article.innerHTML = `
+                        <div class="entry-image-wrap">
+                            <img src="${img}" alt="${item.title}" loading="lazy">
+                        </div>
+                        <div class="entry-meta">
+                            <span>${new Date(item.pubDate).toLocaleDateString('en-US', {month: 'long', year: 'numeric'})}</span>
+                            <span style="color: var(--text)">${'★'.repeat(stars)}${half}</span>
+                        </div>
+                        <h2 class="entry-title">${item.title}</h2>
+                        <p class="entry-excerpt">${text}</p>
+                    `;
+                    container.appendChild(article);
+                });
+            } catch (err) {
+                document.getElementById('feed-container').innerHTML = '<p>The archive is currently unreachable.</p>';
+            }
+        }
+
+        loadReviews();
+    </script>
+</body>
+</html>
