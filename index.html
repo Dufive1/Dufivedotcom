@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>DUFIVE | The Ledger - G & P</title>
+  <title>DUFIVE | The Ledger - Movie Reviews</title>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;500;800&family=Playfair+Display:ital,wght@0,700;1,700&display=swap" rel="stylesheet">
@@ -11,23 +11,27 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <style>
-    :root { --bg: #ffffff; --text: #111111; --muted: #888; --accent: #008CFF; --border: #eee; }
+    :root { --bg: #ffffff; --text: #111111; --muted: #888; --accent: #008CFF; --border: #eee; --red: #ff4444; }
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); -webkit-font-smoothing: antialiased; }
     .container { max-width: 1400px; margin: 0 auto; padding: 0 40px; }
     
     nav { display: flex; justify-content: space-between; align-items: center; padding: 40px 0; border-bottom: 1px solid var(--border); margin-bottom: 60px; }
     .brand { font-weight: 800; font-size: 1.4rem; text-decoration: none; color: var(--text); letter-spacing: -0.04em; }
+    .auth-controls { display: flex; gap: 20px; align-items: center; }
     .login-trigger { cursor: pointer; font-size: 0.7rem; font-weight: 800; letter-spacing: 0.2em; color: var(--muted); transition: color 0.3s; user-select: none; }
     .login-trigger:hover { color: var(--accent); }
     .login-trigger.active { color: var(--accent); }
+    .logout-btn { cursor: pointer; font-size: 0.7rem; font-weight: 800; letter-spacing: 0.2em; color: var(--red); transition: opacity 0.3s; display: none; }
+    .logout-btn.visible { display: block; }
+    .logout-btn:hover { opacity: 0.7; }
 
     header { margin-bottom: 80px; }
     .page-title { font-family: 'Playfair Display', serif; font-size: clamp(3rem, 8vw, 6rem); line-height: 1; margin-bottom: 20px; }
     .tagline { font-size: 1.1rem; color: var(--muted); letter-spacing: 0.05em; font-weight: 300; }
 
     .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 60px 40px; }
-    .entry { min-width: 0; cursor: pointer; transition: transform 0.2s; }
+    .entry { min-width: 0; transition: transform 0.2s; }
     .entry:hover { transform: translateY(-2px); }
     .poster-frame { aspect-ratio: 2/3; background: #f9f9f9; overflow: hidden; margin-bottom: 20px; border: 1px solid var(--border); }
     .poster-frame img { width: 100%; height: 100%; object-fit: cover; display: block; }
@@ -38,29 +42,37 @@
     .val { font-size: 0.9rem; font-weight: 700; display: flex; align-items: center; gap: 6px; }
     .p-val.editable { color: var(--accent); cursor: pointer; text-decoration: underline; }
     
-    .reaction { font-size: 0.9rem; cursor: pointer; opacity: 0.7; transition: opacity 0.2s, transform 0.2s; }
-    .reaction:hover { opacity: 1; transform: scale(1.2); }
-    .reaction.active { opacity: 1; }
+    .reaction { font-size: 0.9rem; opacity: 0.8; }
+    .reaction.clickable { cursor: pointer; transition: opacity 0.2s, transform 0.2s; }
+    .reaction.clickable:hover { opacity: 1; transform: scale(1.1); }
     
-    .arguments-badge { font-size: 0.75rem; color: var(--muted); display: flex; align-items: center; gap: 4px; margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--border); }
+    .react-btn { font-size: 0.7rem; color: var(--accent); cursor: pointer; opacity: 0.6; transition: opacity 0.2s; user-select: none; }
+    .react-btn:hover { opacity: 1; text-decoration: underline; }
+    
+    .expand-btn { font-size: 0.7rem; color: var(--muted); cursor: pointer; display: flex; align-items: center; gap: 4px; margin-top: 10px; padding: 8px 0; transition: color 0.2s; user-select: none; }
+    .expand-btn:hover { color: var(--accent); }
     
     .arguments-section { display: none; border-top: 1px solid var(--border); margin-top: 12px; padding-top: 12px; }
     .arguments-section.expanded { display: block; }
-    .arguments-title { font-size: 0.7rem; font-weight: 800; color: var(--muted); letter-spacing: 0.05em; margin-bottom: 8px; }
+    .arguments-title { font-size: 0.7rem; font-weight: 800; color: var(--muted); letter-spacing: 0.05em; margin-bottom: 12px; }
     
-    .argument { padding: 8px 0; border-bottom: 1px solid var(--border); }
-    .argument:last-child { border-bottom: none; }
+    .argument { padding: 10px 0; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: flex-start; }
+    .argument:last-of-type { border-bottom: none; }
+    .argument-content { flex: 1; }
     .argument-author { font-size: 0.65rem; font-weight: 800; color: var(--accent); letter-spacing: 0.05em; margin-bottom: 4px; }
     .argument-text { font-size: 0.85rem; line-height: 1.4; color: var(--text); }
+    .delete-arg { font-size: 0.7rem; color: var(--red); cursor: pointer; opacity: 0; transition: opacity 0.2s; padding: 4px 8px; }
+    .argument:hover .delete-arg { opacity: 0.6; }
+    .delete-arg:hover { opacity: 1 !important; }
     
-    .argument-input { width: 100%; padding: 8px; border: 1px solid var(--border); font-family: 'Inter', sans-serif; font-size: 0.85rem; margin-top: 8px; resize: vertical; min-height: 60px; }
-    .argument-submit { background: var(--accent); color: white; border: none; padding: 8px 16px; font-size: 0.75rem; font-weight: 800; letter-spacing: 0.05em; cursor: pointer; margin-top: 8px; }
+    .argument-input { width: 100%; padding: 10px; border: 1px solid var(--border); font-family: 'Inter', sans-serif; font-size: 0.85rem; margin-top: 12px; resize: vertical; min-height: 70px; }
+    .argument-submit { background: var(--accent); color: white; border: none; padding: 10px 20px; font-size: 0.75rem; font-weight: 800; letter-spacing: 0.05em; cursor: pointer; margin-top: 8px; transition: opacity 0.2s; }
     .argument-submit:hover { opacity: 0.9; }
 
-    .reaction-picker { display: flex; gap: 8px; margin-top: 4px; }
-    .reaction-option { font-size: 1.2rem; cursor: pointer; opacity: 0.5; transition: all 0.2s; padding: 4px; }
-    .reaction-option:hover { opacity: 1; transform: scale(1.2); }
-    .reaction-option.selected { opacity: 1; background: var(--border); border-radius: 4px; }
+    .reaction-picker { display: flex; gap: 8px; margin-top: 8px; padding: 8px; background: var(--border); border-radius: 4px; }
+    .reaction-option { font-size: 1.3rem; cursor: pointer; opacity: 0.5; transition: all 0.2s; padding: 6px; border-radius: 4px; }
+    .reaction-option:hover { opacity: 1; transform: scale(1.15); background: white; }
+    .reaction-option.selected { opacity: 1; background: white; }
 
     #loader { grid-column: 1/-1; text-align: center; padding: 100px 0; font-family: 'Playfair Display'; font-style: italic; font-size: 2rem; }
     #error-log { position: fixed; bottom: 10px; left: 10px; font-size: 10px; color: red; background: rgba(255,255,255,0.9); padding: 5px; z-index: 100; max-width: 70vw; overflow: auto; }
@@ -77,12 +89,15 @@
 <body>
   <div class="container">
     <nav>
-      <a href="index.html" class="brand">DUFIVE</a>
-      <div id="auth-btn" class="login-trigger">GREG VS PEER • UNLOCKED?</div>
+      <a href="index.html" class="brand">DUFIVE - Movie Reviews</a>
+      <div class="auth-controls">
+        <div id="auth-btn" class="login-trigger">PEER LOGIN</div>
+        <div id="logout-btn" class="logout-btn">LOGOUT</div>
+      </div>
     </nav>
 
     <header>
-      <h1 class="page-title">The Ledger — G & P</h1>
+      <h1 class="page-title">The Ledger</h1>
       <p class="tagline">Rated in Stars, not words.</p>
     </header>
 
@@ -110,20 +125,22 @@
 
     const elGrid = document.getElementById('ledger-grid');
     const elAuthBtn = document.getElementById('auth-btn');
+    const elLogoutBtn = document.getElementById('logout-btn');
     const elError = document.getElementById('error-log');
 
     let isPeerAuthenticated = sessionStorage.getItem('peer_authed') === '1';
-    let currentData = { gregItems: [], peerMap: {}, reactions: {}, arguments: {} };
 
     function setError(msg) { elError.textContent = msg || ''; }
 
     function setAuthUI() {
       if (isPeerAuthenticated) {
-        elAuthBtn.textContent = 'PEER ACCESS: GRANTED';
+        elAuthBtn.textContent = 'PEER: ONLINE';
         elAuthBtn.classList.add('active');
+        elLogoutBtn.classList.add('visible');
       } else {
-        elAuthBtn.textContent = 'GREG VS PEER • UNLOCKED?';
+        elAuthBtn.textContent = 'PEER LOGIN';
         elAuthBtn.classList.remove('active');
+        elLogoutBtn.classList.remove('visible');
       }
     }
 
@@ -273,21 +290,12 @@
         const peerReaction = reactions[movieKey]?.peer;
         if (peerReaction && REACTIONS[peerReaction]) {
           const reactionSpan = document.createElement('span');
-          reactionSpan.className = 'reaction';
+          reactionSpan.className = 'reaction clickable';
           reactionSpan.textContent = REACTIONS[peerReaction];
+          reactionSpan.title = 'Click to change/remove';
           reactionSpan.onclick = (e) => {
             e.stopPropagation();
-            if (isPeerAuthenticated) showReactionPicker(movieKey, 'peer');
-          };
-          pVal.appendChild(reactionSpan);
-        } else if (isPeerAuthenticated) {
-          const reactionSpan = document.createElement('span');
-          reactionSpan.className = 'reaction';
-          reactionSpan.textContent = '💬';
-          reactionSpan.style.opacity = '0.3';
-          reactionSpan.onclick = (e) => {
-            e.stopPropagation();
-            showReactionPicker(movieKey, 'peer');
+            if (isPeerAuthenticated) showReactionPicker(movieKey, 'peer', reactionSpan);
           };
           pVal.appendChild(reactionSpan);
         }
@@ -298,16 +306,20 @@
         ratingBox.appendChild(rowG);
         ratingBox.appendChild(rowP);
 
-        // Arguments badge
-        const args = argumentsMap[movieKey] || [];
-        if (args.length > 0) {
-          const badge = document.createElement('div');
-          badge.className = 'arguments-badge';
-          badge.innerHTML = `⚡ ${args.length} argument${args.length === 1 ? '' : 's'}`;
-          ratingBox.appendChild(badge);
+        // React to Greg's rating button (only when authenticated)
+        if (isPeerAuthenticated && !peerReaction) {
+          const reactBtn = document.createElement('div');
+          reactBtn.className = 'react-btn';
+          reactBtn.textContent = '💬 React to Greg';
+          reactBtn.onclick = (e) => {
+            e.stopPropagation();
+            showReactionPicker(movieKey, 'peer', reactBtn);
+          };
+          ratingBox.appendChild(reactBtn);
         }
 
-        // Arguments section (hidden by default)
+        // Arguments
+        const args = argumentsMap[movieKey] || [];
         const argsSection = document.createElement('div');
         argsSection.className = 'arguments-section';
         argsSection.dataset.movieKey = movieKey;
@@ -320,21 +332,42 @@
         args.forEach(arg => {
           const argEl = document.createElement('div');
           argEl.className = 'argument';
+          
+          const contentDiv = document.createElement('div');
+          contentDiv.className = 'argument-content';
+          
           const authorEl = document.createElement('div');
           authorEl.className = 'argument-author';
           authorEl.textContent = arg.author.toUpperCase();
+          
           const textEl = document.createElement('div');
           textEl.className = 'argument-text';
           textEl.textContent = arg.argument;
-          argEl.appendChild(authorEl);
-          argEl.appendChild(textEl);
+          
+          contentDiv.appendChild(authorEl);
+          contentDiv.appendChild(textEl);
+          argEl.appendChild(contentDiv);
+          
+          // Delete button (only for peer's own arguments)
+          if (isPeerAuthenticated && arg.author === 'peer') {
+            const delBtn = document.createElement('div');
+            delBtn.className = 'delete-arg';
+            delBtn.textContent = '✕';
+            delBtn.title = 'Delete argument';
+            delBtn.onclick = (e) => {
+              e.stopPropagation();
+              deleteArgument(arg.id);
+            };
+            argEl.appendChild(delBtn);
+          }
+          
           argsSection.appendChild(argEl);
         });
 
         if (isPeerAuthenticated) {
           const input = document.createElement('textarea');
           input.className = 'argument-input';
-          input.placeholder = 'Add your argument...';
+          input.placeholder = 'Add your argument... (max 200 chars)';
           input.maxLength = 200;
           const submit = document.createElement('button');
           submit.className = 'argument-submit';
@@ -349,41 +382,70 @@
 
         ratingBox.appendChild(argsSection);
 
+        // Expand/collapse button
+        const expandBtn = document.createElement('div');
+        expandBtn.className = 'expand-btn';
+        expandBtn.innerHTML = `⚡ ${args.length > 0 ? `${args.length} argument${args.length === 1 ? '' : 's'}` : 'Add argument'} <span style="font-size:0.8em">▼</span>`;
+        expandBtn.onclick = (e) => {
+          e.stopPropagation();
+          const isExpanded = argsSection.classList.toggle('expanded');
+          expandBtn.querySelector('span').textContent = isExpanded ? '▲' : '▼';
+        };
+        ratingBox.appendChild(expandBtn);
+
         el.appendChild(posterFrame);
         el.appendChild(h2);
         el.appendChild(ratingBox);
-
-        // Toggle arguments on card click
-        el.onclick = (e) => {
-          if (e.target.classList.contains('p-val') && e.target.classList.contains('editable')) {
-            return; // Let rating click handler work
-          }
-          argsSection.classList.toggle('expanded');
-        };
 
         elGrid.appendChild(el);
       });
     }
 
-    function showReactionPicker(movieKey, reactor) {
-      const existing = document.querySelector('.reaction-picker');
-      if (existing) existing.remove();
+    function showReactionPicker(movieKey, reactor, triggerElement) {
+      // Remove any existing picker
+      const existing = document.querySelectorAll('.reaction-picker');
+      existing.forEach(p => p.remove());
 
       const picker = document.createElement('div');
       picker.className = 'reaction-picker';
+      
+      // Add remove option if reaction exists
+      const currentReaction = triggerElement?.textContent;
+      if (currentReaction && Object.values(REACTIONS).includes(currentReaction)) {
+        const removeOpt = document.createElement('span');
+        removeOpt.className = 'reaction-option';
+        removeOpt.textContent = '✕';
+        removeOpt.title = 'Remove reaction';
+        removeOpt.onclick = (e) => {
+          e.stopPropagation();
+          deleteReaction(movieKey, reactor);
+        };
+        picker.appendChild(removeOpt);
+      }
       
       Object.entries(REACTIONS).forEach(([key, emoji]) => {
         const opt = document.createElement('span');
         opt.className = 'reaction-option';
         opt.textContent = emoji;
-        opt.onclick = () => saveReaction(movieKey, reactor, key);
+        opt.title = key;
+        opt.onclick = (e) => {
+          e.stopPropagation();
+          saveReaction(movieKey, reactor, key);
+        };
         picker.appendChild(opt);
       });
 
-      const entry = document.querySelector(`[data-movie-key="${movieKey}"]`);
-      if (entry) {
-        entry.querySelector('.rating-box').appendChild(picker);
-      }
+      triggerElement.parentElement.appendChild(picker);
+      
+      // Close picker when clicking outside
+      setTimeout(() => {
+        document.addEventListener('click', function closePickerHandler(e) {
+          if (!picker.contains(e.target)) {
+            picker.remove();
+            document.removeEventListener('click', closePickerHandler);
+          }
+        });
+      }, 0);
     }
 
     async function saveReaction(movieKey, reactor, reaction) {
@@ -399,8 +461,26 @@
       await loadArchive();
     }
 
+    async function deleteReaction(movieKey, reactor) {
+      const { error } = await supabaseClient
+        .from('rating_reactions')
+        .delete()
+        .eq('movie_key', movieKey)
+        .eq('reactor', reactor);
+
+      if (error) {
+        alert('Delete reaction error: ' + error.message);
+        return;
+      }
+
+      await loadArchive();
+    }
+
     async function submitArgument(movieKey, text) {
-      if (!text.trim()) return;
+      if (!text.trim()) {
+        alert('Please enter some text for your argument.');
+        return;
+      }
 
       const { error } = await supabaseClient
         .from('film_arguments')
@@ -408,6 +488,22 @@
 
       if (error) {
         alert('Argument save error: ' + error.message);
+        return;
+      }
+
+      await loadArchive();
+    }
+
+    async function deleteArgument(argId) {
+      if (!confirm('Delete this argument?')) return;
+
+      const { error } = await supabaseClient
+        .from('film_arguments')
+        .delete()
+        .eq('id', argId);
+
+      if (error) {
+        alert('Delete error: ' + error.message);
         return;
       }
 
@@ -426,7 +522,6 @@
           fetchArguments()
         ]);
 
-        currentData = { gregItems, peerMap, reactions, arguments: argumentsMap };
         renderLedger(gregItems, peerMap, reactions, argumentsMap);
       } catch (e) {
         setError(e && e.message ? e.message : String(e));
@@ -481,6 +576,8 @@
     }
 
     function togglePeerAccess() {
+      if (isPeerAuthenticated) return; // Already logged in
+      
       const attempt = prompt('Enter Peer Access Key:');
       if (attempt === null) return;
 
@@ -494,8 +591,18 @@
       }
     }
 
+    function logout() {
+      if (!confirm('Log out?')) return;
+      
+      isPeerAuthenticated = false;
+      sessionStorage.removeItem('peer_authed');
+      setAuthUI();
+      loadArchive();
+    }
+
     // Events
     elAuthBtn.addEventListener('click', togglePeerAccess);
+    elLogoutBtn.addEventListener('click', logout);
 
     elGrid.addEventListener('click', (e) => {
       const t = e.target;
