@@ -1535,8 +1535,8 @@
     async function fetchGregFilms() {
       const { data, error } = await supabaseClient
         .from('greg_films')
-        .select('movie_key, title, poster_url, greg_rating, letterboxd_url, updated_at')
-        .order('updated_at', { ascending: false });
+        .select('id, movie_key, title, poster_url, greg_rating, letterboxd_url, updated_at')
+        .order('id', { ascending: true });
       if (error) throw new Error('Greg Films Error: ' + error.message);
       // Normalise into the shape the rest of the code expects
       return (data || []).map(f => ({
@@ -1545,7 +1545,8 @@
         posterUrl: (f.poster_url && !f.poster_url.includes(EMPTY_POSTER)) ? f.poster_url : null,
         gregRating: f.greg_rating,
         link: f.letterboxd_url || '',
-        pubDate: f.updated_at
+        pubDate: f.updated_at,
+        sortId: f.id
       }));
     }
 
@@ -1626,10 +1627,9 @@
 
         switch (sortBy) {
           case 'date': {
-            // Newest first by updated_at, fallback to title
-            const dA = a.pubDate ? new Date(a.pubDate).getTime() : 0;
-            const dB = b.pubDate ? new Date(b.pubDate).getTime() : 0;
-            return dB - dA || a.title.localeCompare(b.title);
+            // Newest first — use sortId which reflects Letterboxd page order
+            // (lower id = page 1 = newest films on Letterboxd)
+            return (a.sortId || 0) - (b.sortId || 0);
           }
           case 'greg-high': {
             // Rated films first, then by rating desc, then alphabetical
