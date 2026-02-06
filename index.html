@@ -33,10 +33,13 @@
     .p-val.editable { color: var(--accent); cursor: pointer; text-decoration: underline; }
 
     #loader { grid-column: 1/-1; text-align: center; padding: 100px 0; font-family: 'Playfair Display'; font-style: italic; font-size: 2rem; }
-    #error-log { position: fixed; bottom: 10px; left: 10px; font-size: 10px; color: red; background: rgba(255,255,255,0.9); padding: 5px; z-index: 100; max-width: 60vw; overflow: auto; }
+    #error-log { position: fixed; bottom: 10px; left: 10px; font-size: 10px; color: red; background: rgba(255,255,255,0.9); padding: 5px; z-index: 100; max-width: 70vw; overflow: auto; }
 
     @media (max-width: 900px) { .grid { grid-template-columns: 1fr 1fr; } }
-    @media (max-width: 600px) { .grid { grid-template-columns: 1fr; } .container { padding: 0 20px; } }
+    @media (max-width: 600px) {
+      .grid { grid-template-columns: 1fr; }
+      .container { padding: 0 20px; }
+    }
   </style>
 </head>
 
@@ -59,10 +62,17 @@
   <div id="error-log"></div>
 
   <script>
+    // === Config ===
     const SB_URL = 'https://brgxorrpfberfcyeugzq.supabase.co';
     const SB_KEY = 'sb_publishable_VbVFBh-gtIBAbr9Qtp240w_GS8Kn4Jf';
 
+    const GREG_RSS = 'https://letterboxd.com/gdufore/rss/'; // always 50 max
     const PEER_PASS = 'cinema2026';
+
+    // CORS proxy for static sites (no backend). If this proxy ever flakes,
+    // the “best” long-term solution is your own Supabase Edge Function proxy.
+    const CORS_PROXY = 'https://api.allorigins.win/raw?url=';
+
     const supabaseClient = window.supabase.createClient(SB_URL, SB_KEY);
 
     const elGrid = document.getElementById('ledger-grid');
@@ -83,7 +93,15 @@
       }
     }
 
-    function starsFromRating(n) {
+    function clearGridToLoader(text) {
+      elGrid.innerHTML = '';
+      const loader = document.createElement('div');
+      loader.id = 'loader';
+      loader.textContent = text || 'Loading...';
+      elGrid.appendChild(loader);
+    }
+
+    function gregStarsFromNumeric(n) {
       const num = Number(n);
       if (!Number.isFinite(num) || num <= 0) return '—';
       const full = Math.floor(num);
@@ -97,106 +115,146 @@
       return '—';
     }
 
-    function clearGridToLoader(text) {
-      elGrid.innerHTML = '';
-      const loader = document.createElement('div');
-      loader.id = 'loader';
-      loader.textContent = text || 'Loading...';
-      elGrid.appendChild(loader);
+    function firstText(parent, tagNames) {
+      for (const name of tagNames) {
+        const el = parent.getElementsByTagName(name)[0];
+        if (el && el.textContent) return el.textContent.trim();
+      }
+      return '';
     }
 
-    async function loadLedger() {
+    function extractPosterUrlFromDescription(html) {
+      const m = String(html || '').match(/<img[^>]+src="([^">]+)"/i);
+      return m && m[1] ? m[1] : '';
+    }
+
+    async function fetchPeerRatings() {
+      const { data, error } = await supabaseClient
+        .from('ratings')
+        .select('movie_title,rating');
+
+      if (error) throw new Error('Supabase (ratings) Error: ' + error.message);
+
+      const map = Object.create(null);
+      (data || []).forEach(r => {
+        if (r && typeof r.movie_title === 'string') map[r.movie_title] = r.rating;
+      });
+      return map;
+    }
+
+    async function fetchGregRssItems() {
+      const url = CORS_PROXY + encodeURIComponent(GREG_RSS);
+      const res = await fetch(url);
+      if (!res.ok) throw new Error('RSS Fetch Error: HTTP ' + res.status);
+
+      const xmlText = await res.text();
+      const doc = new DOMParser().parseFromString(xmlText, 'text/xml');
+
+      const items = Array.from(doc.getElementsByTagName('item'));
+      return items.map(item => {
+        // Prefer the explicit Letterboxd tags (they’re in the RSS you posted)
+        const filmTitle = firstText(item, ['letterboxd:filmTitle']);
+        const memberRating = firstText(item, ['letterboxd:memberRating']); // e.g. "4.0"
+        const watchedDate = firstText(item, ['letterboxd:watchedDate']);   // e.g. "2026-02-04"
+
+        const link = firstText(item, ['link']); // film URL
+        const descEl = item.getElementsByTagName('description')[0];
+        const descHtml = descEl ? descEl.textContent : '';
+        const posterUrl = extractPosterUrlFromDescription(descHtml);
+
+        // Fallback if tags ever missing:
+        const titleFallback = firstText(item, ['title']); // often "Film, YEAR - ★★★★"
+        const title = filmTitle || titleFallback || 'Untitled';
+
+        return {
+          title,
+          watchedDate,
+          gregRating: memberRating ? Number(memberRating) : null,
+          posterUrl,
+          link
+        };
+      });
+    }
+
+    function renderLedger(gregItems, peerMap) {
+      elGrid.innerHTML = '';
+
+      gregItems.forEach(entry => {
+        const title = entry.title;
+
+        const el = document.createElement('div');
+        el.className = 'entry';
+
+        const posterFrame = document.createElement('div');
+        posterFrame.className = 'poster-frame';
+        const img = document.createElement('img');
+        img.alt = title;
+        if (entry.posterUrl) img.src = entry.posterUrl;
+        posterFrame.appendChild(img);
+
+        const h2 = document.createElement('h2');
+        h2.className = 'entry-title';
+        h2.textContent = title;
+
+        const ratingBox = document.createElement('div');
+        ratingBox.className = 'rating-box';
+
+        const rowG = document.createElement('div');
+        rowG.className = 'row';
+        const gLabel = document.createElement('span');
+        gLabel.className = 'label';
+        gLabel.textContent = 'GREG';
+        const gVal = document.createElement('span');
+        gVal.className = 'val';
+        gVal.textContent = gregStarsFromNumeric(entry.gregRating);
+        rowG.appendChild(gLabel);
+        rowG.appendChild(gVal);
+
+        const rowP = document.createElement('div');
+        rowP.className = 'row';
+        const pLabel = document.createElement('span');
+        pLabel.className = 'label';
+        pLabel.textContent = 'PEER';
+
+        const pVal = document.createElement('span');
+        pVal.className = 'val p-val' + (isPeerAuthenticated ? ' editable' : '');
+        pVal.textContent = peerStars(peerMap[title]);
+        pVal.dataset.title = title;
+
+        rowP.appendChild(pLabel);
+        rowP.appendChild(pVal);
+
+        ratingBox.appendChild(rowG);
+        ratingBox.appendChild(rowP);
+
+        el.appendChild(posterFrame);
+        el.appendChild(h2);
+        el.appendChild(ratingBox);
+
+        elGrid.appendChild(el);
+      });
+    }
+
+    async function loadArchive() {
       setError('');
       clearGridToLoader('Consulting the archives...');
 
       try {
-        // 1) Pull Greg watches (your backfilled + maintained dataset)
-        const { data: watches, error: wErr } = await supabaseClient
-          .from('greg_watches')
-          .select('movie_key,title,poster_url,letterboxd_url,greg_rating')
-          .order('watched_date', { ascending: false })
-          .limit(2000);
+        const [peerMap, gregItems] = await Promise.all([
+          fetchPeerRatings(),
+          fetchGregRssItems()
+        ]);
 
-        if (wErr) { setError('Supabase (greg_watches) Error: ' + wErr.message); return; }
-
-        // 2) Pull Peer ratings
-        const { data: ratings, error: rErr } = await supabaseClient
-          .from('ratings')
-          .select('movie_key,rating');
-
-        if (rErr) { setError('Supabase (ratings) Error: ' + rErr.message); return; }
-
-        const peerMap = Object.create(null);
-        (ratings || []).forEach(r => { if (r?.movie_key) peerMap[r.movie_key] = r.rating; });
-
-        // 3) Render
-        elGrid.innerHTML = '';
-
-        (watches || []).forEach(w => {
-          const entry = document.createElement('div');
-          entry.className = 'entry';
-
-          const posterFrame = document.createElement('div');
-          posterFrame.className = 'poster-frame';
-
-          const img = document.createElement('img');
-          img.alt = w.title || '';
-          if (w.poster_url) img.src = w.poster_url;
-          posterFrame.appendChild(img);
-
-          const h2 = document.createElement('h2');
-          h2.className = 'entry-title';
-          h2.textContent = w.title || 'Untitled';
-
-          const ratingBox = document.createElement('div');
-          ratingBox.className = 'rating-box';
-
-          const rowG = document.createElement('div');
-          rowG.className = 'row';
-          rowG.innerHTML = '';
-          const gLabel = document.createElement('span');
-          gLabel.className = 'label';
-          gLabel.textContent = 'GREG';
-          const gVal = document.createElement('span');
-          gVal.className = 'val';
-          gVal.textContent = starsFromRating(w.greg_rating);
-          rowG.appendChild(gLabel);
-          rowG.appendChild(gVal);
-
-          const rowP = document.createElement('div');
-          rowP.className = 'row';
-          const pLabel = document.createElement('span');
-          pLabel.className = 'label';
-          pLabel.textContent = 'PEER';
-
-          const pVal = document.createElement('span');
-          pVal.className = 'val p-val' + (isPeerAuthenticated ? ' editable' : '');
-          pVal.textContent = peerStars(peerMap[w.movie_key]);
-          pVal.dataset.movieKey = w.movie_key;
-          pVal.dataset.title = w.title || '';
-
-          rowP.appendChild(pLabel);
-          rowP.appendChild(pVal);
-
-          ratingBox.appendChild(rowG);
-          ratingBox.appendChild(rowP);
-
-          entry.appendChild(posterFrame);
-          entry.appendChild(h2);
-          entry.appendChild(ratingBox);
-
-          elGrid.appendChild(entry);
-        });
-
+        renderLedger(gregItems, peerMap);
       } catch (e) {
-        setError('Script Error: ' + (e?.message || String(e)));
+        setError(e && e.message ? e.message : String(e));
       }
     }
 
-    async function submitRating(movieKey, title) {
+    async function submitRating(movieTitle) {
       if (!isPeerAuthenticated) return;
 
-      const score = prompt(`Rate "${title}" (1-5):`);
+      const score = prompt(`Rate "${movieTitle}" (1-5):`);
       if (score === null) return;
       if (score.trim() === '') return;
 
@@ -206,12 +264,17 @@
         return;
       }
 
+      // NOTE: this expects movie_title to be UNIQUE (or primary key) in Supabase
       const { error } = await supabaseClient
         .from('ratings')
-        .upsert({ movie_key: movieKey, rating: num }, { onConflict: 'movie_key' });
+        .upsert({ movie_title: movieTitle, rating: num }, { onConflict: 'movie_title' });
 
-      if (error) { alert('Database Save Error: ' + error.message); return; }
-      await loadLedger();
+      if (error) {
+        alert('Database Save Error: ' + error.message);
+        return;
+      }
+
+      await loadArchive();
     }
 
     function togglePeerAccess() {
@@ -222,7 +285,7 @@
         isPeerAuthenticated = true;
         sessionStorage.setItem('peer_authed', '1');
         setAuthUI();
-        loadLedger();
+        loadArchive();
       } else {
         alert('Access Denied.');
       }
@@ -237,14 +300,13 @@
       if (!t.classList.contains('p-val')) return;
       if (!isPeerAuthenticated) return;
 
-      const movieKey = t.dataset.movieKey;
-      const title = t.dataset.title || '';
-      if (movieKey) submitRating(movieKey, title);
+      const title = t.dataset.title;
+      if (title) submitRating(title);
     });
 
     // Init
     setAuthUI();
-    loadLedger();
+    loadArchive();
   </script>
 </body>
 </html>
