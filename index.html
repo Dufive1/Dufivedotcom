@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>DUFIVE | Movie Reviews</title>
+  <title>DUFIVE | The Ledger - G & P</title>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:ital,wght@0,600;0,700;1,600&display=swap" rel="stylesheet">
@@ -646,7 +646,7 @@
   <div id="login-modal" class="modal-overlay">
     <div class="login-modal">
       <h2 class="modal-title">Reviewer Login</h2>
-      <p class="modal-subtitle">Choose your profile and enter the access key to participate in ratings and discussions.</p>
+      <p class="modal-subtitle">Choose your profile and enter your access key to participate in ratings and discussions.</p>
       
       <div class="reviewer-select">
         <label class="reviewer-label">Select Reviewer</label>
@@ -658,7 +658,7 @@
       
       <div class="password-field">
         <label class="password-label">Access Key</label>
-        <input type="password" id="password-input" class="password-input" placeholder="Enter access key" />
+        <input type="password" id="password-input" class="password-input" placeholder="Enter your access key" autocomplete="off" />
         <div id="login-error" class="error-message">Incorrect access key. Please try again.</div>
       </div>
       
@@ -673,8 +673,9 @@
     const SB_URL = 'https://brgxorrpfberfcyeugzq.supabase.co';
     const SB_KEY = 'sb_publishable_VbVFBh-gtIBAbr9Qtp240w_GS8Kn4Jf';
     const EDGE_FUNCTION_URL = 'https://brgxorrpfberfcyeugzq.supabase.co/functions/v1/fetch-letterboxd-rss';
+    const AUTH_FUNCTION_URL = 'https://brgxorrpfberfcyeugzq.supabase.co/functions/v1/reviewer-auth';
+    const ACTIONS_FUNCTION_URL = 'https://brgxorrpfberfcyeugzq.supabase.co/functions/v1/reviewer-actions';
     
-    const PASSWORDS = { greg: 'cinema2026', peer: 'cinema2026' };
     const REACTIONS = { fire: '🔥', agree: '🤝', disagree: '🤔' };
 
     const supabaseClient = window.supabase.createClient(SB_URL, SB_KEY);
@@ -683,7 +684,8 @@
     const elLogoutBtn = document.getElementById('logout-btn');
     const elError = document.getElementById('error-log');
 
-    let currentUser = sessionStorage.getItem('current_user');
+    let currentUser = localStorage.getItem('reviewer');
+    let sessionToken = localStorage.getItem('session_token');
     let selectedReviewer = null;
 
     function setError(msg) { elError.textContent = msg || ''; }
@@ -798,30 +800,32 @@
         const ratingsContainer = document.createElement('div');
         ratingsContainer.className = 'ratings-container';
 
-        // Greg rating row
+        // Greg rating row + Peer's reaction to Greg
         const gregRow = document.createElement('div');
         gregRow.className = 'rating-row';
         gregRow.innerHTML = `
           <span class="rating-label">Greg</span>
           <span class="rating-value">${starsFromNumeric(entry.gregRating)}</span>
         `;
-const peerReactionToGreg = reactions[movieKey]?.peer;
-if (peerReactionToGreg && REACTIONS[peerReactionToGreg]) {
-  const reactionSpan = document.createElement('span');
-  reactionSpan.className = 'reaction' + (currentUser === 'peer' ? ' clickable' : '');
-  reactionSpan.innerHTML = REACTIONS[peerReactionToGreg] + '<sup style="font-size:0.6em;opacity:0.7;margin-left:1px">P</sup>';
-  reactionSpan.title = 'Peer\'s reaction';
-  if (currentUser === 'peer') {
-    reactionSpan.onclick = (e) => {
-      e.stopPropagation();
-      showReactionPicker(movieKey, 'peer', reactionSpan);
-    };
-  }
-  gregRow.querySelector('.rating-value').appendChild(reactionSpan);
-}
+        
+        const peerReactionToGreg = reactions[movieKey]?.peer;
+        if (peerReactionToGreg && REACTIONS[peerReactionToGreg]) {
+          const reactionSpan = document.createElement('span');
+          reactionSpan.className = 'reaction' + (currentUser === 'peer' ? ' clickable' : '');
+          reactionSpan.innerHTML = REACTIONS[peerReactionToGreg] + '<sup style="font-size:0.6em;opacity:0.7;margin-left:1px">P</sup>';
+          reactionSpan.title = "Peer's reaction";
+          reactionSpan.dataset.hasReaction = 'true';
+          if (currentUser === 'peer') {
+            reactionSpan.onclick = (e) => {
+              e.stopPropagation();
+              showReactionPicker(movieKey, 'peer', reactionSpan);
+            };
+          }
+          gregRow.querySelector('.rating-value').appendChild(reactionSpan);
+        }
         ratingsContainer.appendChild(gregRow);
 
-        // Peer rating row
+        // Peer rating row + Greg's reaction to Peer
         const peerRow = document.createElement('div');
         peerRow.className = 'rating-row';
         const peerRating = document.createElement('span');
@@ -832,20 +836,23 @@ if (peerReactionToGreg && REACTIONS[peerReactionToGreg]) {
         if (currentUser === 'peer') {
           peerRating.onclick = () => submitRating(movieKey, title);
         }
+        
         const gregReactionToPeer = reactions[movieKey]?.greg;
-if (gregReactionToPeer && REACTIONS[gregReactionToPeer]) {
-  const reactionSpan = document.createElement('span');
-  reactionSpan.className = 'reaction' + (currentUser === 'greg' ? ' clickable' : '');
-  reactionSpan.innerHTML = REACTIONS[gregReactionToPeer] + '<sup style="font-size:0.6em;opacity:0.7;margin-left:1px">G</sup>';
-  reactionSpan.title = 'Greg\'s reaction';
-  if (currentUser === 'greg') {
-    reactionSpan.onclick = (e) => {
-      e.stopPropagation();
-      showReactionPicker(movieKey, 'greg', reactionSpan);
-    };
-  }
-  peerRating.appendChild(reactionSpan);
-}
+        if (gregReactionToPeer && REACTIONS[gregReactionToPeer]) {
+          const reactionSpan = document.createElement('span');
+          reactionSpan.className = 'reaction' + (currentUser === 'greg' ? ' clickable' : '');
+          reactionSpan.innerHTML = REACTIONS[gregReactionToPeer] + '<sup style="font-size:0.6em;opacity:0.7;margin-left:1px">G</sup>';
+          reactionSpan.title = "Greg's reaction";
+          reactionSpan.dataset.hasReaction = 'true';
+          if (currentUser === 'greg') {
+            reactionSpan.onclick = (e) => {
+              e.stopPropagation();
+              showReactionPicker(movieKey, 'greg', reactionSpan);
+            };
+          }
+          peerRating.appendChild(reactionSpan);
+        }
+        
         peerRow.innerHTML = '<span class="rating-label">Peer</span>';
         peerRow.appendChild(peerRating);
         ratingsContainer.appendChild(peerRow);
@@ -854,7 +861,7 @@ if (gregReactionToPeer && REACTIONS[gregReactionToPeer]) {
         content.appendChild(ratingsContainer);
 
         // React triggers
-        if (currentUser === 'peer' && !peerReactionToGreg)  {
+        if (currentUser === 'peer' && !peerReactionToGreg) {
           const reactBtn = document.createElement('div');
           reactBtn.className = 'react-trigger';
           reactBtn.textContent = 'React to Greg rating';
@@ -875,103 +882,110 @@ if (gregReactionToPeer && REACTIONS[gregReactionToPeer]) {
           content.appendChild(reactBtn);
         }
 
-        // Discussion trigger
-        const trigger = document.createElement('div');
-        trigger.className = 'discussion-trigger' + (notes.length > 0 ? ' has-notes' : '');
-        const countSpan = document.createElement('span');
-        countSpan.className = 'discussion-count';
-        countSpan.textContent = notes.length > 0 
-          ? `Discussion (${notes.length})`
-          : (currentUser ? 'Add note' : 'Discussion');
-        const chevron = document.createElement('span');
-        chevron.className = 'chevron';
-        chevron.textContent = '▼';
-        trigger.appendChild(countSpan);
-        trigger.appendChild(chevron);
+        // Discussion trigger (only show if logged in OR has existing notes)
+        if (currentUser || notes.length > 0) {
+          const trigger = document.createElement('div');
+          trigger.className = 'discussion-trigger' + (notes.length > 0 ? ' has-notes' : '');
+          const countSpan = document.createElement('span');
+          countSpan.className = 'discussion-count';
+          countSpan.textContent = notes.length > 0 
+            ? `Discussion (${notes.length})`
+            : 'Add note';
+          const chevron = document.createElement('span');
+          chevron.className = 'chevron';
+          chevron.textContent = '▼';
+          trigger.appendChild(countSpan);
+          trigger.appendChild(chevron);
 
-        // Discussion section
-        const discussionSection = document.createElement('div');
-        discussionSection.className = 'discussion-section';
+          // Discussion section
+          const discussionSection = document.createElement('div');
+          discussionSection.className = 'discussion-section';
 
-        const discussionTitle = document.createElement('div');
-        discussionTitle.className = 'discussion-title';
-        discussionTitle.textContent = 'Discussion';
-        discussionSection.appendChild(discussionTitle);
+          if (notes.length > 0) {
+            const discussionTitle = document.createElement('div');
+            discussionTitle.className = 'discussion-title';
+            discussionTitle.textContent = 'Discussion';
+            discussionSection.appendChild(discussionTitle);
 
-        notes.forEach(note => {
-          const noteEl = document.createElement('div');
-          noteEl.className = 'note';
+            notes.forEach(note => {
+              const noteEl = document.createElement('div');
+              noteEl.className = 'note';
 
-          const noteHeader = document.createElement('div');
-          noteHeader.className = 'note-header';
+              const noteHeader = document.createElement('div');
+              noteHeader.className = 'note-header';
 
-          const noteAuthor = document.createElement('div');
-          noteAuthor.className = `note-author ${note.author}`;
-          noteAuthor.textContent = note.author.toUpperCase();
+              const noteAuthor = document.createElement('div');
+              noteAuthor.className = `note-author ${note.author}`;
+              noteAuthor.textContent = note.author.toUpperCase();
 
-          const noteMeta = document.createElement('div');
-          noteMeta.className = 'note-meta';
+              const noteMeta = document.createElement('div');
+              noteMeta.className = 'note-meta';
 
-          const noteTime = document.createElement('span');
-          noteTime.className = 'note-time';
-          noteTime.textContent = timeAgo(note.created_at);
-          noteMeta.appendChild(noteTime);
+              const noteTime = document.createElement('span');
+              noteTime.className = 'note-time';
+              noteTime.textContent = timeAgo(note.created_at);
+              noteMeta.appendChild(noteTime);
 
-          if (currentUser && note.author === currentUser) {
-            const delBtn = document.createElement('span');
-            delBtn.className = 'note-delete';
-            delBtn.textContent = '✕';
-            delBtn.onclick = (e) => {
-              e.stopPropagation();
-              deleteNote(note.id);
-            };
-            noteMeta.appendChild(delBtn);
+              if (currentUser && note.author === currentUser) {
+                const delBtn = document.createElement('span');
+                delBtn.className = 'note-delete';
+                delBtn.textContent = '✕';
+                delBtn.onclick = (e) => {
+                  e.stopPropagation();
+                  deleteNote(note.id);
+                };
+                noteMeta.appendChild(delBtn);
+              }
+
+              noteHeader.appendChild(noteAuthor);
+              noteHeader.appendChild(noteMeta);
+
+              const noteText = document.createElement('div');
+              noteText.className = 'note-text';
+              noteText.textContent = note.argument;
+
+              noteEl.appendChild(noteHeader);
+              noteEl.appendChild(noteText);
+              discussionSection.appendChild(noteEl);
+            });
           }
 
-          noteHeader.appendChild(noteAuthor);
-          noteHeader.appendChild(noteMeta);
+          if (currentUser) {
+            const form = document.createElement('div');
+            form.className = 'note-form';
 
-          const noteText = document.createElement('div');
-          noteText.className = 'note-text';
-          noteText.textContent = note.argument;
+            const input = document.createElement('textarea');
+            input.className = 'note-input';
+            input.placeholder = `Share your thoughts as ${currentUser.toUpperCase()}...`;
+            input.maxLength = 200;
 
-          noteEl.appendChild(noteHeader);
-          noteEl.appendChild(noteText);
-          discussionSection.appendChild(noteEl);
-        });
+            const submit = document.createElement('button');
+            submit.className = 'note-submit';
+            submit.textContent = 'Post Note';
+            submit.onclick = (e) => {
+              e.stopPropagation();
+              if (input.value.trim()) submitNote(movieKey, input.value.trim());
+            };
 
-        if (currentUser) {
-          const form = document.createElement('div');
-          form.className = 'note-form';
+            form.appendChild(input);
+            form.appendChild(submit);
+            discussionSection.appendChild(form);
+          }
 
-          const input = document.createElement('textarea');
-          input.className = 'note-input';
-          input.placeholder = `Share your thoughts as ${currentUser.toUpperCase()}...`;
-          input.maxLength = 200;
-
-          const submit = document.createElement('button');
-          submit.className = 'note-submit';
-          submit.textContent = 'Post Note';
-          submit.onclick = (e) => {
+          trigger.onclick = (e) => {
             e.stopPropagation();
-            if (input.value.trim()) submitNote(movieKey, input.value.trim());
+            const isExpanded = discussionSection.classList.toggle('expanded');
+            chevron.classList.toggle('rotated', isExpanded);
           };
 
-          form.appendChild(input);
-          form.appendChild(submit);
-          discussionSection.appendChild(form);
+          content.appendChild(trigger);
+          card.appendChild(content);
+          card.appendChild(discussionSection);
+        } else {
+          card.appendChild(content);
         }
 
-        trigger.onclick = (e) => {
-          e.stopPropagation();
-          const isExpanded = discussionSection.classList.toggle('expanded');
-          chevron.classList.toggle('rotated', isExpanded);
-        };
-
-        content.appendChild(trigger);
         card.appendChild(posterFrame);
-        card.appendChild(content);
-        card.appendChild(discussionSection);
         elGrid.appendChild(card);
       });
     }
@@ -982,24 +996,26 @@ if (gregReactionToPeer && REACTIONS[gregReactionToPeer]) {
       const picker = document.createElement('div');
       picker.className = 'reaction-picker';
 
-const triggerText = triggerElement?.textContent || '';
-const hasExistingReaction = Object.values(REACTIONS).some(emoji => triggerText.startsWith(emoji));
-
-if (hasExistingReaction) {
-  const removeOpt = document.createElement('span');
-  removeOpt.className = 'reaction-option';
-  removeOpt.textContent = '✕';
-  removeOpt.onclick = (e) => {
-    e.stopPropagation();
-    deleteReaction(movieKey, reactor);
-  };
-  picker.appendChild(removeOpt);
-}
+      // Check if trigger element has existing reaction
+      const hasExisting = triggerElement?.dataset?.hasReaction === 'true';
+      
+      if (hasExisting) {
+        const removeOpt = document.createElement('span');
+        removeOpt.className = 'reaction-option';
+        removeOpt.textContent = '✕';
+        removeOpt.title = 'Remove reaction';
+        removeOpt.onclick = (e) => {
+          e.stopPropagation();
+          deleteReaction(movieKey, reactor);
+        };
+        picker.appendChild(removeOpt);
+      }
 
       Object.entries(REACTIONS).forEach(([key, emoji]) => {
         const opt = document.createElement('span');
         opt.className = 'reaction-option';
         opt.textContent = emoji;
+        opt.title = key;
         opt.onclick = (e) => {
           e.stopPropagation();
           saveReaction(movieKey, reactor, key);
@@ -1019,43 +1035,81 @@ if (hasExistingReaction) {
       }, 0);
     }
 
+    async function authenticatedRequest(action, movieKey, data) {
+      if (!sessionToken) {
+        alert('Session expired. Please login again.');
+        logout();
+        return null;
+      }
+
+      const res = await fetch(ACTIONS_FUNCTION_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${sessionToken}`
+        },
+        body: JSON.stringify({ action, movieKey, data })
+      });
+
+      if (res.status === 401) {
+        alert('Session expired. Please login again.');
+        logout();
+        return null;
+      }
+
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.error || 'Request failed');
+      }
+
+      return await res.json();
+    }
+
     async function saveReaction(movieKey, reactor, reaction) {
-      const { error } = await supabaseClient
-        .from('rating_reactions')
-        .upsert({ movie_key: movieKey, reactor, reaction }, { onConflict: 'movie_key,reactor' });
-      if (error) return alert('Error: ' + error.message);
-      await loadArchive();
+      console.log('Saving reaction:', { movieKey, reactor, reaction });
+      try {
+        await authenticatedRequest('save_reaction', movieKey, { reaction });
+        await loadArchive(true);
+      } catch (e) {
+        alert('Error: ' + e.message);
+      }
     }
 
     async function deleteReaction(movieKey, reactor) {
-      const { error } = await supabaseClient
-        .from('rating_reactions')
-        .delete()
-        .eq('movie_key', movieKey)
-        .eq('reactor', reactor);
-      if (error) return alert('Error: ' + error.message);
-      await loadArchive();
+      try {
+        await authenticatedRequest('delete_reaction', movieKey, {});
+        await loadArchive(true);
+      } catch (e) {
+        alert('Error: ' + e.message);
+      }
     }
 
     async function submitNote(movieKey, text) {
       if (!text.trim()) return alert('Please enter a note.');
-      const { error } = await supabaseClient
-        .from('film_arguments')
-        .insert({ movie_key: movieKey, author: currentUser, argument: text.trim() });
-      if (error) return alert('Error: ' + error.message);
-      await loadArchive();
+      try {
+        await authenticatedRequest('post_note', movieKey, { text });
+        await loadArchive(true);
+      } catch (e) {
+        alert('Error: ' + e.message);
+      }
     }
 
     async function deleteNote(noteId) {
       if (!confirm('Delete this note?')) return;
-      const { error } = await supabaseClient.from('film_arguments').delete().eq('id', noteId);
-      if (error) return alert('Error: ' + error.message);
-      await loadArchive();
+      try {
+        await authenticatedRequest('delete_note', '', { noteId });
+        await loadArchive(true);
+      } catch (e) {
+        alert('Error: ' + e.message);
+      }
     }
 
-    async function loadArchive() {
+    async function loadArchive(preserveScroll = false) {
       setError('');
+      const scrollY = preserveScroll ? window.scrollY : 0;
+      
       clearGridToLoader('Consulting the archives...');
+      
       try {
         const [peerMap, gregItems, reactions, notesMap] = await Promise.all([
           fetchPeerRatings(),
@@ -1063,7 +1117,12 @@ if (hasExistingReaction) {
           fetchReactions(),
           fetchNotes()
         ]);
+
         renderLedger(gregItems, peerMap, reactions, notesMap);
+        
+        if (preserveScroll) {
+          setTimeout(() => window.scrollTo(0, scrollY), 50);
+        }
       } catch (e) {
         setError(e?.message || String(e));
         console.error('Error:', e);
@@ -1075,18 +1134,16 @@ if (hasExistingReaction) {
       const score = prompt(`Rate "${movieTitle}"\n\n0 = Remove\n0.5 to 5 (half-stars allowed):`);
       if (score === null || score.trim() === '') return;
       const num = parseFloat(score);
-      if (num === 0) {
-        const { error } = await supabaseClient.from('ratings').delete().eq('movie_key', movieKey);
-        if (error) return alert('Error: ' + error.message);
-        return await loadArchive();
+      
+      if (!Number.isFinite(num) || num < 0 || num > 5) return alert('Enter 0 to 5');
+      if (num > 0 && (num * 2) % 1 !== 0) return alert('Use half-star increments (e.g. 3.5)');
+      
+      try {
+        await authenticatedRequest('rate', movieKey, { rating: num, movieTitle });
+        await loadArchive(true);
+      } catch (e) {
+        alert('Error: ' + e.message);
       }
-      if (!Number.isFinite(num) || num < 0.5 || num > 5) return alert('Enter 0.5 to 5');
-      if ((num * 2) % 1 !== 0) return alert('Use half-star increments (e.g. 3.5)');
-      const { error } = await supabaseClient
-        .from('ratings')
-        .upsert({ movie_key: movieKey, movie_title: movieTitle, rating: num }, { onConflict: 'movie_key' });
-      if (error) return alert('Error: ' + error.message);
-      await loadArchive();
     }
 
     // Login Modal Functions
@@ -1104,10 +1161,6 @@ if (hasExistingReaction) {
       document.getElementById('login-submit').disabled = true;
       
       modal.classList.add('visible');
-      
-      setTimeout(() => {
-        if (selectedReviewer) passwordInput.focus();
-      }, 100);
     }
 
     function closeLoginModal() {
@@ -1129,38 +1182,70 @@ if (hasExistingReaction) {
       document.getElementById('password-input').focus();
     }
 
-    function attemptLogin() {
+    async function attemptLogin() {
       const password = document.getElementById('password-input').value;
       const errorMsg = document.getElementById('login-error');
+      const submitBtn = document.getElementById('login-submit');
       
-      if (!selectedReviewer) {
-        alert('Please select a reviewer (Greg or Peer)');
-        return;
-      }
+      if (!selectedReviewer) return alert('Please select a reviewer');
+      if (!password) return alert('Please enter an access key');
       
-      if (!password) {
-        alert('Please enter an access key');
-        return;
-      }
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Logging in...';
       
-      if (password === PASSWORDS[selectedReviewer]) {
-        currentUser = selectedReviewer;
-        sessionStorage.setItem('current_user', selectedReviewer);
+      try {
+        const res = await fetch(`${AUTH_FUNCTION_URL}?action=login`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ reviewer: selectedReviewer, password })
+        });
+
+        const data = await res.json();
+
+        if (!res.ok || data.error) {
+          errorMsg.classList.add('visible');
+          document.getElementById('password-input').value = '';
+          document.getElementById('password-input').focus();
+          submitBtn.disabled = false;
+          submitBtn.textContent = 'Login';
+          return;
+        }
+
+        // Store session
+        currentUser = data.reviewer;
+        sessionToken = data.token;
+        localStorage.setItem('reviewer', data.reviewer);
+        localStorage.setItem('session_token', data.token);
+        
         closeLoginModal();
         setAuthUI();
-        loadArchive();
-      } else {
-        errorMsg.classList.add('visible');
-        document.getElementById('password-input').value = '';
-        document.getElementById('password-input').focus();
+        await loadArchive();
+        
+      } catch (e) {
+        alert('Login failed: ' + e.message);
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Login';
       }
     }
 
-    function logout() {
+    async function logout() {
       if (!confirm('Log out?')) return;
       
+      try {
+        if (sessionToken) {
+          await fetch(`${AUTH_FUNCTION_URL}?action=logout`, {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${sessionToken}` }
+          });
+        }
+      } catch (e) {
+        console.error('Logout error:', e);
+      }
+      
       currentUser = null;
-      sessionStorage.removeItem('current_user');
+      sessionToken = null;
+      localStorage.removeItem('reviewer');
+      localStorage.removeItem('session_token');
       setAuthUI();
       loadArchive();
     }
