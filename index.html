@@ -1060,6 +1060,40 @@
     .no-results-text { font-size: 1.125rem; font-weight: 600; margin-bottom: 8px; }
     .no-results-hint { font-size: 0.9375rem; color: var(--text-muted); }
 
+    /* ───── Load More ───── */
+    .load-more-wrapper {
+      grid-column: 1 / -1;
+      text-align: center;
+      padding: 32px 20px;
+    }
+    .load-more-btn {
+      background: var(--card-bg);
+      color: var(--text);
+      border: 1px solid var(--border);
+      padding: 14px 40px;
+      border-radius: var(--radius);
+      font-family: 'Inter', sans-serif;
+      font-size: 0.9375rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: var(--transition);
+      box-shadow: var(--shadow);
+    }
+    .load-more-btn:hover {
+      background: var(--accent);
+      color: white;
+      border-color: var(--accent);
+      box-shadow: var(--shadow-lg);
+      transform: translateY(-1px);
+    }
+    .load-more-btn:active { transform: translateY(0); }
+    .load-more-count {
+      font-size: 0.8125rem;
+      color: var(--text-muted);
+      margin-top: 10px;
+      font-weight: 500;
+    }
+
     /* ───── Error Log ───── */
     #error-log {
       position: fixed; bottom: 16px; left: 16px; font-size: 0.75rem; color: #dc2626;
@@ -1251,11 +1285,11 @@
     ═══════════════════════════════════════════ */
     const SB_URL = 'https://brgxorrpfberfcyeugzq.supabase.co';
     const SB_KEY = 'sb_publishable_VbVFBh-gtIBAbr9Qtp240w_GS8Kn4Jf';
-    const EDGE_FUNCTION_URL = 'https://brgxorrpfberfcyeugzq.supabase.co/functions/v1/fetch-letterboxd-rss';
     const AUTH_FUNCTION_URL = 'https://brgxorrpfberfcyeugzq.supabase.co/functions/v1/clever-task';
     const ACTIONS_FUNCTION_URL = 'https://brgxorrpfberfcyeugzq.supabase.co/functions/v1/bright-function';
 
     const REACTIONS = { fire: '\u{1F525}', agree: '\u{1F91D}', disagree: '\u{1F914}' };
+    const PAGE_SIZE = 24; // Films shown per "page"
 
     const supabaseClient = window.supabase.createClient(SB_URL, SB_KEY);
     const elGrid = document.getElementById('ledger-grid');
@@ -1274,6 +1308,7 @@
     let cachedReactions = {};
     let cachedNotesMap = {};
     let activeFilter = 'all';
+    let visibleCount = PAGE_SIZE; // How many films currently shown
 
     /* ═══════════════════════════════════════════
        TOAST NOTIFICATIONS
@@ -1447,7 +1482,7 @@
       let agreeCount = 0, bothRated = 0, maxGap = 0, controversialTitle = '\u2014';
 
       gregItems.forEach(entry => {
-        const movieKey = entry.link ? entry.link.split('/film/')[1]?.replace('/', '') : entry.title;
+        const movieKey = getMovieKey(entry);
         const gregR = Number(entry.gregRating);
         const peerR = Number(peerMap[movieKey]);
 
@@ -1493,12 +1528,21 @@
       return map;
     }
 
-    async function fetchGregRssItems() {
-      const res = await fetch(EDGE_FUNCTION_URL);
-      if (!res.ok) throw new Error(`Edge Function Error: ${res.status}`);
-      const data = await res.json();
-      if (data.error) throw new Error(data.error);
-      return data.films;
+    async function fetchGregFilms() {
+      const { data, error } = await supabaseClient
+        .from('greg_films')
+        .select('movie_key, title, poster_url, greg_rating, letterboxd_url, updated_at')
+        .order('updated_at', { ascending: false });
+      if (error) throw new Error('Greg Films Error: ' + error.message);
+      // Normalise into the shape the rest of the code expects
+      return (data || []).map(f => ({
+        title: f.title,
+        movieKey: f.movie_key,
+        posterUrl: f.poster_url,
+        gregRating: f.greg_rating,
+        link: f.letterboxd_url || '',
+        pubDate: f.updated_at
+      }));
     }
 
     async function fetchReactions() {
@@ -1529,7 +1573,7 @@
        SEARCH / SORT / FILTER
     ═══════════════════════════════════════════ */
     function getMovieKey(entry) {
-      return entry.link ? entry.link.split('/film/')[1]?.replace('/', '') : entry.title;
+      return entry.movieKey || (entry.link ? entry.link.split('/film/')[1]?.replace('/', '') : entry.title);
     }
 
     function getFilteredAndSorted() {
@@ -1583,20 +1627,21 @@
       return items;
     }
 
-    function rerender() {
+    function rerender(resetPage = true) {
+      if (resetPage) visibleCount = PAGE_SIZE;
       const items = getFilteredAndSorted();
       renderLedger(items, cachedPeerMap, cachedReactions, cachedNotesMap);
     }
 
-    elSearch.addEventListener('input', rerender);
-    elSort.addEventListener('change', rerender);
+    elSearch.addEventListener('input', () => rerender(true));
+    elSort.addEventListener('change', () => rerender(true));
 
     document.querySelectorAll('.filter-chip').forEach(chip => {
       chip.addEventListener('click', () => {
         document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
         chip.classList.add('active');
         activeFilter = chip.dataset.filter;
-        rerender();
+        rerender(true);
       });
     });
 
@@ -1616,7 +1661,10 @@
         return;
       }
 
-      gregItems.forEach((entry, index) => {
+      const totalFiltered = gregItems.length;
+      const pageItems = gregItems.slice(0, visibleCount);
+
+      pageItems.forEach((entry, index) => {
         const title = entry.title;
         const movieKey = getMovieKey(entry);
         const notes = notesMap[movieKey] || [];
@@ -1893,6 +1941,38 @@
 
         elGrid.appendChild(card);
       });
+
+      // Load More button
+      if (visibleCount < totalFiltered) {
+        const remaining = totalFiltered - visibleCount;
+        const wrapper = document.createElement('div');
+        wrapper.className = 'load-more-wrapper';
+
+        const btn = document.createElement('button');
+        btn.className = 'load-more-btn';
+        btn.textContent = `Load More Films`;
+        btn.onclick = () => {
+          visibleCount += PAGE_SIZE;
+          rerender(false);
+        };
+
+        const count = document.createElement('div');
+        count.className = 'load-more-count';
+        count.textContent = `Showing ${pageItems.length} of ${totalFiltered} films \u2022 ${remaining} more`;
+
+        wrapper.appendChild(btn);
+        wrapper.appendChild(count);
+        elGrid.appendChild(wrapper);
+      } else if (totalFiltered > PAGE_SIZE) {
+        // Show "all loaded" indicator
+        const count = document.createElement('div');
+        count.className = 'load-more-wrapper';
+        const countText = document.createElement('div');
+        countText.className = 'load-more-count';
+        countText.textContent = `All ${totalFiltered} films loaded`;
+        count.appendChild(countText);
+        elGrid.appendChild(count);
+      }
     }
 
     /* ═══════════════════════════════════════════
@@ -2092,7 +2172,7 @@
       try {
         const [peerMap, gregItems, reactions, notesMap] = await Promise.all([
           fetchPeerRatings(),
-          fetchGregRssItems(),
+          fetchGregFilms(),
           fetchReactions(),
           fetchNotes()
         ]);
