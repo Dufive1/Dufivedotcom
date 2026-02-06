@@ -673,7 +673,7 @@
     const SB_URL = 'https://brgxorrpfberfcyeugzq.supabase.co';
     const SB_KEY = 'sb_publishable_VbVFBh-gtIBAbr9Qtp240w_GS8Kn4Jf';
     const EDGE_FUNCTION_URL = 'https://brgxorrpfberfcyeugzq.supabase.co/functions/v1/fetch-letterboxd-rss';
-    const AUTH_FUNCTION_URL = 'https://brgxorrpfberfcyeugzq.supabase.co/functions/v1/reviewer-auth';
+    const AUTH_FUNCTION_URL = 'https://brgxorrpfberfcyeugzq.supabase.co/functions/v1/clever-task';
     const ACTIONS_FUNCTION_URL = 'https://brgxorrpfberfcyeugzq.supabase.co/functions/v1/reviewer-actions';
     
     const REACTIONS = { fire: '🔥', agree: '🤝', disagree: '🤔' };
@@ -978,18 +978,18 @@
             chevron.classList.toggle('rotated', isExpanded);
           };
 
-          content.appendChild(trigger);
-          card.appendChild(content);
-          card.appendChild(discussionSection);
+         content.appendChild(trigger);
+          card.appendChild(posterFrame);        // Poster first
+          card.appendChild(content);            // Content second
+          card.appendChild(discussionSection);  // Discussion last
         } else {
-          card.appendChild(content);
+          card.appendChild(posterFrame);        // Poster first
+          card.appendChild(content);            // Content second
         }
 
-        card.appendChild(posterFrame);
         elGrid.appendChild(card);
       });
     }
-
     function showReactionPicker(movieKey, reactor, triggerElement) {
       document.querySelectorAll('.reaction-picker').forEach(p => p.remove());
 
