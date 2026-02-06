@@ -856,7 +856,7 @@
         if (currentUser === 'peer' && !peerReaction) {
           const reactBtn = document.createElement('div');
           reactBtn.className = 'react-trigger';
-          reactBtn.textContent = 'React to Greg's rating';
+          reactBtn.textContent = 'React to Greg rating';
           reactBtn.onclick = (e) => {
             e.stopPropagation();
             showReactionPicker(movieKey, 'peer', reactBtn);
@@ -866,7 +866,7 @@
         if (currentUser === 'greg' && !gregReaction) {
           const reactBtn = document.createElement('div');
           reactBtn.className = 'react-trigger';
-          reactBtn.textContent = 'React to Peer's rating';
+          reactBtn.textContent = 'React to Peer rating';
           reactBtn.onclick = (e) => {
             e.stopPropagation();
             showReactionPicker(movieKey, 'greg', reactBtn);
