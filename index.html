@@ -72,8 +72,8 @@
     // === Config ===
     const SB_URL = 'https://brgxorrpfberfcyeugzq.supabase.co';
     const SB_KEY = 'sb_publishable_VbVFBh-gtIBAbr9Qtp240w_GS8Kn4Jf';
+    const EDGE_FUNCTION_URL = 'https://brgxorrpfberfcyeugzq.supabase.co/functions/v1/fetch-letterboxd-rss';
 
-    const GREG_RSS = 'https://letterboxd.com/gdufore/rss/';
     const PEER_PASS = 'cinema2026';
 
     const supabaseClient = window.supabase.createClient(SB_URL, SB_KEY);
@@ -135,52 +135,26 @@
     }
 
     async function fetchGregRssItems() {
-      // Use corsproxy.io to fetch raw XML (no item limits)
-      const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(GREG_RSS)}`;
-      const res = await fetch(proxyUrl);
-      
-      if (!res.ok) throw new Error('RSS Fetch Error: HTTP ' + res.status);
-
-      const xmlText = await res.text();
-      const parser = new DOMParser();
-      const doc = parser.parseFromString(xmlText, 'text/xml');
-      
-      const items = Array.from(doc.querySelectorAll('item'));
-      
-      console.log(`Found ${items.length} items in RSS feed`);
-      
-      return items.map(item => {
-        const rawTitle = item.querySelector('title')?.textContent || '';
-        const desc = item.querySelector('description')?.textContent || '';
-        
-        // Extract rating from title (Letterboxd format: "Movie, Year - ★★★★½")
-        let gregRating = 0;
-        const titleStarMatch = rawTitle.match(/★+/g);
-        if (titleStarMatch) {
-          gregRating = titleStarMatch[0].length;
-          if (rawTitle.includes('½')) gregRating += 0.5;
+      // Call your Supabase Edge Function (no CORS issues!)
+      const res = await fetch(EDGE_FUNCTION_URL, {
+        headers: {
+          'apikey': SB_KEY,
+          'Authorization': `Bearer ${SB_KEY}`
         }
-
-        // Extract poster URL from description
-        const imgMatch = desc.match(/<img[^>]+src="([^">]+)"/);
-        const posterUrl = imgMatch ? imgMatch[1] : '';
-
-        // Clean title: remove rating suffix and year
-        let cleanTitle = rawTitle
-          .replace(/\s*-\s*★.*$/, '')
-          .replace(/,\s*\d{4}\s*$/, '')
-          .trim();
-
-        if (!cleanTitle) cleanTitle = rawTitle;
-
-        return {
-          title: cleanTitle,
-          watchedDate: item.querySelector('pubDate')?.textContent || '',
-          gregRating: gregRating || null,
-          posterUrl,
-          link: item.querySelector('link')?.textContent || '#'
-        };
       });
+      
+      if (!res.ok) {
+        const errorText = await res.text();
+        throw new Error(`Edge Function Error: HTTP ${res.status} - ${errorText}`);
+      }
+
+      const data = await res.json();
+      
+      if (data.error) throw new Error(`Edge Function Error: ${data.error}`);
+      
+      console.log(`✅ Loaded ${data.count} films from Edge Function`);
+      
+      return data.films;
     }
 
     function renderLedger(gregItems, peerMap) {
@@ -256,6 +230,7 @@
         renderLedger(gregItems, peerMap);
       } catch (e) {
         setError(e && e.message ? e.message : String(e));
+        console.error('Load error:', e);
       }
     }
 
