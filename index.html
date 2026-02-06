@@ -3,91 +3,621 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>DUFIVE | The Ledger - Movie Reviews</title>
+  <title>DUFIVE | Movie Reviews</title>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;500;800&family=Playfair+Display:ital,wght@0,700;1,700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:ital,wght@0,600;0,700;1,600&display=swap" rel="stylesheet">
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <style>
-    :root { --bg: #ffffff; --text: #111111; --muted: #888; --accent: #008CFF; --border: #eee; --red: #ff4444; --greg: #ff6b35; --peer: #008CFF; }
+    :root { 
+      --bg: #fafafa; 
+      --card-bg: #ffffff;
+      --text: #0a0a0a; 
+      --text-secondary: #737373;
+      --text-muted: #a3a3a3;
+      --accent: #2563eb; 
+      --border: #e5e5e5; 
+      --border-light: #f5f5f5;
+      --greg: #ea580c; 
+      --peer: #2563eb;
+      --shadow: 0 1px 3px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.02);
+      --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.06), 0 4px 6px -2px rgba(0,0,0,0.03);
+      --radius: 8px;
+      --transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); -webkit-font-smoothing: antialiased; }
-    .container { max-width: 1400px; margin: 0 auto; padding: 0 40px; }
     
-    nav { display: flex; justify-content: space-between; align-items: center; padding: 40px 0; border-bottom: 1px solid var(--border); margin-bottom: 60px; }
-    .brand { font-weight: 800; font-size: 1.4rem; text-decoration: none; color: var(--text); letter-spacing: -0.04em; }
-    .auth-controls { display: flex; gap: 20px; align-items: center; }
-    .login-trigger { cursor: pointer; font-size: 0.7rem; font-weight: 800; letter-spacing: 0.2em; color: var(--muted); transition: color 0.3s; user-select: none; }
-    .login-trigger:hover { color: var(--accent); }
-    .login-trigger.greg-active { color: var(--greg); }
-    .login-trigger.peer-active { color: var(--peer); }
-    .logout-btn { cursor: pointer; font-size: 0.7rem; font-weight: 800; letter-spacing: 0.2em; color: var(--red); transition: opacity 0.3s; display: none; }
+    body { 
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; 
+      background: var(--bg); 
+      color: var(--text); 
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      line-height: 1.6;
+    }
+    
+    .container { max-width: 1400px; margin: 0 auto; padding: 0 32px; }
+    
+    nav { 
+      display: flex; 
+      justify-content: space-between; 
+      align-items: center; 
+      padding: 32px 0; 
+      border-bottom: 1px solid var(--border); 
+      margin-bottom: 64px; 
+    }
+    
+    .brand { 
+      font-weight: 800; 
+      font-size: 1.5rem; 
+      text-decoration: none; 
+      color: var(--text); 
+      letter-spacing: -0.03em; 
+    }
+    
+    .auth-controls { display: flex; gap: 24px; align-items: center; }
+    
+    .login-trigger { 
+      cursor: pointer; 
+      font-size: 0.8125rem; 
+      font-weight: 600; 
+      letter-spacing: 0.03em;
+      color: var(--text-secondary); 
+      transition: var(--transition); 
+      user-select: none;
+      padding: 8px 16px;
+      border-radius: 6px;
+    }
+    .login-trigger:hover { color: var(--accent); background: var(--border-light); }
+    .login-trigger.greg-active { color: var(--greg); background: rgba(234, 88, 12, 0.08); }
+    .login-trigger.peer-active { color: var(--peer); background: rgba(37, 99, 235, 0.08); }
+    
+    .logout-btn { 
+      cursor: pointer; 
+      font-size: 0.8125rem; 
+      font-weight: 600; 
+      color: var(--text-muted); 
+      transition: var(--transition); 
+      display: none;
+      padding: 8px 16px;
+      border-radius: 6px;
+    }
     .logout-btn.visible { display: block; }
-    .logout-btn:hover { opacity: 0.7; }
+    .logout-btn:hover { color: var(--text); background: var(--border-light); }
 
-    header { margin-bottom: 80px; }
-    .page-title { font-family: 'Playfair Display', serif; font-size: clamp(3rem, 8vw, 6rem); line-height: 1; margin-bottom: 20px; }
-    .tagline { font-size: 1.1rem; color: var(--muted); letter-spacing: 0.05em; font-weight: 300; }
+    header { margin-bottom: 72px; }
+    .page-title { 
+      font-family: 'Playfair Display', serif; 
+      font-size: clamp(2.5rem, 7vw, 5rem); 
+      line-height: 1.1; 
+      margin-bottom: 16px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+    .tagline { 
+      font-size: 1.125rem; 
+      color: var(--text-secondary); 
+      letter-spacing: -0.01em; 
+      font-weight: 400; 
+    }
 
-    .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 60px 40px; }
-    .entry { min-width: 0; transition: transform 0.2s; }
-    .entry:hover { transform: translateY(-2px); }
-    .poster-frame { aspect-ratio: 2/3; background: #f9f9f9; overflow: hidden; margin-bottom: 20px; border: 1px solid var(--border); }
-    .poster-frame img { width: 100%; height: 100%; object-fit: cover; display: block; }
-    .entry-title { font-weight: 800; font-size: 1.1rem; margin-bottom: 15px; min-height: 2.4em; line-height: 1.2; }
-    .rating-box { border-top: 1px solid var(--border); padding-top: 12px; }
-    .row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
-    .label { font-size: 0.65rem; font-weight: 800; color: var(--muted); letter-spacing: 0.05em; }
-    .val { font-size: 0.9rem; font-weight: 700; display: flex; align-items: center; gap: 6px; }
-    .p-val.editable { color: var(--peer); cursor: pointer; text-decoration: underline; }
+    .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 32px; }
     
-    .reaction { font-size: 0.9rem; opacity: 0.8; }
-    .reaction.clickable { cursor: pointer; transition: opacity 0.2s, transform 0.2s; }
-    .reaction.clickable:hover { opacity: 1; transform: scale(1.1); }
+    .entry { 
+      background: var(--card-bg);
+      border-radius: var(--radius);
+      overflow: hidden;
+      box-shadow: var(--shadow);
+      transition: var(--transition);
+      border: 1px solid var(--border);
+    }
+    .entry:hover { box-shadow: var(--shadow-lg); transform: translateY(-2px); }
     
-    .react-btn { font-size: 0.7rem; color: var(--accent); cursor: pointer; opacity: 0.6; transition: opacity 0.2s; user-select: none; margin-top: 4px; }
-    .react-btn:hover { opacity: 1; text-decoration: underline; }
+    .poster-frame { 
+      aspect-ratio: 2/3; 
+      background: var(--border-light); 
+      overflow: hidden;
+      position: relative;
+    }
+    .poster-frame img { 
+      width: 100%; 
+      height: 100%; 
+      object-fit: cover; 
+      display: block;
+      transition: transform 0.4s ease;
+    }
+    .entry:hover .poster-frame img { transform: scale(1.03); }
     
-    .expand-btn { font-size: 0.7rem; color: var(--muted); cursor: pointer; display: flex; align-items: center; gap: 4px; margin-top: 10px; padding: 8px 0; transition: color 0.2s; user-select: none; }
-    .expand-btn:hover { color: var(--accent); }
-    .expand-btn.has-args { font-weight: 800; }
+    .entry-content { padding: 20px; }
     
-    .arguments-section { display: none; border-top: 1px solid var(--border); margin-top: 12px; padding-top: 12px; }
-    .arguments-section.expanded { display: block; }
-    .arguments-title { font-size: 0.7rem; font-weight: 800; color: var(--muted); letter-spacing: 0.05em; margin-bottom: 12px; }
+    .entry-title { 
+      font-weight: 700; 
+      font-size: 1.0625rem; 
+      margin-bottom: 16px; 
+      line-height: 1.3;
+      letter-spacing: -0.01em;
+      color: var(--text);
+    }
     
-    .argument { padding: 12px 0; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
-    .argument:last-of-type { border-bottom: none; }
-    .argument-content { flex: 1; }
-    .argument-author { font-size: 0.65rem; font-weight: 800; letter-spacing: 0.05em; margin-bottom: 4px; }
-    .argument-author.greg { color: var(--greg); }
-    .argument-author.peer { color: var(--peer); }
-    .argument-text { font-size: 0.85rem; line-height: 1.5; color: var(--text); }
-    .argument-time { font-size: 0.65rem; color: var(--muted); margin-top: 4px; }
-    .delete-arg { font-size: 0.7rem; color: var(--red); cursor: pointer; opacity: 0; transition: opacity 0.2s; padding: 4px 8px; flex-shrink: 0; }
-    .argument:hover .delete-arg { opacity: 0.6; }
-    .delete-arg:hover { opacity: 1 !important; }
+    .ratings-container { 
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--border-light);
+    }
     
-    .argument-form { margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border); }
-    .argument-input { width: 100%; padding: 10px; border: 1px solid var(--border); font-family: 'Inter', sans-serif; font-size: 0.85rem; margin-top: 8px; resize: vertical; min-height: 70px; }
-    .argument-submit { background: var(--accent); color: white; border: none; padding: 10px 20px; font-size: 0.75rem; font-weight: 800; letter-spacing: 0.05em; cursor: pointer; margin-top: 8px; transition: opacity 0.2s; }
-    .argument-submit:hover { opacity: 0.9; }
+    .rating-row { 
+      display: flex; 
+      justify-content: space-between; 
+      align-items: center;
+    }
+    
+    .rating-label { 
+      font-size: 0.6875rem; 
+      font-weight: 700; 
+      color: var(--text-muted); 
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+    
+    .rating-value { 
+      display: flex; 
+      align-items: center; 
+      gap: 8px;
+      font-size: 1rem;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+    }
+    
+    .rating-value.editable { 
+      color: var(--peer); 
+      cursor: pointer;
+      transition: var(--transition);
+      padding: 4px 8px;
+      margin: -4px -8px;
+      border-radius: 4px;
+    }
+    .rating-value.editable:hover { background: rgba(37, 99, 235, 0.06); }
+    
+    .reaction { 
+      font-size: 1rem; 
+      opacity: 0.9;
+      transition: var(--transition);
+    }
+    .reaction.clickable { 
+      cursor: pointer;
+      padding: 4px;
+      margin: -4px;
+      border-radius: 4px;
+    }
+    .reaction.clickable:hover { 
+      opacity: 1; 
+      transform: scale(1.1);
+      background: var(--border-light);
+    }
+    
+    .react-trigger { 
+      font-size: 0.75rem; 
+      color: var(--accent); 
+      cursor: pointer; 
+      opacity: 0.7;
+      transition: var(--transition); 
+      user-select: none;
+      margin-top: 6px;
+      display: inline-block;
+      padding: 4px 0;
+      font-weight: 500;
+    }
+    .react-trigger:hover { opacity: 1; }
+    
+    .discussion-trigger { 
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 0;
+      margin-top: 16px;
+      cursor: pointer;
+      user-select: none;
+      transition: var(--transition);
+      color: var(--text-secondary);
+      font-size: 0.8125rem;
+      font-weight: 600;
+      border-top: 1px solid var(--border-light);
+    }
+    .discussion-trigger:hover { color: var(--accent); }
+    .discussion-trigger.has-notes { color: var(--text); }
+    
+    .discussion-count {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    
+    .chevron {
+      font-size: 0.75rem;
+      transition: transform 0.2s ease;
+      opacity: 0.6;
+    }
+    .chevron.rotated { transform: rotate(180deg); }
+    
+    .discussion-section { 
+      display: none;
+      padding: 20px;
+      background: var(--border-light);
+      border-top: 1px solid var(--border);
+    }
+    .discussion-section.expanded { display: block; }
+    
+    .discussion-title { 
+      font-size: 0.6875rem; 
+      font-weight: 700; 
+      color: var(--text-muted); 
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-bottom: 16px;
+    }
+    
+    .note { 
+      background: var(--card-bg);
+      padding: 16px;
+      border-radius: 6px;
+      margin-bottom: 12px;
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow);
+      transition: var(--transition);
+    }
+    .note:hover { box-shadow: var(--shadow-lg); }
+    .note:last-of-type { margin-bottom: 0; }
+    
+    .note-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+    
+    .note-author { 
+      font-size: 0.6875rem; 
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+    .note-author.greg { color: var(--greg); }
+    .note-author.peer { color: var(--peer); }
+    
+    .note-meta {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    
+    .note-time { 
+      font-size: 0.6875rem; 
+      color: var(--text-muted);
+    }
+    
+    .note-delete { 
+      font-size: 0.75rem; 
+      color: var(--text-muted); 
+      cursor: pointer; 
+      opacity: 0;
+      transition: var(--transition);
+      padding: 4px 8px;
+      border-radius: 4px;
+    }
+    .note:hover .note-delete { opacity: 0.5; }
+    .note-delete:hover { opacity: 1 !important; background: var(--border-light); color: var(--text); }
+    
+    .note-text { 
+      font-size: 0.9375rem; 
+      line-height: 1.5; 
+      color: var(--text);
+      letter-spacing: -0.01em;
+    }
+    
+    .note-form { 
+      margin-top: 16px;
+      padding-top: 16px;
+      border-top: 1px solid var(--border);
+    }
+    
+    .note-input { 
+      width: 100%; 
+      padding: 12px 14px; 
+      border: 1px solid var(--border); 
+      font-family: 'Inter', sans-serif; 
+      font-size: 0.9375rem; 
+      resize: vertical; 
+      min-height: 80px;
+      border-radius: 6px;
+      background: var(--card-bg);
+      color: var(--text);
+      transition: var(--transition);
+      line-height: 1.5;
+    }
+    .note-input:focus { 
+      outline: none; 
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.08);
+    }
+    
+    .note-submit { 
+      background: var(--accent); 
+      color: white; 
+      border: none; 
+      padding: 10px 20px; 
+      font-size: 0.8125rem; 
+      font-weight: 600; 
+      letter-spacing: 0.02em;
+      cursor: pointer; 
+      margin-top: 10px;
+      border-radius: 6px;
+      transition: var(--transition);
+      box-shadow: var(--shadow);
+    }
+    .note-submit:hover { 
+      background: #1d4ed8;
+      box-shadow: var(--shadow-lg);
+      transform: translateY(-1px);
+    }
+    .note-submit:active { transform: translateY(0); }
 
-    .reaction-picker { display: flex; gap: 8px; margin-top: 8px; padding: 8px; background: var(--border); border-radius: 4px; }
-    .reaction-option { font-size: 1.3rem; cursor: pointer; opacity: 0.5; transition: all 0.2s; padding: 6px; border-radius: 4px; }
-    .reaction-option:hover { opacity: 1; transform: scale(1.15); background: white; }
-    .reaction-option.selected { opacity: 1; background: white; }
+    .reaction-picker { 
+      display: flex; 
+      gap: 8px; 
+      margin-top: 10px; 
+      padding: 10px; 
+      background: var(--card-bg);
+      border-radius: 8px;
+      box-shadow: var(--shadow-lg);
+      border: 1px solid var(--border);
+    }
+    .reaction-option { 
+      font-size: 1.375rem; 
+      cursor: pointer; 
+      opacity: 0.5; 
+      transition: var(--transition); 
+      padding: 8px 10px;
+      border-radius: 6px;
+    }
+    .reaction-option:hover { 
+      opacity: 1; 
+      transform: scale(1.12); 
+      background: var(--border-light);
+    }
 
-    #loader { grid-column: 1/-1; text-align: center; padding: 100px 0; font-family: 'Playfair Display'; font-style: italic; font-size: 2rem; }
-    #error-log { position: fixed; bottom: 10px; left: 10px; font-size: 10px; color: red; background: rgba(255,255,255,0.9); padding: 5px; z-index: 100; max-width: 70vw; overflow: auto; }
+    /* Login Modal */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.6);
+      backdrop-filter: blur(4px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+      animation: fadeIn 0.2s ease;
+    }
+    .modal-overlay.visible { display: flex; }
 
-    @media (max-width: 900px) { .grid { grid-template-columns: 1fr 1fr; } }
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    .login-modal {
+      background: var(--card-bg);
+      border-radius: 12px;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+      max-width: 400px;
+      width: 90%;
+      padding: 32px;
+      animation: slideUp 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    @keyframes slideUp {
+      from { 
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to { 
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .modal-title {
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin-bottom: 8px;
+      letter-spacing: -0.02em;
+      color: var(--text);
+    }
+
+    .modal-subtitle {
+      font-size: 0.9375rem;
+      color: var(--text-secondary);
+      margin-bottom: 28px;
+      line-height: 1.5;
+    }
+
+    .reviewer-select {
+      margin-bottom: 24px;
+    }
+
+    .reviewer-label {
+      font-size: 0.8125rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      margin-bottom: 12px;
+      display: block;
+      letter-spacing: 0.01em;
+    }
+
+    .reviewer-options {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .reviewer-option {
+      padding: 16px;
+      border: 2px solid var(--border);
+      border-radius: 8px;
+      cursor: pointer;
+      transition: var(--transition);
+      text-align: center;
+      font-weight: 600;
+      font-size: 0.9375rem;
+      background: var(--card-bg);
+      user-select: none;
+    }
+
+    .reviewer-option:hover {
+      border-color: var(--accent);
+      background: var(--border-light);
+    }
+
+    .reviewer-option.selected {
+      border-color: var(--accent);
+      background: rgba(37, 99, 235, 0.08);
+      color: var(--accent);
+    }
+
+    .reviewer-option.greg.selected {
+      border-color: var(--greg);
+      background: rgba(234, 88, 12, 0.08);
+      color: var(--greg);
+    }
+
+    .password-field {
+      margin-bottom: 24px;
+    }
+
+    .password-label {
+      font-size: 0.8125rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      margin-bottom: 8px;
+      display: block;
+      letter-spacing: 0.01em;
+    }
+
+    .password-input {
+      width: 100%;
+      padding: 12px 14px;
+      border: 2px solid var(--border);
+      border-radius: 8px;
+      font-family: 'Inter', sans-serif;
+      font-size: 0.9375rem;
+      transition: var(--transition);
+      background: var(--card-bg);
+      color: var(--text);
+    }
+
+    .password-input:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.08);
+    }
+
+    .modal-actions {
+      display: flex;
+      gap: 12px;
+    }
+
+    .modal-btn {
+      flex: 1;
+      padding: 12px 20px;
+      border-radius: 8px;
+      font-size: 0.9375rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: var(--transition);
+      border: none;
+      font-family: 'Inter', sans-serif;
+    }
+
+    .modal-btn-primary {
+      background: var(--accent);
+      color: white;
+      box-shadow: var(--shadow);
+    }
+
+    .modal-btn-primary:hover:not(:disabled) {
+      background: #1d4ed8;
+      box-shadow: var(--shadow-lg);
+      transform: translateY(-1px);
+    }
+
+    .modal-btn-primary:active:not(:disabled) {
+      transform: translateY(0);
+    }
+
+    .modal-btn-primary:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .modal-btn-secondary {
+      background: var(--border-light);
+      color: var(--text-secondary);
+    }
+
+    .modal-btn-secondary:hover {
+      background: var(--border);
+      color: var(--text);
+    }
+
+    .error-message {
+      color: #dc2626;
+      font-size: 0.8125rem;
+      margin-top: 8px;
+      display: none;
+    }
+
+    .error-message.visible {
+      display: block;
+    }
+
+    #loader { 
+      grid-column: 1/-1; 
+      text-align: center; 
+      padding: 120px 20px; 
+      font-family: 'Playfair Display', serif; 
+      font-style: italic; 
+      font-size: 2rem;
+      color: var(--text-secondary);
+      letter-spacing: -0.01em;
+    }
+    
+    #error-log { 
+      position: fixed; 
+      bottom: 16px; 
+      left: 16px; 
+      font-size: 0.75rem; 
+      color: #dc2626; 
+      background: white; 
+      padding: 12px 16px; 
+      z-index: 1000; 
+      max-width: 400px;
+      border-radius: 8px;
+      box-shadow: var(--shadow-lg);
+      border: 1px solid #fee2e2;
+    }
+
+    @media (max-width: 900px) { .grid { grid-template-columns: 1fr 1fr; gap: 24px; } }
     @media (max-width: 600px) {
-      .grid { grid-template-columns: 1fr; }
+      .grid { grid-template-columns: 1fr; gap: 20px; }
       .container { padding: 0 20px; }
-      .page-title { font-size: 2.5rem; }
+      .page-title { font-size: 2.25rem; }
     }
   </style>
 </head>
@@ -97,14 +627,14 @@
     <nav>
       <a href="index.html" class="brand">DUFIVE - Movie Reviews</a>
       <div class="auth-controls">
-        <div id="auth-btn" class="login-trigger">REVIEWER LOGIN</div>
-        <div id="logout-btn" class="logout-btn">LOGOUT</div>
+        <div id="auth-btn" class="login-trigger">Reviewer Login</div>
+        <div id="logout-btn" class="logout-btn">Logout</div>
       </div>
     </nav>
 
     <header>
       <h1 class="page-title">The Ledger</h1>
-      <p class="tagline">Rated in Stars, not words.</p>
+      <p class="tagline">Rated in stars, not words.</p>
     </header>
 
     <main class="grid" id="ledger-grid">
@@ -114,41 +644,58 @@
 
   <div id="error-log"></div>
 
+  <div id="login-modal" class="modal-overlay">
+    <div class="login-modal">
+      <h2 class="modal-title">Reviewer Login</h2>
+      <p class="modal-subtitle">Choose your profile and enter the access key to participate in ratings and discussions.</p>
+      
+      <div class="reviewer-select">
+        <label class="reviewer-label">Select Reviewer</label>
+        <div class="reviewer-options">
+          <div class="reviewer-option greg" data-reviewer="greg">Greg</div>
+          <div class="reviewer-option peer" data-reviewer="peer">Peer</div>
+        </div>
+      </div>
+      
+      <div class="password-field">
+        <label class="password-label">Access Key</label>
+        <input type="password" id="password-input" class="password-input" placeholder="Enter access key" />
+        <div id="login-error" class="error-message">Incorrect access key. Please try again.</div>
+      </div>
+      
+      <div class="modal-actions">
+        <button class="modal-btn modal-btn-secondary" onclick="closeLoginModal()">Cancel</button>
+        <button class="modal-btn modal-btn-primary" id="login-submit" disabled>Login</button>
+      </div>
+    </div>
+  </div>
+
   <script>
-    // === Config ===
     const SB_URL = 'https://brgxorrpfberfcyeugzq.supabase.co';
     const SB_KEY = 'sb_publishable_VbVFBh-gtIBAbr9Qtp240w_GS8Kn4Jf';
     const EDGE_FUNCTION_URL = 'https://brgxorrpfberfcyeugzq.supabase.co/functions/v1/fetch-letterboxd-rss';
     
-    const PASSWORDS = {
-      greg: 'cinema2026',
-      peer: 'cinema2026' // Same password for now, or use different ones
-    };
-
-    const REACTIONS = {
-      fire: '🔥',
-      agree: '🤝',
-      disagree: '🤔'
-    };
+    const PASSWORDS = { greg: 'cinema2026', peer: 'cinema2026' };
+    const REACTIONS = { fire: '🔥', agree: '🤝', disagree: '🤔' };
 
     const supabaseClient = window.supabase.createClient(SB_URL, SB_KEY);
-
     const elGrid = document.getElementById('ledger-grid');
     const elAuthBtn = document.getElementById('auth-btn');
     const elLogoutBtn = document.getElementById('logout-btn');
     const elError = document.getElementById('error-log');
 
-    let currentUser = sessionStorage.getItem('current_user'); // 'greg' or 'peer' or null
+    let currentUser = sessionStorage.getItem('current_user');
+    let selectedReviewer = null;
 
     function setError(msg) { elError.textContent = msg || ''; }
 
     function setAuthUI() {
       if (currentUser) {
-        elAuthBtn.textContent = `${currentUser.toUpperCase()}: ONLINE`;
+        elAuthBtn.textContent = `${currentUser.toUpperCase()} • Online`;
         elAuthBtn.classList.add(`${currentUser}-active`);
         elLogoutBtn.classList.add('visible');
       } else {
-        elAuthBtn.textContent = 'REVIEWER LOGIN';
+        elAuthBtn.textContent = 'Reviewer Login';
         elAuthBtn.classList.remove('greg-active', 'peer-active');
         elLogoutBtn.classList.remove('visible');
       }
@@ -158,19 +705,11 @@
       elGrid.innerHTML = '';
       const loader = document.createElement('div');
       loader.id = 'loader';
-      loader.textContent = text || 'Loading...';
+      loader.textContent = text || 'Consulting the archives...';
       elGrid.appendChild(loader);
     }
 
-    function gregStarsFromNumeric(n) {
-      const num = Number(n);
-      if (!Number.isFinite(num) || num <= 0) return '—';
-      const full = Math.floor(num);
-      const half = (num - full) >= 0.5 ? '½' : '';
-      return '★'.repeat(full) + half;
-    }
-
-    function peerStars(n) {
+    function starsFromNumeric(n) {
       const num = Number(n);
       if (!Number.isFinite(num) || num <= 0) return '—';
       const full = Math.floor(num);
@@ -183,49 +722,33 @@
       const now = new Date();
       const seconds = Math.floor((now - date) / 1000);
       
-      if (seconds < 60) return 'just now';
+      if (seconds < 60) return 'Just now';
       if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`;
       if (seconds < 86400) return `${Math.floor(seconds / 3600)}h ago`;
       if (seconds < 604800) return `${Math.floor(seconds / 86400)}d ago`;
-      return date.toLocaleDateString();
+      return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
     }
 
     async function fetchPeerRatings() {
-      const { data, error } = await supabaseClient
-        .from('ratings')
-        .select('movie_key,movie_title,rating');
-
-      if (error) throw new Error('Supabase (ratings) Error: ' + error.message);
-
+      const { data, error } = await supabaseClient.from('ratings').select('movie_key,movie_title,rating');
+      if (error) throw new Error('Ratings Error: ' + error.message);
       const map = Object.create(null);
-      (data || []).forEach(r => {
-        if (r && r.movie_key) map[r.movie_key] = r.rating;
-      });
+      (data || []).forEach(r => { if (r?.movie_key) map[r.movie_key] = r.rating; });
       return map;
     }
 
     async function fetchGregRssItems() {
       const res = await fetch(EDGE_FUNCTION_URL);
-      
-      if (!res.ok) {
-        const errorText = await res.text();
-        throw new Error(`Edge Function Error: HTTP ${res.status} - ${errorText}`);
-      }
-
+      if (!res.ok) throw new Error(`Edge Function Error: ${res.status}`);
       const data = await res.json();
-      if (data.error) throw new Error(`Edge Function Error: ${data.error}`);
-      
-      console.log(`✅ Loaded ${data.count} films from Edge Function`);
+      if (data.error) throw new Error(data.error);
+      console.log(`✅ Loaded ${data.count} films`);
       return data.films;
     }
 
     async function fetchReactions() {
-      const { data, error } = await supabaseClient
-        .from('rating_reactions')
-        .select('*');
-
-      if (error) throw new Error('Reactions fetch error: ' + error.message);
-
+      const { data, error } = await supabaseClient.from('rating_reactions').select('*');
+      if (error) throw new Error('Reactions Error: ' + error.message);
       const map = {};
       (data || []).forEach(r => {
         if (!map[r.movie_key]) map[r.movie_key] = {};
@@ -234,258 +757,246 @@
       return map;
     }
 
-    async function fetchArguments() {
+    async function fetchNotes() {
       const { data, error } = await supabaseClient
         .from('film_arguments')
         .select('*')
         .order('created_at', { ascending: true });
-
-      if (error) throw new Error('Arguments fetch error: ' + error.message);
-
+      if (error) throw new Error('Notes Error: ' + error.message);
       const map = {};
-      (data || []).forEach(arg => {
-        if (!map[arg.movie_key]) map[arg.movie_key] = [];
-        map[arg.movie_key].push(arg);
+      (data || []).forEach(note => {
+        if (!map[note.movie_key]) map[note.movie_key] = [];
+        map[note.movie_key].push(note);
       });
       return map;
     }
 
-    function renderLedger(gregItems, peerMap, reactions, argumentsMap) {
+    function renderLedger(gregItems, peerMap, reactions, notesMap) {
       elGrid.innerHTML = '';
 
       gregItems.forEach(entry => {
         const title = entry.title;
         const movieKey = entry.link ? entry.link.split('/film/')[1]?.replace('/', '') : title;
+        const notes = notesMap[movieKey] || [];
 
-        const el = document.createElement('div');
-        el.className = 'entry';
-        el.dataset.movieKey = movieKey;
+        const card = document.createElement('div');
+        card.className = 'entry';
 
         const posterFrame = document.createElement('div');
         posterFrame.className = 'poster-frame';
         const img = document.createElement('img');
         img.alt = title;
-        if (entry.posterUrl) img.src = entry.posterUrl;
+        img.src = entry.posterUrl || '';
         posterFrame.appendChild(img);
+
+        const content = document.createElement('div');
+        content.className = 'entry-content';
 
         const h2 = document.createElement('h2');
         h2.className = 'entry-title';
         h2.textContent = title;
 
-        const ratingBox = document.createElement('div');
-        ratingBox.className = 'rating-box';
+        const ratingsContainer = document.createElement('div');
+        ratingsContainer.className = 'ratings-container';
 
-        // Greg row
-        const rowG = document.createElement('div');
-        rowG.className = 'row';
-        const gLabel = document.createElement('span');
-        gLabel.className = 'label';
-        gLabel.textContent = 'GREG';
-        const gVal = document.createElement('span');
-        gVal.className = 'val';
-        gVal.innerHTML = gregStarsFromNumeric(entry.gregRating);
-        
+        // Greg rating row
+        const gregRow = document.createElement('div');
+        gregRow.className = 'rating-row';
+        gregRow.innerHTML = `
+          <span class="rating-label">Greg</span>
+          <span class="rating-value">${starsFromNumeric(entry.gregRating)}</span>
+        `;
         const gregReaction = reactions[movieKey]?.greg;
         if (gregReaction && REACTIONS[gregReaction]) {
           const reactionSpan = document.createElement('span');
           reactionSpan.className = 'reaction' + (currentUser === 'greg' ? ' clickable' : '');
           reactionSpan.textContent = REACTIONS[gregReaction];
           if (currentUser === 'greg') {
-            reactionSpan.title = 'Click to change/remove';
             reactionSpan.onclick = (e) => {
               e.stopPropagation();
               showReactionPicker(movieKey, 'greg', reactionSpan);
             };
           }
-          gVal.appendChild(reactionSpan);
+          gregRow.querySelector('.rating-value').appendChild(reactionSpan);
         }
-        
-        rowG.appendChild(gLabel);
-        rowG.appendChild(gVal);
+        ratingsContainer.appendChild(gregRow);
 
-        // Peer row
-        const rowP = document.createElement('div');
-        rowP.className = 'row';
-        const pLabel = document.createElement('span');
-        pLabel.className = 'label';
-        pLabel.textContent = 'PEER';
-
-        const pVal = document.createElement('span');
-        pVal.className = 'val p-val' + (currentUser === 'peer' ? ' editable' : '');
-        pVal.innerHTML = peerStars(peerMap[movieKey]);
-        pVal.dataset.movieKey = movieKey;
-        pVal.dataset.title = title;
-        
+        // Peer rating row
+        const peerRow = document.createElement('div');
+        peerRow.className = 'rating-row';
+        const peerRating = document.createElement('span');
+        peerRating.className = 'rating-value' + (currentUser === 'peer' ? ' editable' : '');
+        peerRating.textContent = starsFromNumeric(peerMap[movieKey]);
+        peerRating.dataset.movieKey = movieKey;
+        peerRating.dataset.title = title;
+        if (currentUser === 'peer') {
+          peerRating.onclick = () => submitRating(movieKey, title);
+        }
         const peerReaction = reactions[movieKey]?.peer;
         if (peerReaction && REACTIONS[peerReaction]) {
           const reactionSpan = document.createElement('span');
           reactionSpan.className = 'reaction' + (currentUser === 'peer' ? ' clickable' : '');
           reactionSpan.textContent = REACTIONS[peerReaction];
           if (currentUser === 'peer') {
-            reactionSpan.title = 'Click to change/remove';
             reactionSpan.onclick = (e) => {
               e.stopPropagation();
               showReactionPicker(movieKey, 'peer', reactionSpan);
             };
           }
-          pVal.appendChild(reactionSpan);
+          peerRating.appendChild(reactionSpan);
         }
+        peerRow.innerHTML = '<span class="rating-label">Peer</span>';
+        peerRow.appendChild(peerRating);
+        ratingsContainer.appendChild(peerRow);
 
-        rowP.appendChild(pLabel);
-        rowP.appendChild(pVal);
+        content.appendChild(h2);
+        content.appendChild(ratingsContainer);
 
-        ratingBox.appendChild(rowG);
-        ratingBox.appendChild(rowP);
-
-        // React buttons (only when logged in)
+        // React triggers
         if (currentUser === 'peer' && !peerReaction) {
           const reactBtn = document.createElement('div');
-          reactBtn.className = 'react-btn';
-          reactBtn.textContent = '💬 React to Greg';
+          reactBtn.className = 'react-trigger';
+          reactBtn.textContent = 'React to Greg's rating';
           reactBtn.onclick = (e) => {
             e.stopPropagation();
             showReactionPicker(movieKey, 'peer', reactBtn);
           };
-          ratingBox.appendChild(reactBtn);
+          content.appendChild(reactBtn);
         }
-        
         if (currentUser === 'greg' && !gregReaction) {
           const reactBtn = document.createElement('div');
-          reactBtn.className = 'react-btn';
-          reactBtn.textContent = '💬 React to Peer';
+          reactBtn.className = 'react-trigger';
+          reactBtn.textContent = 'React to Peer's rating';
           reactBtn.onclick = (e) => {
             e.stopPropagation();
             showReactionPicker(movieKey, 'greg', reactBtn);
           };
-          ratingBox.appendChild(reactBtn);
+          content.appendChild(reactBtn);
         }
 
-        // Arguments
-        const args = argumentsMap[movieKey] || [];
-        const argsSection = document.createElement('div');
-        argsSection.className = 'arguments-section';
-        argsSection.dataset.movieKey = movieKey;
-        
-        const argsTitle = document.createElement('div');
-        argsTitle.className = 'arguments-title';
-        argsTitle.textContent = '⚡ ARGUMENTS';
-        argsSection.appendChild(argsTitle);
+        // Discussion trigger
+        const trigger = document.createElement('div');
+        trigger.className = 'discussion-trigger' + (notes.length > 0 ? ' has-notes' : '');
+        const countSpan = document.createElement('span');
+        countSpan.className = 'discussion-count';
+        countSpan.textContent = notes.length > 0 
+          ? `Discussion (${notes.length})`
+          : (currentUser ? 'Add note' : 'Discussion');
+        const chevron = document.createElement('span');
+        chevron.className = 'chevron';
+        chevron.textContent = '▼';
+        trigger.appendChild(countSpan);
+        trigger.appendChild(chevron);
 
-        args.forEach(arg => {
-          const argEl = document.createElement('div');
-          argEl.className = 'argument';
-          
-          const contentDiv = document.createElement('div');
-          contentDiv.className = 'argument-content';
-          
-          const authorEl = document.createElement('div');
-          authorEl.className = `argument-author ${arg.author}`;
-          authorEl.textContent = arg.author.toUpperCase();
-          
-          const textEl = document.createElement('div');
-          textEl.className = 'argument-text';
-          textEl.textContent = arg.argument;
-          
-          const timeEl = document.createElement('div');
-          timeEl.className = 'argument-time';
-          timeEl.textContent = timeAgo(arg.created_at);
-          
-          contentDiv.appendChild(authorEl);
-          contentDiv.appendChild(textEl);
-          contentDiv.appendChild(timeEl);
-          argEl.appendChild(contentDiv);
-          
-          // Delete button (only for your own arguments)
-          if (currentUser && arg.author === currentUser) {
-            const delBtn = document.createElement('div');
-            delBtn.className = 'delete-arg';
+        // Discussion section
+        const discussionSection = document.createElement('div');
+        discussionSection.className = 'discussion-section';
+
+        const discussionTitle = document.createElement('div');
+        discussionTitle.className = 'discussion-title';
+        discussionTitle.textContent = 'Discussion';
+        discussionSection.appendChild(discussionTitle);
+
+        notes.forEach(note => {
+          const noteEl = document.createElement('div');
+          noteEl.className = 'note';
+
+          const noteHeader = document.createElement('div');
+          noteHeader.className = 'note-header';
+
+          const noteAuthor = document.createElement('div');
+          noteAuthor.className = `note-author ${note.author}`;
+          noteAuthor.textContent = note.author.toUpperCase();
+
+          const noteMeta = document.createElement('div');
+          noteMeta.className = 'note-meta';
+
+          const noteTime = document.createElement('span');
+          noteTime.className = 'note-time';
+          noteTime.textContent = timeAgo(note.created_at);
+          noteMeta.appendChild(noteTime);
+
+          if (currentUser && note.author === currentUser) {
+            const delBtn = document.createElement('span');
+            delBtn.className = 'note-delete';
             delBtn.textContent = '✕';
-            delBtn.title = 'Delete argument';
             delBtn.onclick = (e) => {
               e.stopPropagation();
-              deleteArgument(arg.id);
+              deleteNote(note.id);
             };
-            argEl.appendChild(delBtn);
+            noteMeta.appendChild(delBtn);
           }
-          
-          argsSection.appendChild(argEl);
+
+          noteHeader.appendChild(noteAuthor);
+          noteHeader.appendChild(noteMeta);
+
+          const noteText = document.createElement('div');
+          noteText.className = 'note-text';
+          noteText.textContent = note.argument;
+
+          noteEl.appendChild(noteHeader);
+          noteEl.appendChild(noteText);
+          discussionSection.appendChild(noteEl);
         });
 
-        // Argument form (only when logged in)
         if (currentUser) {
           const form = document.createElement('div');
-          form.className = 'argument-form';
-          
+          form.className = 'note-form';
+
           const input = document.createElement('textarea');
-          input.className = 'argument-input';
-          input.placeholder = `Post your argument as ${currentUser.toUpperCase()}... (max 200 chars)`;
+          input.className = 'note-input';
+          input.placeholder = `Share your thoughts as ${currentUser.toUpperCase()}...`;
           input.maxLength = 200;
-          
+
           const submit = document.createElement('button');
-          submit.className = 'argument-submit';
-          submit.textContent = 'POST ARGUMENT';
+          submit.className = 'note-submit';
+          submit.textContent = 'Post Note';
           submit.onclick = (e) => {
             e.stopPropagation();
-            if (input.value.trim()) {
-              submitArgument(movieKey, input.value.trim());
-            }
+            if (input.value.trim()) submitNote(movieKey, input.value.trim());
           };
-          
+
           form.appendChild(input);
           form.appendChild(submit);
-          argsSection.appendChild(form);
+          discussionSection.appendChild(form);
         }
 
-        ratingBox.appendChild(argsSection);
-
-        // Expand/collapse button
-        const expandBtn = document.createElement('div');
-        expandBtn.className = 'expand-btn' + (args.length > 0 ? ' has-args' : '');
-        const btnText = args.length > 0 
-          ? `⚡ ${args.length} argument${args.length === 1 ? '' : 's'}` 
-          : (currentUser ? '⚡ Add argument' : '⚡ Arguments');
-        expandBtn.innerHTML = `${btnText} <span style="font-size:0.8em">▼</span>`;
-        expandBtn.onclick = (e) => {
+        trigger.onclick = (e) => {
           e.stopPropagation();
-          const isExpanded = argsSection.classList.toggle('expanded');
-          expandBtn.querySelector('span').textContent = isExpanded ? '▲' : '▼';
+          const isExpanded = discussionSection.classList.toggle('expanded');
+          chevron.classList.toggle('rotated', isExpanded);
         };
-        ratingBox.appendChild(expandBtn);
 
-        el.appendChild(posterFrame);
-        el.appendChild(h2);
-        el.appendChild(ratingBox);
-
-        elGrid.appendChild(el);
+        content.appendChild(trigger);
+        card.appendChild(posterFrame);
+        card.appendChild(content);
+        card.appendChild(discussionSection);
+        elGrid.appendChild(card);
       });
     }
 
     function showReactionPicker(movieKey, reactor, triggerElement) {
-      const existing = document.querySelectorAll('.reaction-picker');
-      existing.forEach(p => p.remove());
+      document.querySelectorAll('.reaction-picker').forEach(p => p.remove());
 
       const picker = document.createElement('div');
       picker.className = 'reaction-picker';
-      
-      // Add remove option if reaction exists
+
       const currentReaction = triggerElement?.textContent;
       if (currentReaction && Object.values(REACTIONS).includes(currentReaction)) {
         const removeOpt = document.createElement('span');
         removeOpt.className = 'reaction-option';
         removeOpt.textContent = '✕';
-        removeOpt.title = 'Remove reaction';
         removeOpt.onclick = (e) => {
           e.stopPropagation();
           deleteReaction(movieKey, reactor);
         };
         picker.appendChild(removeOpt);
       }
-      
+
       Object.entries(REACTIONS).forEach(([key, emoji]) => {
         const opt = document.createElement('span');
         opt.className = 'reaction-option';
         opt.textContent = emoji;
-        opt.title = key;
         opt.onclick = (e) => {
           e.stopPropagation();
           saveReaction(movieKey, reactor, key);
@@ -494,12 +1005,12 @@
       });
 
       triggerElement.parentElement.appendChild(picker);
-      
+
       setTimeout(() => {
-        document.addEventListener('click', function closePickerHandler(e) {
+        document.addEventListener('click', function closeHandler(e) {
           if (!picker.contains(e.target)) {
             picker.remove();
-            document.removeEventListener('click', closePickerHandler);
+            document.removeEventListener('click', closeHandler);
           }
         });
       }, 0);
@@ -509,12 +1020,7 @@
       const { error } = await supabaseClient
         .from('rating_reactions')
         .upsert({ movie_key: movieKey, reactor, reaction }, { onConflict: 'movie_key,reactor' });
-
-      if (error) {
-        alert('Reaction save error: ' + error.message);
-        return;
-      }
-
+      if (error) return alert('Error: ' + error.message);
       await loadArchive();
     }
 
@@ -524,134 +1030,126 @@
         .delete()
         .eq('movie_key', movieKey)
         .eq('reactor', reactor);
-
-      if (error) {
-        alert('Delete reaction error: ' + error.message);
-        return;
-      }
-
+      if (error) return alert('Error: ' + error.message);
       await loadArchive();
     }
 
-    async function submitArgument(movieKey, text) {
-      if (!text.trim()) {
-        alert('Please enter some text for your argument.');
-        return;
-      }
-
+    async function submitNote(movieKey, text) {
+      if (!text.trim()) return alert('Please enter a note.');
       const { error } = await supabaseClient
         .from('film_arguments')
         .insert({ movie_key: movieKey, author: currentUser, argument: text.trim() });
-
-      if (error) {
-        alert('Argument save error: ' + error.message);
-        return;
-      }
-
+      if (error) return alert('Error: ' + error.message);
       await loadArchive();
     }
 
-    async function deleteArgument(argId) {
-      if (!confirm('Delete this argument?')) return;
-
-      const { error } = await supabaseClient
-        .from('film_arguments')
-        .delete()
-        .eq('id', argId);
-
-      if (error) {
-        alert('Delete error: ' + error.message);
-        return;
-      }
-
+    async function deleteNote(noteId) {
+      if (!confirm('Delete this note?')) return;
+      const { error } = await supabaseClient.from('film_arguments').delete().eq('id', noteId);
+      if (error) return alert('Error: ' + error.message);
       await loadArchive();
     }
 
     async function loadArchive() {
       setError('');
       clearGridToLoader('Consulting the archives...');
-
       try {
-        const [peerMap, gregItems, reactions, argumentsMap] = await Promise.all([
+        const [peerMap, gregItems, reactions, notesMap] = await Promise.all([
           fetchPeerRatings(),
           fetchGregRssItems(),
           fetchReactions(),
-          fetchArguments()
+          fetchNotes()
         ]);
-
-        renderLedger(gregItems, peerMap, reactions, argumentsMap);
+        renderLedger(gregItems, peerMap, reactions, notesMap);
       } catch (e) {
-        setError(e && e.message ? e.message : String(e));
-        console.error('Load error:', e);
+        setError(e?.message || String(e));
+        console.error('Error:', e);
       }
     }
 
     async function submitRating(movieKey, movieTitle) {
       if (currentUser !== 'peer') return;
-
-      const score = prompt(`Rate "${movieTitle}"\n\n0 = Remove rating\n0.5 to 5 (half-stars allowed, e.g. 3.5):`);
-      if (score === null) return;
-      if (score.trim() === '') return;
-
+      const score = prompt(`Rate "${movieTitle}"\n\n0 = Remove\n0.5 to 5 (half-stars allowed):`);
+      if (score === null || score.trim() === '') return;
       const num = parseFloat(score);
-
       if (num === 0) {
-        const { error } = await supabaseClient
-          .from('ratings')
-          .delete()
-          .eq('movie_key', movieKey);
-
-        if (error) {
-          alert('Database Delete Error: ' + error.message);
-          return;
-        }
-
-        await loadArchive();
-        return;
+        const { error } = await supabaseClient.from('ratings').delete().eq('movie_key', movieKey);
+        if (error) return alert('Error: ' + error.message);
+        return await loadArchive();
       }
-
-      if (!Number.isFinite(num) || num < 0.5 || num > 5) {
-        alert('Please enter a number between 0.5 and 5 (or 0 to remove).');
-        return;
-      }
-
-      if ((num * 2) % 1 !== 0) {
-        alert('Please use half-star increments (e.g., 3.5, 4, 4.5).');
-        return;
-      }
-
+      if (!Number.isFinite(num) || num < 0.5 || num > 5) return alert('Enter 0.5 to 5');
+      if ((num * 2) % 1 !== 0) return alert('Use half-star increments (e.g. 3.5)');
       const { error } = await supabaseClient
         .from('ratings')
         .upsert({ movie_key: movieKey, movie_title: movieTitle, rating: num }, { onConflict: 'movie_key' });
-
-      if (error) {
-        alert('Database Save Error: ' + error.message);
-        return;
-      }
-
+      if (error) return alert('Error: ' + error.message);
       await loadArchive();
     }
 
-    function toggleLogin() {
-      if (currentUser) return; // Already logged in
+    // Login Modal Functions
+    function showLoginModal() {
+      if (currentUser) return;
       
-      const who = prompt('Who are you?\n\nType "greg" or "peer":');
-      if (!who) return;
+      const modal = document.getElementById('login-modal');
+      const passwordInput = document.getElementById('password-input');
+      const errorMsg = document.getElementById('login-error');
       
-      const userChoice = who.toLowerCase().trim();
-      if (userChoice !== 'greg' && userChoice !== 'peer') {
-        alert('Please enter either "greg" or "peer"');
+      selectedReviewer = null;
+      passwordInput.value = '';
+      errorMsg.classList.remove('visible');
+      document.querySelectorAll('.reviewer-option').forEach(opt => opt.classList.remove('selected'));
+      document.getElementById('login-submit').disabled = true;
+      
+      modal.classList.add('visible');
+      
+      setTimeout(() => {
+        if (selectedReviewer) passwordInput.focus();
+      }, 100);
+    }
+
+    function closeLoginModal() {
+      document.getElementById('login-modal').classList.remove('visible');
+      selectedReviewer = null;
+    }
+
+    function selectReviewer(reviewer) {
+      selectedReviewer = reviewer;
+      
+      document.querySelectorAll('.reviewer-option').forEach(opt => {
+        opt.classList.remove('selected');
+      });
+      document.querySelector(`.reviewer-option[data-reviewer="${reviewer}"]`).classList.add('selected');
+      
+      const password = document.getElementById('password-input').value;
+      document.getElementById('login-submit').disabled = !password;
+      
+      document.getElementById('password-input').focus();
+    }
+
+    function attemptLogin() {
+      const password = document.getElementById('password-input').value;
+      const errorMsg = document.getElementById('login-error');
+      
+      if (!selectedReviewer) {
+        alert('Please select a reviewer (Greg or Peer)');
         return;
       }
       
-      const password = prompt(`Enter password for ${userChoice.toUpperCase()}:`);
-      if (password === PASSWORDS[userChoice]) {
-        currentUser = userChoice;
-        sessionStorage.setItem('current_user', userChoice);
+      if (!password) {
+        alert('Please enter an access key');
+        return;
+      }
+      
+      if (password === PASSWORDS[selectedReviewer]) {
+        currentUser = selectedReviewer;
+        sessionStorage.setItem('current_user', selectedReviewer);
+        closeLoginModal();
         setAuthUI();
         loadArchive();
       } else {
-        alert('Incorrect password.');
+        errorMsg.classList.add('visible');
+        document.getElementById('password-input').value = '';
+        document.getElementById('password-input').focus();
       }
     }
 
@@ -664,22 +1162,45 @@
       loadArchive();
     }
 
-    // Events
-    elAuthBtn.addEventListener('click', toggleLogin);
-    elLogoutBtn.addEventListener('click', logout);
-
-    elGrid.addEventListener('click', (e) => {
-      const t = e.target;
-      if (!(t instanceof HTMLElement)) return;
-      if (!t.classList.contains('p-val')) return;
-      if (currentUser !== 'peer') return;
-
-      const movieKey = t.dataset.movieKey;
-      const title = t.dataset.title;
-      if (movieKey) submitRating(movieKey, title);
+    // Initialize
+    document.addEventListener('DOMContentLoaded', () => {
+      document.querySelectorAll('.reviewer-option').forEach(option => {
+        option.addEventListener('click', () => {
+          selectReviewer(option.dataset.reviewer);
+        });
+      });
+      
+      const passwordInput = document.getElementById('password-input');
+      passwordInput.addEventListener('input', () => {
+        const hasPassword = passwordInput.value.length > 0;
+        document.getElementById('login-submit').disabled = !selectedReviewer || !hasPassword;
+        document.getElementById('login-error').classList.remove('visible');
+      });
+      
+      passwordInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter' && selectedReviewer && passwordInput.value) {
+          attemptLogin();
+        }
+      });
+      
+      document.getElementById('login-submit').addEventListener('click', attemptLogin);
+      
+      document.getElementById('login-modal').addEventListener('click', (e) => {
+        if (e.target.id === 'login-modal') {
+          closeLoginModal();
+        }
+      });
+      
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && document.getElementById('login-modal').classList.contains('visible')) {
+          closeLoginModal();
+        }
+      });
     });
 
-    // Init
+    elAuthBtn.addEventListener('click', showLoginModal);
+    elLogoutBtn.addEventListener('click', logout);
+
     setAuthUI();
     loadArchive();
   </script>
