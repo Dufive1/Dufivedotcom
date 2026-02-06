@@ -1,0 +1,2010 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DUFIVE | The Ledger</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:ital,wght@0,600;0,700;1,600&display=swap" rel="stylesheet">
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <style>
+    /* ───── Theme Variables ───── */
+    :root,
+    [data-theme="light"] {
+      --bg: #fafafa;
+      --bg-secondary: #f5f5f5;
+      --card-bg: #ffffff;
+      --text: #0a0a0a;
+      --text-secondary: #737373;
+      --text-muted: #a3a3a3;
+      --accent: #2563eb;
+      --accent-hover: #1d4ed8;
+      --border: #e5e5e5;
+      --border-light: #f5f5f5;
+      --greg: #ea580c;
+      --peer: #2563eb;
+      --shadow: 0 1px 3px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.02);
+      --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.06), 0 4px 6px -2px rgba(0,0,0,0.03);
+      --radius: 8px;
+      --transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      --skeleton-from: #e5e5e5;
+      --skeleton-to: #f5f5f5;
+      --overlay-bg: rgba(0, 0, 0, 0.6);
+      --badge-bg: #ef4444;
+    }
+
+    [data-theme="dark"] {
+      --bg: #0a0a0a;
+      --bg-secondary: #171717;
+      --card-bg: #1c1c1e;
+      --text: #f5f5f5;
+      --text-secondary: #a3a3a3;
+      --text-muted: #6b7280;
+      --accent: #3b82f6;
+      --accent-hover: #60a5fa;
+      --border: #2d2d2d;
+      --border-light: #1f1f1f;
+      --greg: #fb923c;
+      --peer: #60a5fa;
+      --shadow: 0 1px 3px rgba(0,0,0,0.3), 0 1px 2px rgba(0,0,0,0.2);
+      --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.4), 0 4px 6px -2px rgba(0,0,0,0.3);
+      --skeleton-from: #2d2d2d;
+      --skeleton-to: #3a3a3a;
+      --overlay-bg: rgba(0, 0, 0, 0.8);
+      --badge-bg: #ef4444;
+    }
+
+    /* ───── Reset & Base ───── */
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      line-height: 1.6;
+      transition: background 0.3s ease, color 0.3s ease;
+    }
+
+    .container { max-width: 1400px; margin: 0 auto; padding: 0 32px; }
+
+    /* ───── Navigation ───── */
+    nav {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 32px 0;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 48px;
+    }
+
+    .brand {
+      font-weight: 800;
+      font-size: 1.5rem;
+      text-decoration: none;
+      color: var(--text);
+      letter-spacing: -0.03em;
+    }
+
+    .nav-controls { display: flex; gap: 12px; align-items: center; }
+
+    .theme-toggle {
+      cursor: pointer;
+      padding: 8px;
+      border-radius: 6px;
+      font-size: 1.125rem;
+      transition: var(--transition);
+      user-select: none;
+      border: none;
+      background: none;
+      color: var(--text-secondary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .theme-toggle:hover { background: var(--border-light); color: var(--text); }
+
+    .auth-controls { display: flex; gap: 12px; align-items: center; }
+
+    .login-trigger {
+      cursor: pointer;
+      font-size: 0.8125rem;
+      font-weight: 600;
+      letter-spacing: 0.03em;
+      color: var(--text-secondary);
+      transition: var(--transition);
+      user-select: none;
+      padding: 8px 16px;
+      border-radius: 6px;
+      white-space: nowrap;
+    }
+    .login-trigger:hover { color: var(--accent); background: var(--border-light); }
+    .login-trigger.greg-active { color: var(--greg); background: rgba(234, 88, 12, 0.08); }
+    .login-trigger.peer-active { color: var(--peer); background: rgba(37, 99, 235, 0.08); }
+
+    .logout-btn {
+      cursor: pointer;
+      font-size: 0.8125rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      transition: var(--transition);
+      display: none;
+      padding: 8px 16px;
+      border-radius: 6px;
+      white-space: nowrap;
+    }
+    .logout-btn.visible { display: block; }
+    .logout-btn:hover { color: var(--text); background: var(--border-light); }
+
+    /* ───── Header ───── */
+    header { margin-bottom: 40px; }
+
+    .page-title {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(2.5rem, 7vw, 5rem);
+      line-height: 1.1;
+      margin-bottom: 12px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+
+    .tagline {
+      font-size: 1.125rem;
+      color: var(--text-secondary);
+      letter-spacing: -0.01em;
+      font-weight: 400;
+    }
+
+    /* ───── Stats Dashboard ───── */
+    .stats-bar {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 16px;
+      margin-bottom: 32px;
+      opacity: 0;
+      transform: translateY(10px);
+      transition: opacity 0.4s ease, transform 0.4s ease;
+    }
+    .stats-bar.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .stat-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px 20px;
+      text-align: center;
+      box-shadow: var(--shadow);
+      transition: var(--transition);
+    }
+    .stat-card:hover { box-shadow: var(--shadow-lg); transform: translateY(-1px); }
+
+    .stat-value {
+      font-size: 1.5rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      line-height: 1.2;
+    }
+    .stat-value.greg-color { color: var(--greg); }
+    .stat-value.peer-color { color: var(--peer); }
+    .stat-value.accent-color { color: var(--accent); }
+
+    .stat-label {
+      font-size: 0.6875rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      margin-top: 4px;
+    }
+
+    /* ───── Toolbar (Search + Sort) ───── */
+    .toolbar {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      margin-bottom: 32px;
+      flex-wrap: wrap;
+    }
+
+    .search-wrapper {
+      flex: 1;
+      min-width: 200px;
+      position: relative;
+    }
+
+    .search-icon {
+      position: absolute;
+      left: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 0.875rem;
+      color: var(--text-muted);
+      pointer-events: none;
+    }
+
+    .search-input {
+      width: 100%;
+      padding: 10px 14px 10px 38px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      font-family: 'Inter', sans-serif;
+      font-size: 0.9375rem;
+      background: var(--card-bg);
+      color: var(--text);
+      transition: var(--transition);
+    }
+    .search-input:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.08);
+    }
+    .search-input::placeholder { color: var(--text-muted); }
+
+    .sort-select {
+      padding: 10px 32px 10px 14px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      font-family: 'Inter', sans-serif;
+      font-size: 0.8125rem;
+      font-weight: 600;
+      background: var(--card-bg);
+      color: var(--text);
+      cursor: pointer;
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23737373' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 12px center;
+      transition: var(--transition);
+      white-space: nowrap;
+    }
+    .sort-select:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+
+    .filter-chips {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .filter-chip {
+      padding: 6px 14px;
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: var(--transition);
+      user-select: none;
+      background: var(--card-bg);
+      white-space: nowrap;
+    }
+    .filter-chip:hover { border-color: var(--accent); color: var(--accent); }
+    .filter-chip.active {
+      background: var(--accent);
+      color: white;
+      border-color: var(--accent);
+    }
+
+    /* ───── Grid & Cards ───── */
+    .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 32px; }
+
+    .entry {
+      background: var(--card-bg);
+      border-radius: var(--radius);
+      overflow: hidden;
+      box-shadow: var(--shadow);
+      transition: var(--transition);
+      border: 1px solid var(--border);
+      opacity: 0;
+      transform: translateY(16px);
+      animation: cardEnter 0.4s ease forwards;
+      position: relative;
+    }
+    .entry:hover { box-shadow: var(--shadow-lg); transform: translateY(-2px); }
+
+    @keyframes cardEnter {
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .new-badge {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      background: var(--badge-bg);
+      color: white;
+      font-size: 0.625rem;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      padding: 4px 8px;
+      border-radius: 4px;
+      z-index: 2;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
+
+    .poster-frame {
+      aspect-ratio: 2/3;
+      background: var(--border-light);
+      overflow: hidden;
+      position: relative;
+    }
+    .poster-frame img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      transition: transform 0.4s ease;
+    }
+    .entry:hover .poster-frame img { transform: scale(1.03); }
+
+    .entry-content { padding: 20px; }
+
+    .entry-title {
+      font-weight: 700;
+      font-size: 1.0625rem;
+      margin-bottom: 16px;
+      line-height: 1.3;
+      letter-spacing: -0.01em;
+      color: var(--text);
+    }
+
+    .ratings-container {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--border-light);
+    }
+
+    .rating-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      min-height: 36px;
+    }
+
+    .rating-label {
+      font-size: 0.6875rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .rating-value {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 1rem;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+    }
+
+    .rating-value.editable {
+      color: var(--peer);
+      cursor: pointer;
+      transition: var(--transition);
+      padding: 6px 10px;
+      margin: -6px -10px;
+      border-radius: 4px;
+    }
+    .rating-value.editable:hover { background: rgba(37, 99, 235, 0.06); }
+
+    .unrated-prompt {
+      font-size: 0.8125rem;
+      color: var(--text-muted);
+      font-style: italic;
+      font-weight: 400;
+    }
+    .unrated-prompt.clickable {
+      cursor: pointer;
+      color: var(--peer);
+      font-style: normal;
+      font-weight: 500;
+      border: 1px dashed var(--peer);
+      padding: 4px 10px;
+      border-radius: 4px;
+      opacity: 0.7;
+      transition: var(--transition);
+    }
+    .unrated-prompt.clickable:hover { opacity: 1; background: rgba(37, 99, 235, 0.06); }
+
+    .reaction {
+      font-size: 1rem;
+      opacity: 0.9;
+      transition: var(--transition);
+    }
+    .reaction.clickable {
+      cursor: pointer;
+      padding: 4px;
+      margin: -4px;
+      border-radius: 4px;
+    }
+    .reaction.clickable:hover {
+      opacity: 1;
+      transform: scale(1.1);
+      background: var(--border-light);
+    }
+
+    .react-trigger {
+      font-size: 0.75rem;
+      color: var(--accent);
+      cursor: pointer;
+      opacity: 0.7;
+      transition: var(--transition);
+      user-select: none;
+      margin-top: 6px;
+      display: inline-block;
+      padding: 6px 0;
+      font-weight: 500;
+    }
+    .react-trigger:hover { opacity: 1; }
+
+    /* ───── Inline Star Picker ───── */
+    .star-picker-overlay {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: var(--overlay-bg);
+      backdrop-filter: blur(4px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+      animation: fadeIn 0.2s ease;
+    }
+
+    .star-picker-modal {
+      background: var(--card-bg);
+      border-radius: 12px;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+      max-width: 380px;
+      width: 90%;
+      padding: 28px;
+      animation: slideUp 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      text-align: center;
+    }
+
+    .star-picker-title {
+      font-size: 1rem;
+      font-weight: 700;
+      margin-bottom: 4px;
+      letter-spacing: -0.01em;
+      color: var(--text);
+    }
+
+    .star-picker-subtitle {
+      font-size: 0.8125rem;
+      color: var(--text-secondary);
+      margin-bottom: 20px;
+    }
+
+    .star-picker-stars {
+      display: flex;
+      justify-content: center;
+      gap: 2px;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+    }
+
+    .star-btn {
+      width: 38px;
+      height: 38px;
+      border: none;
+      background: none;
+      font-size: 1.5rem;
+      cursor: pointer;
+      border-radius: 4px;
+      transition: var(--transition);
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+    .star-btn:hover { background: var(--border-light); transform: scale(1.15); }
+    .star-btn.active { color: #f59e0b; }
+    .star-btn.half-active { color: #f59e0b; }
+
+    .star-btn-label {
+      position: absolute;
+      bottom: -14px;
+      font-size: 0.5625rem;
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+
+    .star-picker-display {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: var(--accent);
+      margin-bottom: 20px;
+      min-height: 1.5em;
+    }
+
+    .star-picker-actions {
+      display: flex;
+      gap: 10px;
+    }
+
+    .star-picker-actions button {
+      flex: 1;
+      padding: 10px 16px;
+      border-radius: 8px;
+      font-size: 0.875rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: var(--transition);
+      border: none;
+      font-family: 'Inter', sans-serif;
+    }
+
+    .star-picker-cancel {
+      background: var(--border-light);
+      color: var(--text-secondary);
+    }
+    .star-picker-cancel:hover { background: var(--border); color: var(--text); }
+
+    .star-picker-confirm {
+      background: var(--accent);
+      color: white;
+      box-shadow: var(--shadow);
+    }
+    .star-picker-confirm:hover { background: var(--accent-hover); box-shadow: var(--shadow-lg); }
+    .star-picker-confirm:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    .star-picker-remove {
+      width: 100%;
+      margin-top: 8px;
+      padding: 8px;
+      border: none;
+      background: none;
+      color: var(--text-muted);
+      font-size: 0.75rem;
+      font-weight: 600;
+      cursor: pointer;
+      border-radius: 6px;
+      font-family: 'Inter', sans-serif;
+      transition: var(--transition);
+    }
+    .star-picker-remove:hover { color: #dc2626; background: rgba(220, 38, 38, 0.06); }
+
+    /* ───── Discussion ───── */
+    .discussion-trigger {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 0;
+      margin-top: 16px;
+      cursor: pointer;
+      user-select: none;
+      transition: var(--transition);
+      color: var(--text-secondary);
+      font-size: 0.8125rem;
+      font-weight: 600;
+      border-top: 1px solid var(--border-light);
+    }
+    .discussion-trigger:hover { color: var(--accent); }
+    .discussion-trigger.has-notes { color: var(--text); }
+
+    .discussion-count { display: flex; align-items: center; gap: 6px; }
+
+    .chevron {
+      font-size: 0.75rem;
+      transition: transform 0.2s ease;
+      opacity: 0.6;
+    }
+    .chevron.rotated { transform: rotate(180deg); }
+
+    .discussion-section {
+      display: none;
+      padding: 20px;
+      background: var(--bg-secondary);
+      border-top: 1px solid var(--border);
+    }
+    .discussion-section.expanded { display: block; }
+
+    .discussion-title {
+      font-size: 0.6875rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-bottom: 16px;
+    }
+
+    .note {
+      background: var(--card-bg);
+      padding: 16px;
+      border-radius: 6px;
+      margin-bottom: 12px;
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow);
+      transition: var(--transition);
+    }
+    .note:hover { box-shadow: var(--shadow-lg); }
+    .note:last-of-type { margin-bottom: 0; }
+
+    .note-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+
+    .note-author {
+      font-size: 0.6875rem;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+    .note-author.greg { color: var(--greg); }
+    .note-author.peer { color: var(--peer); }
+
+    .note-meta { display: flex; align-items: center; gap: 10px; }
+
+    .note-time { font-size: 0.6875rem; color: var(--text-muted); }
+
+    .note-delete {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      cursor: pointer;
+      opacity: 0;
+      transition: var(--transition);
+      padding: 6px 10px;
+      border-radius: 4px;
+    }
+    .note:hover .note-delete { opacity: 0.5; }
+    .note-delete:hover { opacity: 1 !important; background: var(--border-light); color: var(--text); }
+
+    .note-text {
+      font-size: 0.9375rem;
+      line-height: 1.5;
+      color: var(--text);
+      letter-spacing: -0.01em;
+    }
+
+    .note-form { margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border); }
+
+    .note-input {
+      width: 100%;
+      padding: 12px 14px;
+      border: 1px solid var(--border);
+      font-family: 'Inter', sans-serif;
+      font-size: 0.9375rem;
+      resize: vertical;
+      min-height: 80px;
+      border-radius: 6px;
+      background: var(--card-bg);
+      color: var(--text);
+      transition: var(--transition);
+      line-height: 1.5;
+    }
+    .note-input:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.08);
+    }
+
+    .note-submit {
+      background: var(--accent);
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      font-size: 0.8125rem;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      cursor: pointer;
+      margin-top: 10px;
+      border-radius: 6px;
+      transition: var(--transition);
+      box-shadow: var(--shadow);
+      font-family: 'Inter', sans-serif;
+    }
+    .note-submit:hover { background: var(--accent-hover); box-shadow: var(--shadow-lg); transform: translateY(-1px); }
+    .note-submit:active { transform: translateY(0); }
+
+    /* ───── Reaction Picker ───── */
+    .reaction-picker {
+      display: flex;
+      gap: 8px;
+      margin-top: 10px;
+      padding: 10px;
+      background: var(--card-bg);
+      border-radius: 8px;
+      box-shadow: var(--shadow-lg);
+      border: 1px solid var(--border);
+      flex-wrap: wrap;
+    }
+
+    .reaction-option {
+      font-size: 1.375rem;
+      cursor: pointer;
+      opacity: 0.5;
+      transition: var(--transition);
+      padding: 8px 10px;
+      border-radius: 6px;
+    }
+    .reaction-option:hover {
+      opacity: 1;
+      transform: scale(1.12);
+      background: var(--border-light);
+    }
+
+    /* ───── Login Modal ───── */
+    .modal-overlay {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: var(--overlay-bg);
+      backdrop-filter: blur(4px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+      animation: fadeIn 0.2s ease;
+    }
+    .modal-overlay.visible { display: flex; }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    .login-modal {
+      background: var(--card-bg);
+      border-radius: 12px;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+      max-width: 400px;
+      width: 90%;
+      padding: 32px;
+      animation: slideUp 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .modal-title {
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin-bottom: 8px;
+      letter-spacing: -0.02em;
+      color: var(--text);
+    }
+
+    .modal-subtitle {
+      font-size: 0.9375rem;
+      color: var(--text-secondary);
+      margin-bottom: 28px;
+      line-height: 1.5;
+    }
+
+    .reviewer-select { margin-bottom: 24px; }
+
+    .reviewer-label {
+      font-size: 0.8125rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      margin-bottom: 12px;
+      display: block;
+      letter-spacing: 0.01em;
+    }
+
+    .reviewer-options { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+    .reviewer-option {
+      padding: 16px;
+      border: 2px solid var(--border);
+      border-radius: 8px;
+      cursor: pointer;
+      transition: var(--transition);
+      text-align: center;
+      font-weight: 600;
+      font-size: 0.9375rem;
+      background: var(--card-bg);
+      user-select: none;
+    }
+    .reviewer-option:hover { border-color: var(--accent); background: var(--border-light); }
+    .reviewer-option.selected { border-color: var(--accent); background: rgba(37, 99, 235, 0.08); color: var(--accent); }
+    .reviewer-option.greg.selected { border-color: var(--greg); background: rgba(234, 88, 12, 0.08); color: var(--greg); }
+
+    .password-field { margin-bottom: 24px; }
+
+    .password-label {
+      font-size: 0.8125rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      margin-bottom: 8px;
+      display: block;
+      letter-spacing: 0.01em;
+    }
+
+    .password-input {
+      width: 100%;
+      padding: 12px 14px;
+      border: 2px solid var(--border);
+      border-radius: 8px;
+      font-family: 'Inter', sans-serif;
+      font-size: 0.9375rem;
+      transition: var(--transition);
+      background: var(--card-bg);
+      color: var(--text);
+    }
+    .password-input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.08); }
+
+    .modal-actions { display: flex; gap: 12px; }
+
+    .modal-btn {
+      flex: 1;
+      padding: 12px 20px;
+      border-radius: 8px;
+      font-size: 0.9375rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: var(--transition);
+      border: none;
+      font-family: 'Inter', sans-serif;
+    }
+    .modal-btn-primary { background: var(--accent); color: white; box-shadow: var(--shadow); }
+    .modal-btn-primary:hover:not(:disabled) { background: var(--accent-hover); box-shadow: var(--shadow-lg); transform: translateY(-1px); }
+    .modal-btn-primary:active:not(:disabled) { transform: translateY(0); }
+    .modal-btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+    .modal-btn-secondary { background: var(--border-light); color: var(--text-secondary); }
+    .modal-btn-secondary:hover { background: var(--border); color: var(--text); }
+
+    .error-message { color: #dc2626; font-size: 0.8125rem; margin-top: 8px; display: none; }
+    .error-message.visible { display: block; }
+
+    /* ───── Skeleton Loading ───── */
+    .skeleton-card {
+      background: var(--card-bg);
+      border-radius: var(--radius);
+      overflow: hidden;
+      border: 1px solid var(--border);
+    }
+
+    .skeleton-poster {
+      aspect-ratio: 2/3;
+      background: linear-gradient(90deg, var(--skeleton-from) 25%, var(--skeleton-to) 50%, var(--skeleton-from) 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.5s infinite;
+    }
+
+    .skeleton-content { padding: 20px; }
+
+    .skeleton-line {
+      height: 14px;
+      background: linear-gradient(90deg, var(--skeleton-from) 25%, var(--skeleton-to) 50%, var(--skeleton-from) 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.5s infinite;
+      border-radius: 4px;
+      margin-bottom: 12px;
+    }
+    .skeleton-line.short { width: 60%; }
+    .skeleton-line.medium { width: 80%; }
+
+    @keyframes shimmer {
+      0% { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
+    }
+
+    /* ───── No Results ───── */
+    .no-results {
+      grid-column: 1 / -1;
+      text-align: center;
+      padding: 80px 20px;
+      color: var(--text-secondary);
+    }
+    .no-results-icon { font-size: 3rem; margin-bottom: 16px; opacity: 0.5; }
+    .no-results-text { font-size: 1.125rem; font-weight: 600; margin-bottom: 8px; }
+    .no-results-hint { font-size: 0.9375rem; color: var(--text-muted); }
+
+    /* ───── Error Log ───── */
+    #error-log {
+      position: fixed;
+      bottom: 16px;
+      left: 16px;
+      font-size: 0.75rem;
+      color: #dc2626;
+      background: var(--card-bg);
+      padding: 12px 16px;
+      z-index: 1000;
+      max-width: 400px;
+      border-radius: 8px;
+      box-shadow: var(--shadow-lg);
+      border: 1px solid #fee2e2;
+      display: none;
+    }
+
+    /* ───── Responsive: Tablet ───── */
+    @media (max-width: 900px) {
+      .grid { grid-template-columns: 1fr 1fr; gap: 24px; }
+      .stats-bar { grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 12px; }
+    }
+
+    /* ───── Responsive: Mobile ───── */
+    @media (max-width: 600px) {
+      .container { padding: 0 16px; }
+
+      nav {
+        flex-direction: column;
+        gap: 16px;
+        align-items: flex-start;
+        padding: 20px 0;
+        margin-bottom: 24px;
+      }
+
+      .nav-controls {
+        width: 100%;
+        justify-content: space-between;
+      }
+
+      .brand { font-size: 1.25rem; }
+
+      header { margin-bottom: 24px; }
+      .page-title { font-size: 2rem; }
+      .tagline { font-size: 0.9375rem; }
+
+      .stats-bar {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+        margin-bottom: 20px;
+      }
+      .stat-card { padding: 12px 14px; }
+      .stat-value { font-size: 1.25rem; }
+      .stat-label { font-size: 0.625rem; }
+
+      .toolbar { gap: 10px; margin-bottom: 20px; }
+      .search-input { font-size: 0.875rem; padding: 10px 12px 10px 36px; }
+      .sort-select { font-size: 0.75rem; padding: 10px 28px 10px 12px; }
+
+      .filter-chips { gap: 6px; }
+      .filter-chip { padding: 5px 10px; font-size: 0.6875rem; }
+
+      .grid { grid-template-columns: 1fr; gap: 20px; }
+
+      .entry-content { padding: 16px; }
+      .entry-title { font-size: 1rem; margin-bottom: 12px; }
+
+      .discussion-section { padding: 14px; }
+      .note { padding: 12px; }
+      .note-input { min-height: 60px; font-size: 0.875rem; }
+
+      .reaction-picker { gap: 6px; padding: 8px; justify-content: center; }
+      .reaction-option { padding: 6px 8px; font-size: 1.2rem; }
+
+      .rating-value.editable { padding: 8px 12px; margin: -8px -12px; }
+      .react-trigger { padding: 8px 0; }
+      .note-delete { opacity: 0.5; padding: 8px 12px; }
+
+      .login-modal { padding: 24px 20px; }
+      .modal-title { font-size: 1.25rem; }
+      .modal-subtitle { font-size: 0.875rem; margin-bottom: 20px; }
+      .reviewer-option { padding: 12px; font-size: 0.875rem; }
+
+      .star-picker-modal { padding: 24px 20px; }
+      .star-btn { width: 34px; height: 34px; font-size: 1.3rem; }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <nav>
+      <a href="index.html" class="brand">DUFIVE</a>
+      <div class="nav-controls">
+        <button id="theme-toggle" class="theme-toggle" title="Toggle dark mode" aria-label="Toggle dark mode">
+          <span id="theme-icon">&#9790;</span>
+        </button>
+        <div class="auth-controls">
+          <div id="auth-btn" class="login-trigger">Reviewer Login</div>
+          <div id="logout-btn" class="logout-btn">Logout</div>
+        </div>
+      </div>
+    </nav>
+
+    <header>
+      <h1 class="page-title">The Ledger</h1>
+      <p class="tagline">Rated in stars, not words.</p>
+    </header>
+
+    <!-- Stats Dashboard -->
+    <div class="stats-bar" id="stats-bar">
+      <div class="stat-card">
+        <div class="stat-value" id="stat-total">—</div>
+        <div class="stat-label">Total Films</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value greg-color" id="stat-greg-avg">—</div>
+        <div class="stat-label">Greg Avg</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value peer-color" id="stat-peer-avg">—</div>
+        <div class="stat-label">Peer Avg</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value accent-color" id="stat-agreement">—</div>
+        <div class="stat-label">Agreement</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" id="stat-controversial">—</div>
+        <div class="stat-label">Most Debated</div>
+      </div>
+    </div>
+
+    <!-- Toolbar: Search + Sort + Filters -->
+    <div class="toolbar">
+      <div class="search-wrapper">
+        <span class="search-icon">&#128270;</span>
+        <input type="text" class="search-input" id="search-input" placeholder="Search films..." autocomplete="off" />
+      </div>
+      <select class="sort-select" id="sort-select">
+        <option value="date">Newest First</option>
+        <option value="greg-high">Greg: High → Low</option>
+        <option value="greg-low">Greg: Low → High</option>
+        <option value="peer-high">Peer: High → Low</option>
+        <option value="peer-low">Peer: Low → High</option>
+        <option value="gap">Biggest Disagreement</option>
+      </select>
+    </div>
+    <div class="filter-chips" id="filter-chips">
+      <div class="filter-chip active" data-filter="all">All</div>
+      <div class="filter-chip" data-filter="both-rated">Both Rated</div>
+      <div class="filter-chip" data-filter="peer-unrated">Peer Unrated</div>
+      <div class="filter-chip" data-filter="disagree">Disagree (2+ gap)</div>
+    </div>
+
+    <main class="grid" id="ledger-grid" style="margin-top: 24px;">
+      <!-- Skeleton loading -->
+    </main>
+  </div>
+
+  <div id="error-log"></div>
+
+  <!-- Login Modal -->
+  <div id="login-modal" class="modal-overlay">
+    <div class="login-modal">
+      <h2 class="modal-title">Reviewer Login</h2>
+      <p class="modal-subtitle">Choose your profile and enter your access key to participate in ratings and discussions.</p>
+      <div class="reviewer-select">
+        <label class="reviewer-label">Select Reviewer</label>
+        <div class="reviewer-options">
+          <div class="reviewer-option greg" data-reviewer="greg">Greg</div>
+          <div class="reviewer-option peer" data-reviewer="peer">Peer</div>
+        </div>
+      </div>
+      <div class="password-field">
+        <label class="password-label">Access Key</label>
+        <input type="password" id="password-input" class="password-input" placeholder="Enter your access key" autocomplete="off" />
+        <div id="login-error" class="error-message">Incorrect access key. Please try again.</div>
+      </div>
+      <div class="modal-actions">
+        <button class="modal-btn modal-btn-secondary" onclick="closeLoginModal()">Cancel</button>
+        <button class="modal-btn modal-btn-primary" id="login-submit" disabled>Login</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Star Picker Modal -->
+  <div id="star-picker" class="star-picker-overlay" style="display:none;"></div>
+
+  <script>
+    /* ═══════════════════════════════════════════
+       CONFIG
+    ═══════════════════════════════════════════ */
+    const SB_URL = 'https://brgxorrpfberfcyeugzq.supabase.co';
+    const SB_KEY = 'sb_publishable_VbVFBh-gtIBAbr9Qtp240w_GS8Kn4Jf';
+    const EDGE_FUNCTION_URL = 'https://brgxorrpfberfcyeugzq.supabase.co/functions/v1/fetch-letterboxd-rss';
+    const AUTH_FUNCTION_URL = 'https://brgxorrpfberfcyeugzq.supabase.co/functions/v1/clever-task';
+    const ACTIONS_FUNCTION_URL = 'https://brgxorrpfberfcyeugzq.supabase.co/functions/v1/bright-function';
+
+    const REACTIONS = { fire: '\u{1F525}', agree: '\u{1F91D}', disagree: '\u{1F914}' };
+
+    const supabaseClient = window.supabase.createClient(SB_URL, SB_KEY);
+    const elGrid = document.getElementById('ledger-grid');
+    const elAuthBtn = document.getElementById('auth-btn');
+    const elLogoutBtn = document.getElementById('logout-btn');
+    const elError = document.getElementById('error-log');
+    const elSearch = document.getElementById('search-input');
+    const elSort = document.getElementById('sort-select');
+
+    let currentUser = localStorage.getItem('reviewer');
+    let sessionToken = localStorage.getItem('session_token');
+    let selectedReviewer = null;
+
+    // Cached data for search/sort/filter without refetch
+    let cachedGregItems = [];
+    let cachedPeerMap = {};
+    let cachedReactions = {};
+    let cachedNotesMap = {};
+    let activeFilter = 'all';
+
+    /* ═══════════════════════════════════════════
+       DARK MODE
+    ═══════════════════════════════════════════ */
+    function getTheme() {
+      return localStorage.getItem('dufive-theme') || 'light';
+    }
+    function setTheme(theme) {
+      document.documentElement.setAttribute('data-theme', theme);
+      localStorage.setItem('dufive-theme', theme);
+      document.getElementById('theme-icon').innerHTML = theme === 'dark' ? '&#9788;' : '&#9790;';
+    }
+    setTheme(getTheme());
+
+    document.getElementById('theme-toggle').addEventListener('click', () => {
+      setTheme(getTheme() === 'light' ? 'dark' : 'light');
+    });
+
+    /* ═══════════════════════════════════════════
+       HELPERS
+    ═══════════════════════════════════════════ */
+    function setError(msg) {
+      elError.textContent = msg || '';
+      elError.style.display = msg ? 'block' : 'none';
+    }
+
+    function setAuthUI() {
+      if (currentUser) {
+        elAuthBtn.textContent = `${currentUser.toUpperCase()} \u2022 Online`;
+        elAuthBtn.classList.add(`${currentUser}-active`);
+        elLogoutBtn.classList.add('visible');
+      } else {
+        elAuthBtn.textContent = 'Reviewer Login';
+        elAuthBtn.classList.remove('greg-active', 'peer-active');
+        elLogoutBtn.classList.remove('visible');
+      }
+    }
+
+    function starsFromNumeric(n) {
+      const num = Number(n);
+      if (!Number.isFinite(num) || num <= 0) return null;
+      const full = Math.floor(num);
+      const half = (num - full) >= 0.5 ? '\u00BD' : '';
+      return '\u2605'.repeat(full) + half;
+    }
+
+    function timeAgo(dateString) {
+      const date = new Date(dateString);
+      const now = new Date();
+      const seconds = Math.floor((now - date) / 1000);
+      if (seconds < 60) return 'Just now';
+      if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`;
+      if (seconds < 86400) return `${Math.floor(seconds / 3600)}h ago`;
+      if (seconds < 604800) return `${Math.floor(seconds / 86400)}d ago`;
+      return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    }
+
+    function decodeHtml(html) {
+      const txt = document.createElement('textarea');
+      txt.innerHTML = html;
+      return txt.value;
+    }
+
+    /* ═══════════════════════════════════════════
+       NEW SINCE LAST VISIT
+    ═══════════════════════════════════════════ */
+    function getLastVisit() {
+      const ts = localStorage.getItem('dufive-last-visit');
+      return ts ? new Date(ts) : null;
+    }
+    function setLastVisit() {
+      localStorage.setItem('dufive-last-visit', new Date().toISOString());
+    }
+
+    function isNewSinceLastVisit(dateString) {
+      const lastVisit = getLastVisit();
+      if (!lastVisit) return false;
+      return new Date(dateString) > lastVisit;
+    }
+
+    /* ═══════════════════════════════════════════
+       SKELETON LOADER
+    ═══════════════════════════════════════════ */
+    function showSkeletons(count) {
+      elGrid.innerHTML = '';
+      for (let i = 0; i < count; i++) {
+        const card = document.createElement('div');
+        card.className = 'skeleton-card';
+        card.innerHTML = `
+          <div class="skeleton-poster"></div>
+          <div class="skeleton-content">
+            <div class="skeleton-line medium"></div>
+            <div class="skeleton-line short"></div>
+            <div class="skeleton-line short"></div>
+          </div>
+        `;
+        elGrid.appendChild(card);
+      }
+    }
+
+    /* ═══════════════════════════════════════════
+       STATS DASHBOARD
+    ═══════════════════════════════════════════ */
+    function computeStats(gregItems, peerMap) {
+      const total = gregItems.length;
+      let gregSum = 0, gregCount = 0;
+      let peerSum = 0, peerCount = 0;
+      let agreeCount = 0, bothRated = 0;
+      let maxGap = 0, controversialTitle = '—';
+
+      gregItems.forEach(entry => {
+        const movieKey = entry.link ? entry.link.split('/film/')[1]?.replace('/', '') : entry.title;
+        const gregR = Number(entry.gregRating);
+        const peerR = Number(peerMap[movieKey]);
+
+        if (Number.isFinite(gregR) && gregR > 0) { gregSum += gregR; gregCount++; }
+        if (Number.isFinite(peerR) && peerR > 0) { peerSum += peerR; peerCount++; }
+
+        if (Number.isFinite(gregR) && gregR > 0 && Number.isFinite(peerR) && peerR > 0) {
+          bothRated++;
+          const gap = Math.abs(gregR - peerR);
+          if (gap <= 0.5) agreeCount++;
+          if (gap > maxGap) {
+            maxGap = gap;
+            controversialTitle = decodeHtml(entry.title);
+          }
+        }
+      });
+
+      const gregAvg = gregCount > 0 ? (gregSum / gregCount).toFixed(1) : '—';
+      const peerAvg = peerCount > 0 ? (peerSum / peerCount).toFixed(1) : '—';
+      const agreePct = bothRated > 0 ? Math.round((agreeCount / bothRated) * 100) + '%' : '—';
+
+      document.getElementById('stat-total').textContent = total;
+      document.getElementById('stat-greg-avg').textContent = gregAvg !== '—' ? gregAvg + ' \u2605' : '—';
+      document.getElementById('stat-peer-avg').textContent = peerAvg !== '—' ? peerAvg + ' \u2605' : '—';
+      document.getElementById('stat-agreement').textContent = agreePct;
+
+      const controversialEl = document.getElementById('stat-controversial');
+      if (controversialTitle.length > 18) {
+        controversialEl.textContent = controversialTitle.substring(0, 16) + '...';
+        controversialEl.title = controversialTitle;
+      } else {
+        controversialEl.textContent = controversialTitle;
+      }
+
+      document.getElementById('stats-bar').classList.add('visible');
+    }
+
+    /* ═══════════════════════════════════════════
+       DATA FETCHING
+    ═══════════════════════════════════════════ */
+    async function fetchPeerRatings() {
+      const { data, error } = await supabaseClient.from('ratings').select('movie_key,movie_title,rating');
+      if (error) throw new Error('Ratings Error: ' + error.message);
+      const map = Object.create(null);
+      (data || []).forEach(r => { if (r?.movie_key) map[r.movie_key] = r.rating; });
+      return map;
+    }
+
+    async function fetchGregRssItems() {
+      const res = await fetch(EDGE_FUNCTION_URL);
+      if (!res.ok) throw new Error(`Edge Function Error: ${res.status}`);
+      const data = await res.json();
+      if (data.error) throw new Error(data.error);
+      return data.films;
+    }
+
+    async function fetchReactions() {
+      const { data, error } = await supabaseClient.from('rating_reactions').select('*');
+      if (error) throw new Error('Reactions Error: ' + error.message);
+      const map = {};
+      (data || []).forEach(r => {
+        if (!map[r.movie_key]) map[r.movie_key] = {};
+        map[r.movie_key][r.reactor] = r.reaction;
+      });
+      return map;
+    }
+
+    async function fetchNotes() {
+      const { data, error } = await supabaseClient
+        .from('film_arguments')
+        .select('*')
+        .order('created_at', { ascending: true });
+      if (error) throw new Error('Notes Error: ' + error.message);
+      const map = {};
+      (data || []).forEach(note => {
+        if (!map[note.movie_key]) map[note.movie_key] = [];
+        map[note.movie_key].push(note);
+      });
+      return map;
+    }
+
+    /* ═══════════════════════════════════════════
+       SEARCH / SORT / FILTER
+    ═══════════════════════════════════════════ */
+    function getFilteredAndSorted() {
+      let items = [...cachedGregItems];
+      const searchTerm = elSearch.value.trim().toLowerCase();
+      const sortBy = elSort.value;
+
+      // Search
+      if (searchTerm) {
+        items = items.filter(e => decodeHtml(e.title).toLowerCase().includes(searchTerm));
+      }
+
+      // Filter
+      if (activeFilter === 'both-rated') {
+        items = items.filter(e => {
+          const key = e.link ? e.link.split('/film/')[1]?.replace('/', '') : e.title;
+          const pR = Number(cachedPeerMap[key]);
+          const gR = Number(e.gregRating);
+          return Number.isFinite(gR) && gR > 0 && Number.isFinite(pR) && pR > 0;
+        });
+      } else if (activeFilter === 'peer-unrated') {
+        items = items.filter(e => {
+          const key = e.link ? e.link.split('/film/')[1]?.replace('/', '') : e.title;
+          const pR = Number(cachedPeerMap[key]);
+          return !Number.isFinite(pR) || pR <= 0;
+        });
+      } else if (activeFilter === 'disagree') {
+        items = items.filter(e => {
+          const key = e.link ? e.link.split('/film/')[1]?.replace('/', '') : e.title;
+          const pR = Number(cachedPeerMap[key]);
+          const gR = Number(e.gregRating);
+          return Number.isFinite(gR) && gR > 0 && Number.isFinite(pR) && pR > 0 && Math.abs(gR - pR) >= 2;
+        });
+      }
+
+      // Sort
+      items.sort((a, b) => {
+        const keyA = a.link ? a.link.split('/film/')[1]?.replace('/', '') : a.title;
+        const keyB = b.link ? b.link.split('/film/')[1]?.replace('/', '') : b.title;
+        const gA = Number(a.gregRating) || 0;
+        const gB = Number(b.gregRating) || 0;
+        const pA = Number(cachedPeerMap[keyA]) || 0;
+        const pB = Number(cachedPeerMap[keyB]) || 0;
+
+        switch (sortBy) {
+          case 'greg-high': return gB - gA;
+          case 'greg-low': return gA - gB;
+          case 'peer-high': return pB - pA;
+          case 'peer-low': return pA - pB;
+          case 'gap': {
+            const gapA = (gA > 0 && pA > 0) ? Math.abs(gA - pA) : -1;
+            const gapB = (gB > 0 && pB > 0) ? Math.abs(gB - pB) : -1;
+            return gapB - gapA;
+          }
+          default: return 0; // date order from RSS
+        }
+      });
+
+      return items;
+    }
+
+    function rerender() {
+      const items = getFilteredAndSorted();
+      renderLedger(items, cachedPeerMap, cachedReactions, cachedNotesMap);
+    }
+
+    elSearch.addEventListener('input', rerender);
+    elSort.addEventListener('change', rerender);
+
+    document.querySelectorAll('.filter-chip').forEach(chip => {
+      chip.addEventListener('click', () => {
+        document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+        chip.classList.add('active');
+        activeFilter = chip.dataset.filter;
+        rerender();
+      });
+    });
+
+    /* ═══════════════════════════════════════════
+       RENDER
+    ═══════════════════════════════════════════ */
+    function renderLedger(gregItems, peerMap, reactions, notesMap) {
+      elGrid.innerHTML = '';
+
+      if (gregItems.length === 0) {
+        elGrid.innerHTML = `
+          <div class="no-results">
+            <div class="no-results-icon">\u{1F3AC}</div>
+            <div class="no-results-text">No films found</div>
+            <div class="no-results-hint">Try adjusting your search or filters.</div>
+          </div>
+        `;
+        return;
+      }
+
+      gregItems.forEach((entry, index) => {
+        const title = entry.title;
+        const movieKey = entry.link ? entry.link.split('/film/')[1]?.replace('/', '') : title;
+        const notes = notesMap[movieKey] || [];
+
+        // Check if this entry has new activity
+        const hasNewNotes = notes.some(n => isNewSinceLastVisit(n.created_at));
+        const hasNewReaction = reactions[movieKey] && Object.values(reactions[movieKey]).length > 0;
+
+        const card = document.createElement('div');
+        card.className = 'entry';
+        card.style.animationDelay = `${Math.min(index * 0.05, 0.5)}s`;
+
+        // New badge
+        if (hasNewNotes) {
+          const badge = document.createElement('div');
+          badge.className = 'new-badge';
+          badge.textContent = 'NEW';
+          card.appendChild(badge);
+        }
+
+        const posterFrame = document.createElement('div');
+        posterFrame.className = 'poster-frame';
+        const img = document.createElement('img');
+        img.alt = title;
+        img.loading = 'lazy';
+        img.src = entry.posterUrl || '';
+        posterFrame.appendChild(img);
+
+        const content = document.createElement('div');
+        content.className = 'entry-content';
+
+        const h2 = document.createElement('h2');
+        h2.className = 'entry-title';
+        h2.textContent = decodeHtml(title);
+
+        const ratingsContainer = document.createElement('div');
+        ratingsContainer.className = 'ratings-container';
+
+        // Greg rating row + Peer's reaction
+        const gregRow = document.createElement('div');
+        gregRow.className = 'rating-row';
+        gregRow.innerHTML = `
+          <span class="rating-label">Greg</span>
+          <span class="rating-value">${starsFromNumeric(entry.gregRating) || '\u2014'}</span>
+        `;
+
+        const peerReactionToGreg = reactions[movieKey]?.peer;
+        if (peerReactionToGreg && REACTIONS[peerReactionToGreg]) {
+          const reactionSpan = document.createElement('span');
+          reactionSpan.className = 'reaction' + (currentUser === 'peer' ? ' clickable' : '');
+          reactionSpan.innerHTML = REACTIONS[peerReactionToGreg] + '<sup style="font-size:0.6em;opacity:0.7;margin-left:1px">P</sup>';
+          reactionSpan.title = "Peer's reaction";
+          reactionSpan.dataset.hasReaction = 'true';
+          if (currentUser === 'peer') {
+            reactionSpan.onclick = (e) => { e.stopPropagation(); showReactionPicker(movieKey, 'peer', reactionSpan); };
+          }
+          gregRow.querySelector('.rating-value').appendChild(reactionSpan);
+        }
+        ratingsContainer.appendChild(gregRow);
+
+        // Peer rating row + Greg's reaction
+        const peerRow = document.createElement('div');
+        peerRow.className = 'rating-row';
+
+        const peerStars = starsFromNumeric(peerMap[movieKey]);
+        const peerRating = document.createElement('span');
+
+        if (peerStars) {
+          peerRating.className = 'rating-value' + (currentUser === 'peer' ? ' editable' : '');
+          peerRating.textContent = peerStars;
+          if (currentUser === 'peer') {
+            peerRating.onclick = () => showStarPicker(movieKey, title, peerMap[movieKey]);
+          }
+        } else {
+          peerRating.className = 'rating-value';
+          const unrated = document.createElement('span');
+          unrated.className = 'unrated-prompt' + (currentUser === 'peer' ? ' clickable' : '');
+          unrated.textContent = currentUser === 'peer' ? 'Tap to rate' : '\u2014';
+          if (currentUser === 'peer') {
+            unrated.onclick = () => showStarPicker(movieKey, title, null);
+          }
+          peerRating.appendChild(unrated);
+        }
+
+        peerRating.dataset.movieKey = movieKey;
+        peerRating.dataset.title = title;
+
+        const gregReactionToPeer = reactions[movieKey]?.greg;
+        if (gregReactionToPeer && REACTIONS[gregReactionToPeer]) {
+          const reactionSpan = document.createElement('span');
+          reactionSpan.className = 'reaction' + (currentUser === 'greg' ? ' clickable' : '');
+          reactionSpan.innerHTML = REACTIONS[gregReactionToPeer] + '<sup style="font-size:0.6em;opacity:0.7;margin-left:1px">G</sup>';
+          reactionSpan.title = "Greg's reaction";
+          reactionSpan.dataset.hasReaction = 'true';
+          if (currentUser === 'greg') {
+            reactionSpan.onclick = (e) => { e.stopPropagation(); showReactionPicker(movieKey, 'greg', reactionSpan); };
+          }
+          peerRating.appendChild(reactionSpan);
+        }
+
+        peerRow.innerHTML = '<span class="rating-label">Peer</span>';
+        peerRow.appendChild(peerRating);
+        ratingsContainer.appendChild(peerRow);
+
+        content.appendChild(h2);
+        content.appendChild(ratingsContainer);
+
+        // React triggers
+        if (currentUser === 'peer' && !peerReactionToGreg) {
+          const reactBtn = document.createElement('div');
+          reactBtn.className = 'react-trigger';
+          reactBtn.textContent = 'React to Greg\u2019s rating';
+          reactBtn.onclick = (e) => { e.stopPropagation(); showReactionPicker(movieKey, 'peer', reactBtn); };
+          content.appendChild(reactBtn);
+        }
+        if (currentUser === 'greg' && !gregReactionToPeer) {
+          const reactBtn = document.createElement('div');
+          reactBtn.className = 'react-trigger';
+          reactBtn.textContent = 'React to Peer\u2019s rating';
+          reactBtn.onclick = (e) => { e.stopPropagation(); showReactionPicker(movieKey, 'greg', reactBtn); };
+          content.appendChild(reactBtn);
+        }
+
+        // Discussion
+        if (currentUser || notes.length > 0) {
+          const trigger = document.createElement('div');
+          trigger.className = 'discussion-trigger' + (notes.length > 0 ? ' has-notes' : '');
+          const countSpan = document.createElement('span');
+          countSpan.className = 'discussion-count';
+          countSpan.textContent = notes.length > 0 ? `Discussion (${notes.length})` : 'Add note';
+          const chevron = document.createElement('span');
+          chevron.className = 'chevron';
+          chevron.textContent = '\u25BC';
+          trigger.appendChild(countSpan);
+          trigger.appendChild(chevron);
+
+          const discussionSection = document.createElement('div');
+          discussionSection.className = 'discussion-section';
+
+          if (notes.length > 0) {
+            const discussionTitle = document.createElement('div');
+            discussionTitle.className = 'discussion-title';
+            discussionTitle.textContent = 'Discussion';
+            discussionSection.appendChild(discussionTitle);
+
+            notes.forEach(note => {
+              const noteEl = document.createElement('div');
+              noteEl.className = 'note';
+
+              const noteHeader = document.createElement('div');
+              noteHeader.className = 'note-header';
+
+              const noteAuthor = document.createElement('div');
+              noteAuthor.className = `note-author ${note.author}`;
+              noteAuthor.textContent = note.author.toUpperCase();
+
+              const noteMeta = document.createElement('div');
+              noteMeta.className = 'note-meta';
+
+              const noteTime = document.createElement('span');
+              noteTime.className = 'note-time';
+              noteTime.textContent = timeAgo(note.created_at);
+              noteMeta.appendChild(noteTime);
+
+              if (currentUser && note.author === currentUser) {
+                const delBtn = document.createElement('span');
+                delBtn.className = 'note-delete';
+                delBtn.textContent = '\u2715';
+                delBtn.onclick = (e) => { e.stopPropagation(); deleteNote(note.id); };
+                noteMeta.appendChild(delBtn);
+              }
+
+              noteHeader.appendChild(noteAuthor);
+              noteHeader.appendChild(noteMeta);
+
+              const noteText = document.createElement('div');
+              noteText.className = 'note-text';
+              noteText.textContent = note.argument;
+
+              noteEl.appendChild(noteHeader);
+              noteEl.appendChild(noteText);
+              discussionSection.appendChild(noteEl);
+            });
+          }
+
+          if (currentUser) {
+            const form = document.createElement('div');
+            form.className = 'note-form';
+
+            const input = document.createElement('textarea');
+            input.className = 'note-input';
+            input.placeholder = `Share your thoughts as ${currentUser.toUpperCase()}...`;
+            input.maxLength = 200;
+
+            const submit = document.createElement('button');
+            submit.className = 'note-submit';
+            submit.textContent = 'Post Note';
+            submit.onclick = (e) => {
+              e.stopPropagation();
+              if (input.value.trim()) submitNote(movieKey, input.value.trim());
+            };
+
+            form.appendChild(input);
+            form.appendChild(submit);
+            discussionSection.appendChild(form);
+          }
+
+          trigger.onclick = (e) => {
+            e.stopPropagation();
+            const isExpanded = discussionSection.classList.toggle('expanded');
+            chevron.classList.toggle('rotated', isExpanded);
+          };
+
+          content.appendChild(trigger);
+          card.appendChild(posterFrame);
+          card.appendChild(content);
+          card.appendChild(discussionSection);
+        } else {
+          card.appendChild(posterFrame);
+          card.appendChild(content);
+        }
+
+        elGrid.appendChild(card);
+      });
+    }
+
+    /* ═══════════════════════════════════════════
+       STAR PICKER (replaces prompt)
+    ═══════════════════════════════════════════ */
+    function showStarPicker(movieKey, movieTitle, currentRating) {
+      if (currentUser !== 'peer') return;
+
+      const overlay = document.getElementById('star-picker');
+      let selectedValue = currentRating ? Number(currentRating) : null;
+
+      function buildStarDisplay(val) {
+        if (!val || val <= 0) return 'Select a rating';
+        return starsFromNumeric(val) + ` (${val})`;
+      }
+
+      function renderPicker() {
+        overlay.innerHTML = `
+          <div class="star-picker-modal">
+            <div class="star-picker-title">${decodeHtml(movieTitle)}</div>
+            <div class="star-picker-subtitle">Tap a star to set your rating</div>
+            <div class="star-picker-stars" id="star-buttons"></div>
+            <div class="star-picker-display" id="star-display">${buildStarDisplay(selectedValue)}</div>
+            <div class="star-picker-actions">
+              <button class="star-picker-cancel" id="star-cancel">Cancel</button>
+              <button class="star-picker-confirm" id="star-confirm" ${!selectedValue ? 'disabled' : ''}>Confirm</button>
+            </div>
+            ${currentRating ? '<button class="star-picker-remove" id="star-remove">Remove rating</button>' : ''}
+          </div>
+        `;
+
+        const starsContainer = document.getElementById('star-buttons');
+        // Half-star increments: 0.5, 1, 1.5, 2, ... 5
+        for (let val = 0.5; val <= 5; val += 0.5) {
+          const btn = document.createElement('button');
+          btn.className = 'star-btn';
+          const isHalf = val % 1 !== 0;
+          btn.textContent = isHalf ? '\u00BD' : '\u2605';
+          if (selectedValue && val <= selectedValue) {
+            btn.classList.add('active');
+          }
+          btn.onclick = () => {
+            selectedValue = val;
+            // Update active states
+            starsContainer.querySelectorAll('.star-btn').forEach((b, i) => {
+              const bVal = (i + 1) * 0.5;
+              b.classList.toggle('active', bVal <= val);
+            });
+            document.getElementById('star-display').textContent = buildStarDisplay(val);
+            document.getElementById('star-confirm').disabled = false;
+          };
+          starsContainer.appendChild(btn);
+        }
+
+        document.getElementById('star-cancel').onclick = () => { overlay.style.display = 'none'; };
+        document.getElementById('star-confirm').onclick = async () => {
+          overlay.style.display = 'none';
+          if (selectedValue) await submitRating(movieKey, movieTitle, selectedValue);
+        };
+
+        const removeBtn = document.getElementById('star-remove');
+        if (removeBtn) {
+          removeBtn.onclick = async () => {
+            overlay.style.display = 'none';
+            await submitRating(movieKey, movieTitle, 0);
+          };
+        }
+
+        // Close on overlay click
+        overlay.onclick = (e) => {
+          if (e.target === overlay) overlay.style.display = 'none';
+        };
+      }
+
+      renderPicker();
+      overlay.style.display = 'flex';
+    }
+
+    /* ═══════════════════════════════════════════
+       REACTION PICKER
+    ═══════════════════════════════════════════ */
+    function showReactionPicker(movieKey, reactor, triggerElement) {
+      document.querySelectorAll('.reaction-picker').forEach(p => p.remove());
+
+      const picker = document.createElement('div');
+      picker.className = 'reaction-picker';
+
+      const hasExisting = triggerElement?.dataset?.hasReaction === 'true';
+
+      if (hasExisting) {
+        const removeOpt = document.createElement('span');
+        removeOpt.className = 'reaction-option';
+        removeOpt.textContent = '\u2715';
+        removeOpt.title = 'Remove reaction';
+        removeOpt.onclick = (e) => { e.stopPropagation(); deleteReaction(movieKey, reactor); };
+        picker.appendChild(removeOpt);
+      }
+
+      Object.entries(REACTIONS).forEach(([key, emoji]) => {
+        const opt = document.createElement('span');
+        opt.className = 'reaction-option';
+        opt.textContent = emoji;
+        opt.title = key;
+        opt.onclick = (e) => { e.stopPropagation(); saveReaction(movieKey, reactor, key); };
+        picker.appendChild(opt);
+      });
+
+      triggerElement.parentElement.appendChild(picker);
+
+      setTimeout(() => {
+        document.addEventListener('click', function closeHandler(e) {
+          if (!picker.contains(e.target)) {
+            picker.remove();
+            document.removeEventListener('click', closeHandler);
+          }
+        });
+      }, 0);
+    }
+
+    /* ═══════════════════════════════════════════
+       AUTHENTICATED ACTIONS
+    ═══════════════════════════════════════════ */
+    async function authenticatedRequest(action, movieKey, data) {
+      if (!sessionToken) {
+        alert('Session expired. Please login again.');
+        logout();
+        return null;
+      }
+
+      const res = await fetch(ACTIONS_FUNCTION_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${sessionToken}`
+        },
+        body: JSON.stringify({ action, movieKey, data })
+      });
+
+      if (res.status === 401) {
+        alert('Session expired. Please login again.');
+        logout();
+        return null;
+      }
+
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.error || 'Request failed');
+      }
+
+      return await res.json();
+    }
+
+    async function saveReaction(movieKey, reactor, reaction) {
+      try {
+        await authenticatedRequest('save_reaction', movieKey, { reaction });
+        await loadArchive(true);
+      } catch (e) { alert('Error: ' + e.message); }
+    }
+
+    async function deleteReaction(movieKey, reactor) {
+      try {
+        await authenticatedRequest('delete_reaction', movieKey, {});
+        await loadArchive(true);
+      } catch (e) { alert('Error: ' + e.message); }
+    }
+
+    async function submitNote(movieKey, text) {
+      if (!text.trim()) return alert('Please enter a note.');
+      try {
+        await authenticatedRequest('post_note', movieKey, { text });
+        await loadArchive(true);
+      } catch (e) { alert('Error: ' + e.message); }
+    }
+
+    async function deleteNote(noteId) {
+      if (!confirm('Delete this note?')) return;
+      try {
+        await authenticatedRequest('delete_note', '', { noteId });
+        await loadArchive(true);
+      } catch (e) { alert('Error: ' + e.message); }
+    }
+
+    async function submitRating(movieKey, movieTitle, rating) {
+      if (currentUser !== 'peer') return;
+      try {
+        await authenticatedRequest('rate', movieKey, { rating, movieTitle });
+        await loadArchive(true);
+      } catch (e) { alert('Error: ' + e.message); }
+    }
+
+    /* ═══════════════════════════════════════════
+       MAIN LOAD
+    ═══════════════════════════════════════════ */
+    async function loadArchive(preserveScroll = false) {
+      setError('');
+      const scrollY = preserveScroll ? window.scrollY : 0;
+
+      if (!preserveScroll) {
+        showSkeletons(6);
+      }
+
+      try {
+        const [peerMap, gregItems, reactions, notesMap] = await Promise.all([
+          fetchPeerRatings(),
+          fetchGregRssItems(),
+          fetchReactions(),
+          fetchNotes()
+        ]);
+
+        // Cache data for local search/sort/filter
+        cachedGregItems = gregItems;
+        cachedPeerMap = peerMap;
+        cachedReactions = reactions;
+        cachedNotesMap = notesMap;
+
+        computeStats(gregItems, peerMap);
+
+        const items = getFilteredAndSorted();
+        renderLedger(items, peerMap, reactions, notesMap);
+
+        // Mark visit after successful load
+        setLastVisit();
+
+        if (preserveScroll) {
+          window.scrollTo(0, scrollY);
+        }
+      } catch (e) {
+        setError(e?.message || String(e));
+        console.error('Error:', e);
+      }
+    }
+
+    /* ═══════════════════════════════════════════
+       LOGIN / LOGOUT
+    ═══════════════════════════════════════════ */
+    function showLoginModal() {
+      if (currentUser) return;
+
+      const modal = document.getElementById('login-modal');
+      const passwordInput = document.getElementById('password-input');
+      const errorMsg = document.getElementById('login-error');
+
+      selectedReviewer = null;
+      passwordInput.value = '';
+      errorMsg.classList.remove('visible');
+      document.querySelectorAll('.reviewer-option').forEach(opt => opt.classList.remove('selected'));
+      document.getElementById('login-submit').disabled = true;
+
+      modal.classList.add('visible');
+    }
+
+    function closeLoginModal() {
+      document.getElementById('login-modal').classList.remove('visible');
+      selectedReviewer = null;
+    }
+
+    function selectReviewer(reviewer) {
+      selectedReviewer = reviewer;
+      document.querySelectorAll('.reviewer-option').forEach(opt => opt.classList.remove('selected'));
+      document.querySelector(`.reviewer-option[data-reviewer="${reviewer}"]`).classList.add('selected');
+      const password = document.getElementById('password-input').value;
+      document.getElementById('login-submit').disabled = !password;
+      document.getElementById('password-input').focus();
+    }
+
+    async function attemptLogin() {
+      const password = document.getElementById('password-input').value;
+      const errorMsg = document.getElementById('login-error');
+      const submitBtn = document.getElementById('login-submit');
+
+      if (!selectedReviewer) return alert('Please select a reviewer');
+      if (!password) return alert('Please enter an access key');
+
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Logging in...';
+
+      try {
+        const res = await fetch(`${AUTH_FUNCTION_URL}?action=login`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ reviewer: selectedReviewer, password })
+        });
+
+        const data = await res.json();
+
+        if (!res.ok || data.error) {
+          errorMsg.classList.add('visible');
+          document.getElementById('password-input').value = '';
+          document.getElementById('password-input').focus();
+          submitBtn.disabled = false;
+          submitBtn.textContent = 'Login';
+          return;
+        }
+
+        currentUser = data.reviewer;
+        sessionToken = data.token;
+        localStorage.setItem('reviewer', data.reviewer);
+        localStorage.setItem('session_token', data.token);
+
+        closeLoginModal();
+        setAuthUI();
+        await loadArchive();
+      } catch (e) {
+        alert('Login failed: ' + e.message);
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Login';
+      }
+    }
+
+    async function logout() {
+      if (!confirm('Log out?')) return;
+
+      try {
+        if (sessionToken) {
+          await fetch(`${AUTH_FUNCTION_URL}?action=logout`, {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${sessionToken}` }
+          });
+        }
+      } catch (e) { console.error('Logout error:', e); }
+
+      currentUser = null;
+      sessionToken = null;
+      localStorage.removeItem('reviewer');
+      localStorage.removeItem('session_token');
+      setAuthUI();
+      loadArchive();
+    }
+
+    /* ═══════════════════════════════════════════
+       INIT
+    ═══════════════════════════════════════════ */
+    document.addEventListener('DOMContentLoaded', () => {
+      document.querySelectorAll('.reviewer-option').forEach(option => {
+        option.addEventListener('click', () => selectReviewer(option.dataset.reviewer));
+      });
+
+      const passwordInput = document.getElementById('password-input');
+      passwordInput.addEventListener('input', () => {
+        const hasPassword = passwordInput.value.length > 0;
+        document.getElementById('login-submit').disabled = !selectedReviewer || !hasPassword;
+        document.getElementById('login-error').classList.remove('visible');
+      });
+
+      passwordInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter' && selectedReviewer && passwordInput.value) attemptLogin();
+      });
+
+      document.getElementById('login-submit').addEventListener('click', attemptLogin);
+
+      document.getElementById('login-modal').addEventListener('click', (e) => {
+        if (e.target.id === 'login-modal') closeLoginModal();
+      });
+
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+          if (document.getElementById('login-modal').classList.contains('visible')) closeLoginModal();
+          const starPicker = document.getElementById('star-picker');
+          if (starPicker.style.display === 'flex') starPicker.style.display = 'none';
+        }
+      });
+    });
+
+    elAuthBtn.addEventListener('click', showLoginModal);
+    elLogoutBtn.addEventListener('click', logout);
+
+    setAuthUI();
+    loadArchive();
+  </script>
+</body>
+</html>
