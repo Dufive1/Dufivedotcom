@@ -36,10 +36,7 @@
     #error-log { position: fixed; bottom: 10px; left: 10px; font-size: 10px; color: red; background: rgba(255,255,255,0.9); padding: 5px; z-index: 100; max-width: 60vw; overflow: auto; }
 
     @media (max-width: 900px) { .grid { grid-template-columns: 1fr 1fr; } }
-    @media (max-width: 600px) {
-      .grid { grid-template-columns: 1fr; }
-      .container { padding: 0 20px; }
-    }
+    @media (max-width: 600px) { .grid { grid-template-columns: 1fr; } .container { padding: 0 20px; } }
   </style>
 </head>
 
@@ -62,13 +59,10 @@
   <div id="error-log"></div>
 
   <script>
-    // Config
     const SB_URL = 'https://brgxorrpfberfcyeugzq.supabase.co';
     const SB_KEY = 'sb_publishable_VbVFBh-gtIBAbr9Qtp240w_GS8Kn4Jf';
-    const GREG_RSS = 'https://letterboxd.com/gdufore/rss/';
-    const PEER_PASS = 'cinema2026';
 
-    // Create Supabase client (avoid naming collision with global)
+    const PEER_PASS = 'cinema2026';
     const supabaseClient = window.supabase.createClient(SB_URL, SB_KEY);
 
     const elGrid = document.getElementById('ledger-grid');
@@ -77,9 +71,7 @@
 
     let isPeerAuthenticated = sessionStorage.getItem('peer_authed') === '1';
 
-    function setError(msg) {
-      elError.textContent = msg || '';
-    }
+    function setError(msg) { elError.textContent = msg || ''; }
 
     function setAuthUI() {
       if (isPeerAuthenticated) {
@@ -91,23 +83,15 @@
       }
     }
 
-    function isSafeHttpUrl(url) {
-      try {
-        const u = new URL(url);
-        return u.protocol === 'http:' || u.protocol === 'https:';
-      } catch {
-        return false;
-      }
+    function starsFromRating(n) {
+      const num = Number(n);
+      if (!Number.isFinite(num) || num <= 0) return '—';
+      const full = Math.floor(num);
+      const half = (num - full) >= 0.5 ? '½' : '';
+      return '★'.repeat(full) + half;
     }
 
-    function gregRatingFromDescription(desc) {
-      const stars = (desc.match(/★/g) || []).length;
-      const half = desc.includes('½') ? '½' : '';
-      const out = '★'.repeat(stars) + half;
-      return out || '—';
-    }
-
-    function peerRatingDisplay(n) {
+    function peerStars(n) {
       const num = Number(n);
       if (Number.isInteger(num) && num >= 1 && num <= 5) return '★'.repeat(num);
       return '—';
@@ -121,54 +105,34 @@
       elGrid.appendChild(loader);
     }
 
-    async function loadArchive() {
+    async function loadLedger() {
       setError('');
       clearGridToLoader('Consulting the archives...');
 
       try {
-        // 1) Peer ratings
-        const { data: pRatings, error: sbError } = await supabaseClient
-          .from('ratings')
-          .select('movie_title,rating');
+        // 1) Pull Greg watches (your backfilled + maintained dataset)
+        const { data: watches, error: wErr } = await supabaseClient
+          .from('greg_watches')
+          .select('movie_key,title,poster_url,letterboxd_url,greg_rating')
+          .order('watched_date', { ascending: false })
+          .limit(2000);
 
-        if (sbError) {
-          setError('Supabase Error: ' + sbError.message);
-          return;
-        }
+        if (wErr) { setError('Supabase (greg_watches) Error: ' + wErr.message); return; }
+
+        // 2) Pull Peer ratings
+        const { data: ratings, error: rErr } = await supabaseClient
+          .from('ratings')
+          .select('movie_key,rating');
+
+        if (rErr) { setError('Supabase (ratings) Error: ' + rErr.message); return; }
 
         const peerMap = Object.create(null);
-        (pRatings || []).forEach(r => {
-          if (r && typeof r.movie_title === 'string') peerMap[r.movie_title] = r.rating;
-        });
-
-        // 2) Greg RSS via rss2json (3rd party)
-        const rssRes = await fetch(
-          `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(GREG_RSS)}&count=50`
-        );
-
-        if (!rssRes.ok) {
-          setError('RSS Fetch Error: HTTP ' + rssRes.status);
-          return;
-        }
-
-        const gregData = await rssRes.json();
-        const items = Array.isArray(gregData.items) ? gregData.items : [];
+        (ratings || []).forEach(r => { if (r?.movie_key) peerMap[r.movie_key] = r.rating; });
 
         // 3) Render
         elGrid.innerHTML = '';
 
-        for (const item of items) {
-          const title = (item && typeof item.title === 'string') ? item.title : 'Untitled';
-          const desc = (item && typeof item.description === 'string') ? item.description : '';
-
-          const gRating = gregRatingFromDescription(desc);
-          const pRatingRaw = peerMap[title];
-          const pRating = peerRatingDisplay(pRatingRaw);
-
-          // Attempt to extract poster url from description
-          const imgMatch = desc.match(/<img[^>]+src="([^">]+)"/);
-          const imgUrl = imgMatch && imgMatch[1] ? imgMatch[1] : '';
-
+        (watches || []).forEach(w => {
           const entry = document.createElement('div');
           entry.className = 'entry';
 
@@ -176,26 +140,26 @@
           posterFrame.className = 'poster-frame';
 
           const img = document.createElement('img');
-          img.alt = title;
-
-          if (imgUrl && isSafeHttpUrl(imgUrl)) img.src = imgUrl;
+          img.alt = w.title || '';
+          if (w.poster_url) img.src = w.poster_url;
           posterFrame.appendChild(img);
 
           const h2 = document.createElement('h2');
           h2.className = 'entry-title';
-          h2.textContent = title;
+          h2.textContent = w.title || 'Untitled';
 
           const ratingBox = document.createElement('div');
           ratingBox.className = 'rating-box';
 
           const rowG = document.createElement('div');
           rowG.className = 'row';
+          rowG.innerHTML = '';
           const gLabel = document.createElement('span');
           gLabel.className = 'label';
           gLabel.textContent = 'GREG';
           const gVal = document.createElement('span');
           gVal.className = 'val';
-          gVal.textContent = gRating;
+          gVal.textContent = starsFromRating(w.greg_rating);
           rowG.appendChild(gLabel);
           rowG.appendChild(gVal);
 
@@ -204,10 +168,13 @@
           const pLabel = document.createElement('span');
           pLabel.className = 'label';
           pLabel.textContent = 'PEER';
+
           const pVal = document.createElement('span');
           pVal.className = 'val p-val' + (isPeerAuthenticated ? ' editable' : '');
-          pVal.textContent = pRating;
-          pVal.dataset.title = title;
+          pVal.textContent = peerStars(peerMap[w.movie_key]);
+          pVal.dataset.movieKey = w.movie_key;
+          pVal.dataset.title = w.title || '';
+
           rowP.appendChild(pLabel);
           rowP.appendChild(pVal);
 
@@ -219,36 +186,32 @@
           entry.appendChild(ratingBox);
 
           elGrid.appendChild(entry);
-        }
-      } catch (err) {
-        setError('Script Error: ' + (err && err.message ? err.message : String(err)));
+        });
+
+      } catch (e) {
+        setError('Script Error: ' + (e?.message || String(e)));
       }
     }
 
-    async function submitRating(movieTitle) {
+    async function submitRating(movieKey, title) {
       if (!isPeerAuthenticated) return;
 
-      const score = prompt(`Rate "${movieTitle}" (1-5):`);
+      const score = prompt(`Rate "${title}" (1-5):`);
       if (score === null) return;
-
       if (score.trim() === '') return;
 
-      const numScore = parseInt(score, 10);
-      if (!Number.isInteger(numScore) || numScore < 1 || numScore > 5) {
+      const num = parseInt(score, 10);
+      if (!Number.isInteger(num) || num < 1 || num > 5) {
         alert('Please enter a whole number between 1 and 5.');
         return;
       }
 
       const { error } = await supabaseClient
         .from('ratings')
-        .upsert({ movie_title: movieTitle, rating: numScore }, { onConflict: 'movie_title' });
+        .upsert({ movie_key: movieKey, rating: num }, { onConflict: 'movie_key' });
 
-      if (error) {
-        alert('Database Save Error: ' + error.message);
-        return;
-      }
-
-      await loadArchive();
+      if (error) { alert('Database Save Error: ' + error.message); return; }
+      await loadLedger();
     }
 
     function togglePeerAccess() {
@@ -259,29 +222,29 @@
         isPeerAuthenticated = true;
         sessionStorage.setItem('peer_authed', '1');
         setAuthUI();
-        loadArchive();
+        loadLedger();
       } else {
         alert('Access Denied.');
       }
     }
 
-    // Event wiring
+    // Events
     elAuthBtn.addEventListener('click', togglePeerAccess);
 
-    // Click delegation for peer rating edits
     elGrid.addEventListener('click', (e) => {
-      const target = e.target;
-      if (!(target instanceof HTMLElement)) return;
-      if (!target.classList.contains('p-val')) return;
+      const t = e.target;
+      if (!(t instanceof HTMLElement)) return;
+      if (!t.classList.contains('p-val')) return;
       if (!isPeerAuthenticated) return;
 
-      const title = target.dataset.title;
-      if (title) submitRating(title);
+      const movieKey = t.dataset.movieKey;
+      const title = t.dataset.title || '';
+      if (movieKey) submitRating(movieKey, title);
     });
 
     // Init
     setAuthUI();
-    loadArchive();
+    loadLedger();
   </script>
 </body>
 </html>
