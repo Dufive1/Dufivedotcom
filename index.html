@@ -11,7 +11,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <style>
-    :root { --bg: #ffffff; --text: #111111; --muted: #888; --accent: #008CFF; --border: #eee; --red: #ff4444; }
+    :root { --bg: #ffffff; --text: #111111; --muted: #888; --accent: #008CFF; --border: #eee; --red: #ff4444; --greg: #ff6b35; --peer: #008CFF; }
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); -webkit-font-smoothing: antialiased; }
     .container { max-width: 1400px; margin: 0 auto; padding: 0 40px; }
@@ -21,7 +21,8 @@
     .auth-controls { display: flex; gap: 20px; align-items: center; }
     .login-trigger { cursor: pointer; font-size: 0.7rem; font-weight: 800; letter-spacing: 0.2em; color: var(--muted); transition: color 0.3s; user-select: none; }
     .login-trigger:hover { color: var(--accent); }
-    .login-trigger.active { color: var(--accent); }
+    .login-trigger.greg-active { color: var(--greg); }
+    .login-trigger.peer-active { color: var(--peer); }
     .logout-btn { cursor: pointer; font-size: 0.7rem; font-weight: 800; letter-spacing: 0.2em; color: var(--red); transition: opacity 0.3s; display: none; }
     .logout-btn.visible { display: block; }
     .logout-btn:hover { opacity: 0.7; }
@@ -40,32 +41,37 @@
     .row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
     .label { font-size: 0.65rem; font-weight: 800; color: var(--muted); letter-spacing: 0.05em; }
     .val { font-size: 0.9rem; font-weight: 700; display: flex; align-items: center; gap: 6px; }
-    .p-val.editable { color: var(--accent); cursor: pointer; text-decoration: underline; }
+    .p-val.editable { color: var(--peer); cursor: pointer; text-decoration: underline; }
     
     .reaction { font-size: 0.9rem; opacity: 0.8; }
     .reaction.clickable { cursor: pointer; transition: opacity 0.2s, transform 0.2s; }
     .reaction.clickable:hover { opacity: 1; transform: scale(1.1); }
     
-    .react-btn { font-size: 0.7rem; color: var(--accent); cursor: pointer; opacity: 0.6; transition: opacity 0.2s; user-select: none; }
+    .react-btn { font-size: 0.7rem; color: var(--accent); cursor: pointer; opacity: 0.6; transition: opacity 0.2s; user-select: none; margin-top: 4px; }
     .react-btn:hover { opacity: 1; text-decoration: underline; }
     
     .expand-btn { font-size: 0.7rem; color: var(--muted); cursor: pointer; display: flex; align-items: center; gap: 4px; margin-top: 10px; padding: 8px 0; transition: color 0.2s; user-select: none; }
     .expand-btn:hover { color: var(--accent); }
+    .expand-btn.has-args { font-weight: 800; }
     
     .arguments-section { display: none; border-top: 1px solid var(--border); margin-top: 12px; padding-top: 12px; }
     .arguments-section.expanded { display: block; }
     .arguments-title { font-size: 0.7rem; font-weight: 800; color: var(--muted); letter-spacing: 0.05em; margin-bottom: 12px; }
     
-    .argument { padding: 10px 0; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: flex-start; }
+    .argument { padding: 12px 0; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
     .argument:last-of-type { border-bottom: none; }
     .argument-content { flex: 1; }
-    .argument-author { font-size: 0.65rem; font-weight: 800; color: var(--accent); letter-spacing: 0.05em; margin-bottom: 4px; }
-    .argument-text { font-size: 0.85rem; line-height: 1.4; color: var(--text); }
-    .delete-arg { font-size: 0.7rem; color: var(--red); cursor: pointer; opacity: 0; transition: opacity 0.2s; padding: 4px 8px; }
+    .argument-author { font-size: 0.65rem; font-weight: 800; letter-spacing: 0.05em; margin-bottom: 4px; }
+    .argument-author.greg { color: var(--greg); }
+    .argument-author.peer { color: var(--peer); }
+    .argument-text { font-size: 0.85rem; line-height: 1.5; color: var(--text); }
+    .argument-time { font-size: 0.65rem; color: var(--muted); margin-top: 4px; }
+    .delete-arg { font-size: 0.7rem; color: var(--red); cursor: pointer; opacity: 0; transition: opacity 0.2s; padding: 4px 8px; flex-shrink: 0; }
     .argument:hover .delete-arg { opacity: 0.6; }
     .delete-arg:hover { opacity: 1 !important; }
     
-    .argument-input { width: 100%; padding: 10px; border: 1px solid var(--border); font-family: 'Inter', sans-serif; font-size: 0.85rem; margin-top: 12px; resize: vertical; min-height: 70px; }
+    .argument-form { margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border); }
+    .argument-input { width: 100%; padding: 10px; border: 1px solid var(--border); font-family: 'Inter', sans-serif; font-size: 0.85rem; margin-top: 8px; resize: vertical; min-height: 70px; }
     .argument-submit { background: var(--accent); color: white; border: none; padding: 10px 20px; font-size: 0.75rem; font-weight: 800; letter-spacing: 0.05em; cursor: pointer; margin-top: 8px; transition: opacity 0.2s; }
     .argument-submit:hover { opacity: 0.9; }
 
@@ -91,7 +97,7 @@
     <nav>
       <a href="index.html" class="brand">DUFIVE - Movie Reviews</a>
       <div class="auth-controls">
-        <div id="auth-btn" class="login-trigger">PEER LOGIN</div>
+        <div id="auth-btn" class="login-trigger">REVIEWER LOGIN</div>
         <div id="logout-btn" class="logout-btn">LOGOUT</div>
       </div>
     </nav>
@@ -113,7 +119,11 @@
     const SB_URL = 'https://brgxorrpfberfcyeugzq.supabase.co';
     const SB_KEY = 'sb_publishable_VbVFBh-gtIBAbr9Qtp240w_GS8Kn4Jf';
     const EDGE_FUNCTION_URL = 'https://brgxorrpfberfcyeugzq.supabase.co/functions/v1/fetch-letterboxd-rss';
-    const PEER_PASS = 'cinema2026';
+    
+    const PASSWORDS = {
+      greg: 'cinema2026',
+      peer: 'cinema2026' // Same password for now, or use different ones
+    };
 
     const REACTIONS = {
       fire: '🔥',
@@ -128,18 +138,18 @@
     const elLogoutBtn = document.getElementById('logout-btn');
     const elError = document.getElementById('error-log');
 
-    let isPeerAuthenticated = sessionStorage.getItem('peer_authed') === '1';
+    let currentUser = sessionStorage.getItem('current_user'); // 'greg' or 'peer' or null
 
     function setError(msg) { elError.textContent = msg || ''; }
 
     function setAuthUI() {
-      if (isPeerAuthenticated) {
-        elAuthBtn.textContent = 'PEER: ONLINE';
-        elAuthBtn.classList.add('active');
+      if (currentUser) {
+        elAuthBtn.textContent = `${currentUser.toUpperCase()}: ONLINE`;
+        elAuthBtn.classList.add(`${currentUser}-active`);
         elLogoutBtn.classList.add('visible');
       } else {
-        elAuthBtn.textContent = 'PEER LOGIN';
-        elAuthBtn.classList.remove('active');
+        elAuthBtn.textContent = 'REVIEWER LOGIN';
+        elAuthBtn.classList.remove('greg-active', 'peer-active');
         elLogoutBtn.classList.remove('visible');
       }
     }
@@ -166,6 +176,18 @@
       const full = Math.floor(num);
       const half = (num - full) >= 0.5 ? '½' : '';
       return '★'.repeat(full) + half;
+    }
+
+    function timeAgo(dateString) {
+      const date = new Date(dateString);
+      const now = new Date();
+      const seconds = Math.floor((now - date) / 1000);
+      
+      if (seconds < 60) return 'just now';
+      if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`;
+      if (seconds < 86400) return `${Math.floor(seconds / 3600)}h ago`;
+      if (seconds < 604800) return `${Math.floor(seconds / 86400)}d ago`;
+      return date.toLocaleDateString();
     }
 
     async function fetchPeerRatings() {
@@ -266,8 +288,15 @@
         const gregReaction = reactions[movieKey]?.greg;
         if (gregReaction && REACTIONS[gregReaction]) {
           const reactionSpan = document.createElement('span');
-          reactionSpan.className = 'reaction';
+          reactionSpan.className = 'reaction' + (currentUser === 'greg' ? ' clickable' : '');
           reactionSpan.textContent = REACTIONS[gregReaction];
+          if (currentUser === 'greg') {
+            reactionSpan.title = 'Click to change/remove';
+            reactionSpan.onclick = (e) => {
+              e.stopPropagation();
+              showReactionPicker(movieKey, 'greg', reactionSpan);
+            };
+          }
           gVal.appendChild(reactionSpan);
         }
         
@@ -282,7 +311,7 @@
         pLabel.textContent = 'PEER';
 
         const pVal = document.createElement('span');
-        pVal.className = 'val p-val' + (isPeerAuthenticated ? ' editable' : '');
+        pVal.className = 'val p-val' + (currentUser === 'peer' ? ' editable' : '');
         pVal.innerHTML = peerStars(peerMap[movieKey]);
         pVal.dataset.movieKey = movieKey;
         pVal.dataset.title = title;
@@ -290,13 +319,15 @@
         const peerReaction = reactions[movieKey]?.peer;
         if (peerReaction && REACTIONS[peerReaction]) {
           const reactionSpan = document.createElement('span');
-          reactionSpan.className = 'reaction clickable';
+          reactionSpan.className = 'reaction' + (currentUser === 'peer' ? ' clickable' : '');
           reactionSpan.textContent = REACTIONS[peerReaction];
-          reactionSpan.title = 'Click to change/remove';
-          reactionSpan.onclick = (e) => {
-            e.stopPropagation();
-            if (isPeerAuthenticated) showReactionPicker(movieKey, 'peer', reactionSpan);
-          };
+          if (currentUser === 'peer') {
+            reactionSpan.title = 'Click to change/remove';
+            reactionSpan.onclick = (e) => {
+              e.stopPropagation();
+              showReactionPicker(movieKey, 'peer', reactionSpan);
+            };
+          }
           pVal.appendChild(reactionSpan);
         }
 
@@ -306,14 +337,25 @@
         ratingBox.appendChild(rowG);
         ratingBox.appendChild(rowP);
 
-        // React to Greg's rating button (only when authenticated)
-        if (isPeerAuthenticated && !peerReaction) {
+        // React buttons (only when logged in)
+        if (currentUser === 'peer' && !peerReaction) {
           const reactBtn = document.createElement('div');
           reactBtn.className = 'react-btn';
           reactBtn.textContent = '💬 React to Greg';
           reactBtn.onclick = (e) => {
             e.stopPropagation();
             showReactionPicker(movieKey, 'peer', reactBtn);
+          };
+          ratingBox.appendChild(reactBtn);
+        }
+        
+        if (currentUser === 'greg' && !gregReaction) {
+          const reactBtn = document.createElement('div');
+          reactBtn.className = 'react-btn';
+          reactBtn.textContent = '💬 React to Peer';
+          reactBtn.onclick = (e) => {
+            e.stopPropagation();
+            showReactionPicker(movieKey, 'greg', reactBtn);
           };
           ratingBox.appendChild(reactBtn);
         }
@@ -337,19 +379,24 @@
           contentDiv.className = 'argument-content';
           
           const authorEl = document.createElement('div');
-          authorEl.className = 'argument-author';
+          authorEl.className = `argument-author ${arg.author}`;
           authorEl.textContent = arg.author.toUpperCase();
           
           const textEl = document.createElement('div');
           textEl.className = 'argument-text';
           textEl.textContent = arg.argument;
           
+          const timeEl = document.createElement('div');
+          timeEl.className = 'argument-time';
+          timeEl.textContent = timeAgo(arg.created_at);
+          
           contentDiv.appendChild(authorEl);
           contentDiv.appendChild(textEl);
+          contentDiv.appendChild(timeEl);
           argEl.appendChild(contentDiv);
           
-          // Delete button (only for peer's own arguments)
-          if (isPeerAuthenticated && arg.author === 'peer') {
+          // Delete button (only for your own arguments)
+          if (currentUser && arg.author === currentUser) {
             const delBtn = document.createElement('div');
             delBtn.className = 'delete-arg';
             delBtn.textContent = '✕';
@@ -364,28 +411,40 @@
           argsSection.appendChild(argEl);
         });
 
-        if (isPeerAuthenticated) {
+        // Argument form (only when logged in)
+        if (currentUser) {
+          const form = document.createElement('div');
+          form.className = 'argument-form';
+          
           const input = document.createElement('textarea');
           input.className = 'argument-input';
-          input.placeholder = 'Add your argument... (max 200 chars)';
+          input.placeholder = `Post your argument as ${currentUser.toUpperCase()}... (max 200 chars)`;
           input.maxLength = 200;
+          
           const submit = document.createElement('button');
           submit.className = 'argument-submit';
           submit.textContent = 'POST ARGUMENT';
           submit.onclick = (e) => {
             e.stopPropagation();
-            submitArgument(movieKey, input.value);
+            if (input.value.trim()) {
+              submitArgument(movieKey, input.value.trim());
+            }
           };
-          argsSection.appendChild(input);
-          argsSection.appendChild(submit);
+          
+          form.appendChild(input);
+          form.appendChild(submit);
+          argsSection.appendChild(form);
         }
 
         ratingBox.appendChild(argsSection);
 
         // Expand/collapse button
         const expandBtn = document.createElement('div');
-        expandBtn.className = 'expand-btn';
-        expandBtn.innerHTML = `⚡ ${args.length > 0 ? `${args.length} argument${args.length === 1 ? '' : 's'}` : 'Add argument'} <span style="font-size:0.8em">▼</span>`;
+        expandBtn.className = 'expand-btn' + (args.length > 0 ? ' has-args' : '');
+        const btnText = args.length > 0 
+          ? `⚡ ${args.length} argument${args.length === 1 ? '' : 's'}` 
+          : (currentUser ? '⚡ Add argument' : '⚡ Arguments');
+        expandBtn.innerHTML = `${btnText} <span style="font-size:0.8em">▼</span>`;
         expandBtn.onclick = (e) => {
           e.stopPropagation();
           const isExpanded = argsSection.classList.toggle('expanded');
@@ -402,7 +461,6 @@
     }
 
     function showReactionPicker(movieKey, reactor, triggerElement) {
-      // Remove any existing picker
       const existing = document.querySelectorAll('.reaction-picker');
       existing.forEach(p => p.remove());
 
@@ -437,7 +495,6 @@
 
       triggerElement.parentElement.appendChild(picker);
       
-      // Close picker when clicking outside
       setTimeout(() => {
         document.addEventListener('click', function closePickerHandler(e) {
           if (!picker.contains(e.target)) {
@@ -484,7 +541,7 @@
 
       const { error } = await supabaseClient
         .from('film_arguments')
-        .insert({ movie_key: movieKey, author: 'peer', argument: text.trim() });
+        .insert({ movie_key: movieKey, author: currentUser, argument: text.trim() });
 
       if (error) {
         alert('Argument save error: ' + error.message);
@@ -530,7 +587,7 @@
     }
 
     async function submitRating(movieKey, movieTitle) {
-      if (!isPeerAuthenticated) return;
+      if (currentUser !== 'peer') return;
 
       const score = prompt(`Rate "${movieTitle}"\n\n0 = Remove rating\n0.5 to 5 (half-stars allowed, e.g. 3.5):`);
       if (score === null) return;
@@ -575,40 +632,47 @@
       await loadArchive();
     }
 
-    function togglePeerAccess() {
-      if (isPeerAuthenticated) return; // Already logged in
+    function toggleLogin() {
+      if (currentUser) return; // Already logged in
       
-      const attempt = prompt('Enter Peer Access Key:');
-      if (attempt === null) return;
-
-      if (attempt === PEER_PASS) {
-        isPeerAuthenticated = true;
-        sessionStorage.setItem('peer_authed', '1');
+      const who = prompt('Who are you?\n\nType "greg" or "peer":');
+      if (!who) return;
+      
+      const userChoice = who.toLowerCase().trim();
+      if (userChoice !== 'greg' && userChoice !== 'peer') {
+        alert('Please enter either "greg" or "peer"');
+        return;
+      }
+      
+      const password = prompt(`Enter password for ${userChoice.toUpperCase()}:`);
+      if (password === PASSWORDS[userChoice]) {
+        currentUser = userChoice;
+        sessionStorage.setItem('current_user', userChoice);
         setAuthUI();
         loadArchive();
       } else {
-        alert('Access Denied.');
+        alert('Incorrect password.');
       }
     }
 
     function logout() {
       if (!confirm('Log out?')) return;
       
-      isPeerAuthenticated = false;
-      sessionStorage.removeItem('peer_authed');
+      currentUser = null;
+      sessionStorage.removeItem('current_user');
       setAuthUI();
       loadArchive();
     }
 
     // Events
-    elAuthBtn.addEventListener('click', togglePeerAccess);
+    elAuthBtn.addEventListener('click', toggleLogin);
     elLogoutBtn.addEventListener('click', logout);
 
     elGrid.addEventListener('click', (e) => {
       const t = e.target;
       if (!(t instanceof HTMLElement)) return;
       if (!t.classList.contains('p-val')) return;
-      if (!isPeerAuthenticated) return;
+      if (currentUser !== 'peer') return;
 
       const movieKey = t.dataset.movieKey;
       const title = t.dataset.title;
