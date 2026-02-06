@@ -288,7 +288,6 @@
   <script>
     const SB_URL = 'https://brgxorrpfberfcyeugzq.supabase.co';
     const SB_KEY = 'sb_publishable_VbVFBh-gtIBAbr9Qtp240w_GS8Kn4Jf';
-    const EDGE_FUNCTION_URL = 'https://brgxorrpfberfcyeugzq.supabase.co/functions/v1/fetch-letterboxd-rss';
 
     const REACTIONS_MAP = { fire: '\u{1F525}', agree: '\u{1F91D}', disagree: '\u{1F914}' };
 
@@ -393,21 +392,19 @@
         });
       } catch (e) { console.error('Notes fetch error:', e); }
 
-      // Try to enrich movie titles from RSS
+      // Enrich movie titles from greg_films table
       try {
-        const res = await fetch(EDGE_FUNCTION_URL);
-        if (res.ok) {
-          const data = await res.json();
+        const { data: films } = await supabaseClient
+          .from('greg_films')
+          .select('movie_key, title');
+        if (films) {
           const titleMap = {};
-          (data.films || []).forEach(f => {
-            const key = f.link ? f.link.split('/film/')[1]?.replace('/', '') : f.title;
-            titleMap[key] = decodeHtml(f.title);
-          });
+          films.forEach(f => { titleMap[f.movie_key] = f.title; });
           events.forEach(ev => {
             if (titleMap[ev.movieKey]) ev.movieTitle = titleMap[ev.movieKey];
           });
         }
-      } catch (e) { console.error('RSS fetch error:', e); }
+      } catch (e) { console.error('Title lookup error:', e); }
 
       // Sort newest first
       events.sort((a, b) => new Date(b.date) - new Date(a.date));
