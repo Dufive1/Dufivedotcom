@@ -27,15 +27,40 @@
     .tagline { font-size: 1.1rem; color: var(--muted); letter-spacing: 0.05em; font-weight: 300; }
 
     .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 60px 40px; }
-    .entry { min-width: 0; }
+    .entry { min-width: 0; cursor: pointer; transition: transform 0.2s; }
+    .entry:hover { transform: translateY(-2px); }
     .poster-frame { aspect-ratio: 2/3; background: #f9f9f9; overflow: hidden; margin-bottom: 20px; border: 1px solid var(--border); }
     .poster-frame img { width: 100%; height: 100%; object-fit: cover; display: block; }
     .entry-title { font-weight: 800; font-size: 1.1rem; margin-bottom: 15px; min-height: 2.4em; line-height: 1.2; }
     .rating-box { border-top: 1px solid var(--border); padding-top: 12px; }
     .row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
     .label { font-size: 0.65rem; font-weight: 800; color: var(--muted); letter-spacing: 0.05em; }
-    .val { font-size: 0.9rem; font-weight: 700; }
+    .val { font-size: 0.9rem; font-weight: 700; display: flex; align-items: center; gap: 6px; }
     .p-val.editable { color: var(--accent); cursor: pointer; text-decoration: underline; }
+    
+    .reaction { font-size: 0.9rem; cursor: pointer; opacity: 0.7; transition: opacity 0.2s, transform 0.2s; }
+    .reaction:hover { opacity: 1; transform: scale(1.2); }
+    .reaction.active { opacity: 1; }
+    
+    .arguments-badge { font-size: 0.75rem; color: var(--muted); display: flex; align-items: center; gap: 4px; margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--border); }
+    
+    .arguments-section { display: none; border-top: 1px solid var(--border); margin-top: 12px; padding-top: 12px; }
+    .arguments-section.expanded { display: block; }
+    .arguments-title { font-size: 0.7rem; font-weight: 800; color: var(--muted); letter-spacing: 0.05em; margin-bottom: 8px; }
+    
+    .argument { padding: 8px 0; border-bottom: 1px solid var(--border); }
+    .argument:last-child { border-bottom: none; }
+    .argument-author { font-size: 0.65rem; font-weight: 800; color: var(--accent); letter-spacing: 0.05em; margin-bottom: 4px; }
+    .argument-text { font-size: 0.85rem; line-height: 1.4; color: var(--text); }
+    
+    .argument-input { width: 100%; padding: 8px; border: 1px solid var(--border); font-family: 'Inter', sans-serif; font-size: 0.85rem; margin-top: 8px; resize: vertical; min-height: 60px; }
+    .argument-submit { background: var(--accent); color: white; border: none; padding: 8px 16px; font-size: 0.75rem; font-weight: 800; letter-spacing: 0.05em; cursor: pointer; margin-top: 8px; }
+    .argument-submit:hover { opacity: 0.9; }
+
+    .reaction-picker { display: flex; gap: 8px; margin-top: 4px; }
+    .reaction-option { font-size: 1.2rem; cursor: pointer; opacity: 0.5; transition: all 0.2s; padding: 4px; }
+    .reaction-option:hover { opacity: 1; transform: scale(1.2); }
+    .reaction-option.selected { opacity: 1; background: var(--border); border-radius: 4px; }
 
     #loader { grid-column: 1/-1; text-align: center; padding: 100px 0; font-family: 'Playfair Display'; font-style: italic; font-size: 2rem; }
     #error-log { position: fixed; bottom: 10px; left: 10px; font-size: 10px; color: red; background: rgba(255,255,255,0.9); padding: 5px; z-index: 100; max-width: 70vw; overflow: auto; }
@@ -52,12 +77,12 @@
 <body>
   <div class="container">
     <nav>
-      <a href="index.html" class="brand">DUFIVE - Movie Reviews</a>
+      <a href="index.html" class="brand">DUFIVE</a>
       <div id="auth-btn" class="login-trigger">GREG VS PEER • UNLOCKED?</div>
     </nav>
 
     <header>
-      <h1 class="page-title">The Ledger</h1>
+      <h1 class="page-title">The Ledger — G & P</h1>
       <p class="tagline">Rated in Stars, not words.</p>
     </header>
 
@@ -73,8 +98,13 @@
     const SB_URL = 'https://brgxorrpfberfcyeugzq.supabase.co';
     const SB_KEY = 'sb_publishable_VbVFBh-gtIBAbr9Qtp240w_GS8Kn4Jf';
     const EDGE_FUNCTION_URL = 'https://brgxorrpfberfcyeugzq.supabase.co/functions/v1/fetch-letterboxd-rss';
-
     const PEER_PASS = 'cinema2026';
+
+    const REACTIONS = {
+      fire: '🔥',
+      agree: '🤝',
+      disagree: '🤔'
+    };
 
     const supabaseClient = window.supabase.createClient(SB_URL, SB_KEY);
 
@@ -83,6 +113,7 @@
     const elError = document.getElementById('error-log');
 
     let isPeerAuthenticated = sessionStorage.getItem('peer_authed') === '1';
+    let currentData = { gregItems: [], peerMap: {}, reactions: {}, arguments: {} };
 
     function setError(msg) { elError.textContent = msg || ''; }
 
@@ -123,25 +154,19 @@
     async function fetchPeerRatings() {
       const { data, error } = await supabaseClient
         .from('ratings')
-        .select('movie_title,rating');
+        .select('movie_key,movie_title,rating');
 
       if (error) throw new Error('Supabase (ratings) Error: ' + error.message);
 
       const map = Object.create(null);
       (data || []).forEach(r => {
-        if (r && typeof r.movie_title === 'string') map[r.movie_title] = r.rating;
+        if (r && r.movie_key) map[r.movie_key] = r.rating;
       });
       return map;
     }
 
     async function fetchGregRssItems() {
-      // Call your Supabase Edge Function (no CORS issues!)
-      const res = await fetch(EDGE_FUNCTION_URL, {
-        headers: {
-          'apikey': SB_KEY,
-          'Authorization': `Bearer ${SB_KEY}`
-        }
-      });
+      const res = await fetch(EDGE_FUNCTION_URL);
       
       if (!res.ok) {
         const errorText = await res.text();
@@ -149,22 +174,53 @@
       }
 
       const data = await res.json();
-      
       if (data.error) throw new Error(`Edge Function Error: ${data.error}`);
       
       console.log(`✅ Loaded ${data.count} films from Edge Function`);
-      
       return data.films;
     }
 
-    function renderLedger(gregItems, peerMap) {
+    async function fetchReactions() {
+      const { data, error } = await supabaseClient
+        .from('rating_reactions')
+        .select('*');
+
+      if (error) throw new Error('Reactions fetch error: ' + error.message);
+
+      const map = {};
+      (data || []).forEach(r => {
+        if (!map[r.movie_key]) map[r.movie_key] = {};
+        map[r.movie_key][r.reactor] = r.reaction;
+      });
+      return map;
+    }
+
+    async function fetchArguments() {
+      const { data, error } = await supabaseClient
+        .from('film_arguments')
+        .select('*')
+        .order('created_at', { ascending: true });
+
+      if (error) throw new Error('Arguments fetch error: ' + error.message);
+
+      const map = {};
+      (data || []).forEach(arg => {
+        if (!map[arg.movie_key]) map[arg.movie_key] = [];
+        map[arg.movie_key].push(arg);
+      });
+      return map;
+    }
+
+    function renderLedger(gregItems, peerMap, reactions, argumentsMap) {
       elGrid.innerHTML = '';
 
       gregItems.forEach(entry => {
         const title = entry.title;
+        const movieKey = entry.link ? entry.link.split('/film/')[1]?.replace('/', '') : title;
 
         const el = document.createElement('div');
         el.className = 'entry';
+        el.dataset.movieKey = movieKey;
 
         const posterFrame = document.createElement('div');
         posterFrame.className = 'poster-frame';
@@ -180,6 +236,7 @@
         const ratingBox = document.createElement('div');
         ratingBox.className = 'rating-box';
 
+        // Greg row
         const rowG = document.createElement('div');
         rowG.className = 'row';
         const gLabel = document.createElement('span');
@@ -187,10 +244,20 @@
         gLabel.textContent = 'GREG';
         const gVal = document.createElement('span');
         gVal.className = 'val';
-        gVal.textContent = gregStarsFromNumeric(entry.gregRating);
+        gVal.innerHTML = gregStarsFromNumeric(entry.gregRating);
+        
+        const gregReaction = reactions[movieKey]?.greg;
+        if (gregReaction && REACTIONS[gregReaction]) {
+          const reactionSpan = document.createElement('span');
+          reactionSpan.className = 'reaction';
+          reactionSpan.textContent = REACTIONS[gregReaction];
+          gVal.appendChild(reactionSpan);
+        }
+        
         rowG.appendChild(gLabel);
         rowG.appendChild(gVal);
 
+        // Peer row
         const rowP = document.createElement('div');
         rowP.className = 'row';
         const pLabel = document.createElement('span');
@@ -199,8 +266,31 @@
 
         const pVal = document.createElement('span');
         pVal.className = 'val p-val' + (isPeerAuthenticated ? ' editable' : '');
-        pVal.textContent = peerStars(peerMap[title]);
+        pVal.innerHTML = peerStars(peerMap[movieKey]);
+        pVal.dataset.movieKey = movieKey;
         pVal.dataset.title = title;
+        
+        const peerReaction = reactions[movieKey]?.peer;
+        if (peerReaction && REACTIONS[peerReaction]) {
+          const reactionSpan = document.createElement('span');
+          reactionSpan.className = 'reaction';
+          reactionSpan.textContent = REACTIONS[peerReaction];
+          reactionSpan.onclick = (e) => {
+            e.stopPropagation();
+            if (isPeerAuthenticated) showReactionPicker(movieKey, 'peer');
+          };
+          pVal.appendChild(reactionSpan);
+        } else if (isPeerAuthenticated) {
+          const reactionSpan = document.createElement('span');
+          reactionSpan.className = 'reaction';
+          reactionSpan.textContent = '💬';
+          reactionSpan.style.opacity = '0.3';
+          reactionSpan.onclick = (e) => {
+            e.stopPropagation();
+            showReactionPicker(movieKey, 'peer');
+          };
+          pVal.appendChild(reactionSpan);
+        }
 
         rowP.appendChild(pLabel);
         rowP.appendChild(pVal);
@@ -208,12 +298,120 @@
         ratingBox.appendChild(rowG);
         ratingBox.appendChild(rowP);
 
+        // Arguments badge
+        const args = argumentsMap[movieKey] || [];
+        if (args.length > 0) {
+          const badge = document.createElement('div');
+          badge.className = 'arguments-badge';
+          badge.innerHTML = `⚡ ${args.length} argument${args.length === 1 ? '' : 's'}`;
+          ratingBox.appendChild(badge);
+        }
+
+        // Arguments section (hidden by default)
+        const argsSection = document.createElement('div');
+        argsSection.className = 'arguments-section';
+        argsSection.dataset.movieKey = movieKey;
+        
+        const argsTitle = document.createElement('div');
+        argsTitle.className = 'arguments-title';
+        argsTitle.textContent = '⚡ ARGUMENTS';
+        argsSection.appendChild(argsTitle);
+
+        args.forEach(arg => {
+          const argEl = document.createElement('div');
+          argEl.className = 'argument';
+          const authorEl = document.createElement('div');
+          authorEl.className = 'argument-author';
+          authorEl.textContent = arg.author.toUpperCase();
+          const textEl = document.createElement('div');
+          textEl.className = 'argument-text';
+          textEl.textContent = arg.argument;
+          argEl.appendChild(authorEl);
+          argEl.appendChild(textEl);
+          argsSection.appendChild(argEl);
+        });
+
+        if (isPeerAuthenticated) {
+          const input = document.createElement('textarea');
+          input.className = 'argument-input';
+          input.placeholder = 'Add your argument...';
+          input.maxLength = 200;
+          const submit = document.createElement('button');
+          submit.className = 'argument-submit';
+          submit.textContent = 'POST ARGUMENT';
+          submit.onclick = (e) => {
+            e.stopPropagation();
+            submitArgument(movieKey, input.value);
+          };
+          argsSection.appendChild(input);
+          argsSection.appendChild(submit);
+        }
+
+        ratingBox.appendChild(argsSection);
+
         el.appendChild(posterFrame);
         el.appendChild(h2);
         el.appendChild(ratingBox);
 
+        // Toggle arguments on card click
+        el.onclick = (e) => {
+          if (e.target.classList.contains('p-val') && e.target.classList.contains('editable')) {
+            return; // Let rating click handler work
+          }
+          argsSection.classList.toggle('expanded');
+        };
+
         elGrid.appendChild(el);
       });
+    }
+
+    function showReactionPicker(movieKey, reactor) {
+      const existing = document.querySelector('.reaction-picker');
+      if (existing) existing.remove();
+
+      const picker = document.createElement('div');
+      picker.className = 'reaction-picker';
+      
+      Object.entries(REACTIONS).forEach(([key, emoji]) => {
+        const opt = document.createElement('span');
+        opt.className = 'reaction-option';
+        opt.textContent = emoji;
+        opt.onclick = () => saveReaction(movieKey, reactor, key);
+        picker.appendChild(opt);
+      });
+
+      const entry = document.querySelector(`[data-movie-key="${movieKey}"]`);
+      if (entry) {
+        entry.querySelector('.rating-box').appendChild(picker);
+      }
+    }
+
+    async function saveReaction(movieKey, reactor, reaction) {
+      const { error } = await supabaseClient
+        .from('rating_reactions')
+        .upsert({ movie_key: movieKey, reactor, reaction }, { onConflict: 'movie_key,reactor' });
+
+      if (error) {
+        alert('Reaction save error: ' + error.message);
+        return;
+      }
+
+      await loadArchive();
+    }
+
+    async function submitArgument(movieKey, text) {
+      if (!text.trim()) return;
+
+      const { error } = await supabaseClient
+        .from('film_arguments')
+        .insert({ movie_key: movieKey, author: 'peer', argument: text.trim() });
+
+      if (error) {
+        alert('Argument save error: ' + error.message);
+        return;
+      }
+
+      await loadArchive();
     }
 
     async function loadArchive() {
@@ -221,20 +419,22 @@
       clearGridToLoader('Consulting the archives...');
 
       try {
-        const [peerMap, gregItems] = await Promise.all([
+        const [peerMap, gregItems, reactions, argumentsMap] = await Promise.all([
           fetchPeerRatings(),
-          fetchGregRssItems()
+          fetchGregRssItems(),
+          fetchReactions(),
+          fetchArguments()
         ]);
 
-        console.log(`Rendering ${gregItems.length} films`);
-        renderLedger(gregItems, peerMap);
+        currentData = { gregItems, peerMap, reactions, arguments: argumentsMap };
+        renderLedger(gregItems, peerMap, reactions, argumentsMap);
       } catch (e) {
         setError(e && e.message ? e.message : String(e));
         console.error('Load error:', e);
       }
     }
 
-    async function submitRating(movieTitle) {
+    async function submitRating(movieKey, movieTitle) {
       if (!isPeerAuthenticated) return;
 
       const score = prompt(`Rate "${movieTitle}"\n\n0 = Remove rating\n0.5 to 5 (half-stars allowed, e.g. 3.5):`);
@@ -243,12 +443,11 @@
 
       const num = parseFloat(score);
 
-      // Special case: 0 means delete/remove the rating
       if (num === 0) {
         const { error } = await supabaseClient
           .from('ratings')
           .delete()
-          .eq('movie_title', movieTitle);
+          .eq('movie_key', movieKey);
 
         if (error) {
           alert('Database Delete Error: ' + error.message);
@@ -259,13 +458,11 @@
         return;
       }
 
-      // Validate: must be between 0.5 and 5, in 0.5 increments
       if (!Number.isFinite(num) || num < 0.5 || num > 5) {
         alert('Please enter a number between 0.5 and 5 (or 0 to remove).');
         return;
       }
 
-      // Check if it's a valid half-star increment
       if ((num * 2) % 1 !== 0) {
         alert('Please use half-star increments (e.g., 3.5, 4, 4.5).');
         return;
@@ -273,7 +470,7 @@
 
       const { error } = await supabaseClient
         .from('ratings')
-        .upsert({ movie_title: movieTitle, rating: num }, { onConflict: 'movie_title' });
+        .upsert({ movie_key: movieKey, movie_title: movieTitle, rating: num }, { onConflict: 'movie_key' });
 
       if (error) {
         alert('Database Save Error: ' + error.message);
@@ -306,8 +503,9 @@
       if (!t.classList.contains('p-val')) return;
       if (!isPeerAuthenticated) return;
 
+      const movieKey = t.dataset.movieKey;
       const title = t.dataset.title;
-      if (title) submitRating(title);
+      if (movieKey) submitRating(movieKey, title);
     });
 
     // Init
