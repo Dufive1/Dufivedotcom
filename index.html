@@ -1220,8 +1220,8 @@
         <input type="text" class="search-input" id="search-input" placeholder="Search films..." autocomplete="off" />
       </div>
       <select class="sort-select" id="sort-select">
-        <option value="date">Newest First</option>
         <option value="greg-high">Greg: High &rarr; Low</option>
+        <option value="date">Newest First</option>
         <option value="greg-low">Greg: Low &rarr; High</option>
         <option value="peer-high">Peer: High &rarr; Low</option>
         <option value="peer-low">Peer: Low &rarr; High</option>
@@ -1230,8 +1230,10 @@
     </div>
     <div class="filter-chips" id="filter-chips">
       <div class="filter-chip active" data-filter="all">All</div>
+      <div class="filter-chip" data-filter="greg-rated">Greg Rated</div>
       <div class="filter-chip" data-filter="both-rated">Both Rated</div>
       <div class="filter-chip" data-filter="peer-unrated">Peer Unrated</div>
+      <div class="filter-chip" data-filter="greg-unrated">Greg Unrated</div>
       <div class="filter-chip" data-filter="disagree">Disagree (2+ gap)</div>
     </div>
 
@@ -1528,17 +1530,20 @@
       return map;
     }
 
+    const EMPTY_POSTER = 'empty-poster'; // Letterboxd placeholder token
+
     async function fetchGregFilms() {
       const { data, error } = await supabaseClient
         .from('greg_films')
         .select('movie_key, title, poster_url, greg_rating, letterboxd_url, updated_at')
-        .order('updated_at', { ascending: false });
+        .order('greg_rating', { ascending: false, nullsFirst: false })
+        .order('title', { ascending: true });
       if (error) throw new Error('Greg Films Error: ' + error.message);
       // Normalise into the shape the rest of the code expects
       return (data || []).map(f => ({
         title: f.title,
         movieKey: f.movie_key,
-        posterUrl: f.poster_url,
+        posterUrl: (f.poster_url && !f.poster_url.includes(EMPTY_POSTER)) ? f.poster_url : null,
         gregRating: f.greg_rating,
         link: f.letterboxd_url || '',
         pubDate: f.updated_at
@@ -1585,7 +1590,12 @@
         items = items.filter(e => decodeHtml(e.title).toLowerCase().includes(searchTerm));
       }
 
-      if (activeFilter === 'both-rated') {
+      if (activeFilter === 'greg-rated') {
+        items = items.filter(e => {
+          const gR = Number(e.gregRating);
+          return Number.isFinite(gR) && gR > 0;
+        });
+      } else if (activeFilter === 'both-rated') {
         items = items.filter(e => {
           const pR = Number(cachedPeerMap[getMovieKey(e)]);
           const gR = Number(e.gregRating);
@@ -1595,6 +1605,11 @@
         items = items.filter(e => {
           const pR = Number(cachedPeerMap[getMovieKey(e)]);
           return !Number.isFinite(pR) || pR <= 0;
+        });
+      } else if (activeFilter === 'greg-unrated') {
+        items = items.filter(e => {
+          const gR = Number(e.gregRating);
+          return !Number.isFinite(gR) || gR <= 0;
         });
       } else if (activeFilter === 'disagree') {
         items = items.filter(e => {
@@ -1727,9 +1742,26 @@
         gregLabelGroup.className = 'rating-label-group';
         gregLabelGroup.innerHTML = '<div class="avatar greg-avatar">G</div><span class="rating-label">Greg</span>';
 
+        // Greg rating: show Letterboxd rating, allow Greg to edit via app
+        const gregStars = starsFromNumeric(entry.gregRating);
         const gregValSpan = document.createElement('span');
-        gregValSpan.className = 'rating-value';
-        gregValSpan.textContent = starsFromNumeric(entry.gregRating) || '\u2014';
+
+        if (gregStars) {
+          gregValSpan.className = 'rating-value' + (currentUser === 'greg' ? ' editable' : '');
+          gregValSpan.textContent = gregStars;
+          if (currentUser === 'greg') {
+            gregValSpan.onclick = () => showStarPicker(movieKey, title, entry.gregRating);
+          }
+        } else {
+          gregValSpan.className = 'rating-value';
+          const unrated = document.createElement('span');
+          unrated.className = 'unrated-prompt' + (currentUser === 'greg' ? ' clickable' : '');
+          unrated.textContent = currentUser === 'greg' ? 'Tap to rate' : '\u2014';
+          if (currentUser === 'greg') {
+            unrated.onclick = () => showStarPicker(movieKey, title, null);
+          }
+          gregValSpan.appendChild(unrated);
+        }
 
         const peerReactionToGreg = reactions[movieKey]?.peer;
         if (peerReactionToGreg && REACTIONS[peerReactionToGreg]) {
@@ -1979,7 +2011,7 @@
        STAR PICKER
     ═══════════════════════════════════════════ */
     function showStarPicker(movieKey, movieTitle, currentRating) {
-      if (currentUser !== 'peer') return;
+      if (!currentUser) return;
 
       const overlay = document.getElementById('star-picker');
       let selectedValue = currentRating ? Number(currentRating) : null;
@@ -2152,7 +2184,7 @@
     }
 
     async function submitRating(movieKey, movieTitle, rating) {
-      if (currentUser !== 'peer') return;
+      if (!currentUser) return;
       try {
         await authenticatedRequest('rate', movieKey, { rating, movieTitle });
         showToast(rating > 0 ? `Rated ${decodeHtml(movieTitle)} ${starsFromNumeric(rating)}` : 'Rating removed', 'success', 2500);
