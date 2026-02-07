@@ -629,21 +629,56 @@
       flex-shrink: 0;
     }
 
-    .reaction {
-      font-size: 1rem;
-      opacity: 0.9;
+    /* ───── Poster Corner Reaction Badges ───── */
+    .poster-badge {
+      position: absolute;
+      top: 8px;
+      z-index: 3;
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.35rem;
+      background: rgba(0,0,0,0.7);
+      backdrop-filter: blur(6px);
+      border: 2px solid rgba(255,255,255,0.25);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.5);
       transition: var(--transition);
+      cursor: default;
+      line-height: 1;
     }
-    .reaction.clickable {
-      cursor: pointer;
-      padding: 4px;
-      margin: -4px;
-      border-radius: 4px;
+    .poster-badge.left  { left: 8px; }
+    .poster-badge.right { right: 8px; }
+    .poster-badge.clickable { cursor: pointer; }
+    .poster-badge.clickable:hover {
+      transform: scale(1.15);
+      border-color: var(--accent);
     }
-    .reaction.clickable:hover {
-      opacity: 1;
-      transform: scale(1.1);
-      background: var(--border-light);
+    .poster-badge .badge-who {
+      position: absolute;
+      bottom: -4px;
+      right: -4px;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      font-size: 0.55rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      border: 1.5px solid rgba(0,0,0,0.6);
+    }
+    .badge-who.peer-who { background: var(--accent); }
+    .badge-who.greg-who { background: #e67e22; }
+    .poster-badge .kc-face {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      object-fit: cover;
+      filter: grayscale(0.2);
     }
 
     .react-trigger {
@@ -659,6 +694,9 @@
       font-weight: 500;
     }
     .react-trigger:hover { opacity: 1; }
+
+    /* Old inline .reaction kept for backwards compat but hidden */
+    .reaction { display: none; }
 
     /* ───── Star Picker ───── */
     .star-picker-overlay {
@@ -927,17 +965,27 @@
     }
 
     .reaction-option {
-      font-size: 1.375rem;
+      font-size: 1.6rem;
       cursor: pointer;
-      opacity: 0.5;
+      opacity: 0.6;
       transition: var(--transition);
-      padding: 8px 10px;
-      border-radius: 6px;
+      padding: 10px 12px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
     .reaction-option:hover {
       opacity: 1;
-      transform: scale(1.12);
+      transform: scale(1.15);
       background: var(--border-light);
+    }
+    .reaction-option .kc-pick {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 2px solid #c0392b;
     }
 
     /* ───── Login Modal ───── */
@@ -1148,7 +1196,11 @@
       .note-input { min-height: 60px; font-size: 0.875rem; }
 
       .reaction-picker { gap: 6px; padding: 8px; justify-content: center; }
-      .reaction-option { padding: 6px 8px; font-size: 1.2rem; }
+      .reaction-option { padding: 8px 10px; font-size: 1.4rem; }
+      .poster-badge { width: 34px; height: 34px; top: 6px; }
+      .poster-badge.left { left: 6px; }
+      .poster-badge.right { right: 6px; }
+      .poster-badge .kc-face { width: 26px; height: 26px; }
 
       .rating-value.editable { padding: 8px 12px; margin: -8px -12px; }
       .react-trigger { padding: 8px 0; }
@@ -1290,7 +1342,8 @@
     const AUTH_FUNCTION_URL = 'https://brgxorrpfberfcyeugzq.supabase.co/functions/v1/clever-task';
     const ACTIONS_FUNCTION_URL = 'https://brgxorrpfberfcyeugzq.supabase.co/functions/v1/bright-function';
 
-    const REACTIONS = { fire: '\u{1F525}', agree: '\u{1F91D}', disagree: '\u{1F914}' };
+    const KC_IMG = 'data:image/jpeg;base64,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';
+    const REACTIONS = { fire: '\u{1F525}', agree: '\u{1F91D}', disagree: '\u{1F914}', costner: 'costner' };
     const PAGE_SIZE = 24; // Films shown per "page"
 
     const supabaseClient = window.supabase.createClient(SB_URL, SB_KEY);
@@ -1747,6 +1800,37 @@
         const posterFrame = document.createElement('div');
         posterFrame.className = 'poster-frame';
 
+        // ── Poster corner reaction badges ──
+        const peerReactionToGreg = reactions[movieKey]?.peer;
+        const gregReactionToPeer = reactions[movieKey]?.greg;
+
+        function makeBadge(reactionKey, who, side) {
+          const badge = document.createElement('div');
+          badge.className = 'poster-badge ' + side + (currentUser === who ? ' clickable' : '');
+          badge.title = (who === 'peer' ? "Peer" : "Greg") + "'s reaction: " + reactionKey;
+          if (reactionKey === 'costner') {
+            badge.innerHTML = `<img class="kc-face" src="${KC_IMG}" alt="Costner">`;
+          } else {
+            badge.textContent = REACTIONS[reactionKey];
+          }
+          const whoTag = document.createElement('span');
+          whoTag.className = 'badge-who ' + (who === 'peer' ? 'peer-who' : 'greg-who');
+          whoTag.textContent = who === 'peer' ? 'P' : 'G';
+          badge.appendChild(whoTag);
+          if (currentUser === who) {
+            badge.dataset.hasReaction = 'true';
+            badge.onclick = (e) => { e.stopPropagation(); showReactionPicker(movieKey, who, badge); };
+          }
+          return badge;
+        }
+
+        if (peerReactionToGreg && REACTIONS[peerReactionToGreg]) {
+          posterFrame.appendChild(makeBadge(peerReactionToGreg, 'peer', 'left'));
+        }
+        if (gregReactionToPeer && REACTIONS[gregReactionToPeer]) {
+          posterFrame.appendChild(makeBadge(gregReactionToPeer, 'greg', 'right'));
+        }
+
         if (entry.posterUrl) {
           const img = document.createElement('img');
           img.alt = decodeHtml(title);
@@ -1806,19 +1890,6 @@
           gregValSpan.appendChild(unrated);
         }
 
-        const peerReactionToGreg = reactions[movieKey]?.peer;
-        if (peerReactionToGreg && REACTIONS[peerReactionToGreg]) {
-          const reactionSpan = document.createElement('span');
-          reactionSpan.className = 'reaction' + (currentUser === 'peer' ? ' clickable' : '');
-          reactionSpan.innerHTML = REACTIONS[peerReactionToGreg] + '<sup style="font-size:0.6em;opacity:0.7;margin-left:1px">P</sup>';
-          reactionSpan.title = "Peer's reaction";
-          reactionSpan.dataset.hasReaction = 'true';
-          if (currentUser === 'peer') {
-            reactionSpan.onclick = (e) => { e.stopPropagation(); showReactionPicker(movieKey, 'peer', reactionSpan); };
-          }
-          gregValSpan.appendChild(reactionSpan);
-        }
-
         gregRow.appendChild(gregLabelGroup);
         gregRow.appendChild(gregValSpan);
         ratingsContainer.appendChild(gregRow);
@@ -1849,19 +1920,6 @@
             unrated.onclick = () => showStarPicker(movieKey, title, null);
           }
           peerRatingSpan.appendChild(unrated);
-        }
-
-        const gregReactionToPeer = reactions[movieKey]?.greg;
-        if (gregReactionToPeer && REACTIONS[gregReactionToPeer]) {
-          const reactionSpan = document.createElement('span');
-          reactionSpan.className = 'reaction' + (currentUser === 'greg' ? ' clickable' : '');
-          reactionSpan.innerHTML = REACTIONS[gregReactionToPeer] + '<sup style="font-size:0.6em;opacity:0.7;margin-left:1px">G</sup>';
-          reactionSpan.title = "Greg's reaction";
-          reactionSpan.dataset.hasReaction = 'true';
-          if (currentUser === 'greg') {
-            reactionSpan.onclick = (e) => { e.stopPropagation(); showReactionPicker(movieKey, 'greg', reactionSpan); };
-          }
-          peerRatingSpan.appendChild(reactionSpan);
         }
 
         peerRow.appendChild(peerLabelGroup);
@@ -2141,13 +2199,24 @@
       Object.entries(REACTIONS).forEach(([key, emoji]) => {
         const opt = document.createElement('span');
         opt.className = 'reaction-option';
-        opt.textContent = emoji;
-        opt.title = key;
+        opt.title = key === 'costner' ? 'Costner Award (terrible movie)' : key;
+        if (key === 'costner') {
+          opt.innerHTML = `<img class="kc-pick" src="${KC_IMG}" alt="Costner Award">`;
+        } else {
+          opt.textContent = emoji;
+        }
         opt.onclick = (e) => { e.stopPropagation(); saveReaction(movieKey, reactor, key); };
         picker.appendChild(opt);
       });
 
-      triggerElement.parentElement.appendChild(picker);
+      // If triggered from poster badge, append to the card's content area instead
+      const card = triggerElement.closest('.entry');
+      if (card) {
+        const content = card.querySelector('.entry-content') || card;
+        content.appendChild(picker);
+      } else {
+        triggerElement.parentElement.appendChild(picker);
+      }
 
       setTimeout(() => {
         document.addEventListener('click', function closeHandler(e) {
