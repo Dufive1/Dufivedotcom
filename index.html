@@ -238,6 +238,116 @@
 
     .auth-controls { display: flex; gap: 12px; align-items: center; }
 
+    /* ───── Notification Bell ───── */
+    .notif-wrapper {
+      position: relative;
+      display: none;  /* hidden until logged in */
+    }
+    .notif-wrapper.visible { display: block; }
+    .notif-bell {
+      cursor: pointer;
+      font-size: 1.25rem;
+      padding: 6px 8px;
+      border-radius: 6px;
+      transition: var(--transition);
+      position: relative;
+      user-select: none;
+      line-height: 1;
+    }
+    .notif-bell:hover { background: var(--border-light); }
+    .notif-badge {
+      position: absolute;
+      top: 2px;
+      right: 2px;
+      min-width: 16px;
+      height: 16px;
+      border-radius: 8px;
+      background: #dc2626;
+      color: #fff;
+      font-size: 0.6rem;
+      font-weight: 800;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 0 4px;
+      line-height: 1;
+      border: 2px solid var(--bg);
+    }
+    .notif-badge.has-count { display: flex; }
+
+    .notif-dropdown {
+      position: absolute;
+      top: calc(100% + 8px);
+      right: 0;
+      width: 320px;
+      max-height: 400px;
+      overflow-y: auto;
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      box-shadow: var(--shadow-lg);
+      z-index: 1000;
+      display: none;
+      animation: dropIn 0.2s ease;
+    }
+    .notif-dropdown.open { display: block; }
+    @keyframes dropIn {
+      from { opacity: 0; transform: translateY(-8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .notif-header {
+      padding: 12px 16px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: var(--text-secondary);
+      border-bottom: 1px solid var(--border);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .notif-item {
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border-light);
+      cursor: pointer;
+      transition: var(--transition);
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+    }
+    .notif-item:last-child { border-bottom: none; }
+    .notif-item:hover { background: var(--border-light); }
+    .notif-avatar {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.7rem;
+      font-weight: 700;
+      color: #fff;
+      flex-shrink: 0;
+    }
+    .notif-avatar.greg { background: var(--greg); }
+    .notif-avatar.peer { background: var(--accent); }
+    .notif-text {
+      font-size: 0.8rem;
+      color: var(--text);
+      line-height: 1.4;
+      flex: 1;
+    }
+    .notif-text strong { font-weight: 700; }
+    .notif-time {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+    .notif-empty {
+      padding: 24px 16px;
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 0.8rem;
+    }
+
     .login-trigger {
       cursor: pointer;
       font-size: 0.8125rem;
@@ -1160,6 +1270,8 @@
     @media (max-width: 600px) {
       .container { padding: 0 16px; }
 
+      .notif-dropdown { width: calc(100vw - 32px); right: -60px; }
+
       nav {
         flex-direction: column;
         gap: 16px;
@@ -1229,10 +1341,20 @@
     <nav>
       <a href="index.html" class="brand">DUFIVE</a>
       <div class="nav-controls">
-        <a href="timeline.html" class="nav-link">Timeline</a>
+        <a href="disagreements.html" class="nav-link">Debates</a>
         <button id="theme-toggle" class="theme-toggle" title="Toggle dark mode" aria-label="Toggle dark mode">
           <span id="theme-icon">&#9790;</span>
         </button>
+        <div class="notif-wrapper" id="notif-wrapper">
+          <div class="notif-bell" id="notif-bell" title="Notifications">
+            &#128276;
+            <span class="notif-badge" id="notif-badge">0</span>
+          </div>
+          <div class="notif-dropdown" id="notif-dropdown">
+            <div class="notif-header">Activity</div>
+            <div id="notif-list"></div>
+          </div>
+        </div>
         <div class="auth-controls">
           <div id="auth-btn" class="login-trigger">Reviewer Login</div>
           <div id="logout-btn" class="logout-btn">Logout</div>
@@ -1463,10 +1585,13 @@
         elAuthBtn.textContent = `${currentUser.toUpperCase()} \u2022 Online`;
         elAuthBtn.classList.add(`${currentUser}-active`);
         elLogoutBtn.classList.add('visible');
+        elNotifWrapper.classList.add('visible');
       } else {
         elAuthBtn.textContent = 'Reviewer Login';
         elAuthBtn.classList.remove('greg-active', 'peer-active');
         elLogoutBtn.classList.remove('visible');
+        elNotifWrapper.classList.remove('visible');
+        elNotifDropdown.classList.remove('open');
       }
     }
 
@@ -1494,6 +1619,165 @@
       txt.innerHTML = html;
       return txt.value;
     }
+
+    /* ═══════════════════════════════════════════
+       NOTIFICATION BELL
+    ═══════════════════════════════════════════ */
+    const elNotifWrapper = document.getElementById('notif-wrapper');
+    const elNotifBell = document.getElementById('notif-bell');
+    const elNotifBadge = document.getElementById('notif-badge');
+    const elNotifDropdown = document.getElementById('notif-dropdown');
+    const elNotifList = document.getElementById('notif-list');
+
+    function getNotifSeenKey() {
+      return currentUser ? `dufive-notif-seen-${currentUser}` : null;
+    }
+    function getNotifSeen() {
+      const key = getNotifSeenKey();
+      if (!key) return null;
+      const ts = localStorage.getItem(key);
+      return ts || '2000-01-01T00:00:00Z';
+    }
+    function markNotifSeen() {
+      const key = getNotifSeenKey();
+      if (key) localStorage.setItem(key, new Date().toISOString());
+    }
+
+    async function fetchNotifications() {
+      if (!currentUser) { elNotifWrapper.classList.remove('visible'); return; }
+      elNotifWrapper.classList.add('visible');
+
+      const otherUser = currentUser === 'peer' ? 'greg' : 'peer';
+      const since = getNotifSeen();
+      const items = [];
+
+      // Ratings by the other user
+      try {
+        const { data } = await supabaseClient
+          .from('ratings')
+          .select('movie_key, movie_title, rating, reviewer, created_at')
+          .eq('reviewer', otherUser)
+          .gt('created_at', since)
+          .order('created_at', { ascending: false })
+          .limit(20);
+        (data || []).forEach(r => {
+          items.push({
+            author: otherUser,
+            text: `rated <strong>${decodeHtml(r.movie_title || r.movie_key)}</strong> ${starsFromNumeric(r.rating) || r.rating}`,
+            movieKey: r.movie_key,
+            date: r.created_at
+          });
+        });
+      } catch (e) { console.error('Notif ratings error:', e); }
+
+      // Reactions by the other user
+      try {
+        const { data } = await supabaseClient
+          .from('rating_reactions')
+          .select('movie_key, reactor, reaction, created_at')
+          .eq('reactor', otherUser)
+          .gt('created_at', since)
+          .order('created_at', { ascending: false })
+          .limit(20);
+        (data || []).forEach(r => {
+          const emoji = REACTIONS[r.reaction] === 'costner' ? '🤠' : (REACTIONS[r.reaction] || r.reaction);
+          items.push({
+            author: otherUser,
+            text: `reacted ${emoji} to a film`,
+            movieKey: r.movie_key,
+            date: r.created_at
+          });
+        });
+      } catch (e) { console.error('Notif reactions error:', e); }
+
+      // Notes by the other user
+      try {
+        const { data } = await supabaseClient
+          .from('film_arguments')
+          .select('movie_key, author, argument, created_at')
+          .eq('author', otherUser)
+          .gt('created_at', since)
+          .order('created_at', { ascending: false })
+          .limit(20);
+        (data || []).forEach(n => {
+          items.push({
+            author: otherUser,
+            text: `posted a note: "${n.argument?.substring(0, 60)}${n.argument?.length > 60 ? '...' : ''}"`,
+            movieKey: n.movie_key,
+            date: n.created_at
+          });
+        });
+      } catch (e) { console.error('Notif notes error:', e); }
+
+      // Enrich movie titles for reactions/notes
+      const keysToEnrich = items.filter(i => i.text.includes('a film')).map(i => i.movieKey);
+      if (keysToEnrich.length > 0) {
+        try {
+          const { data: films } = await supabaseClient
+            .from('greg_films')
+            .select('movie_key, title')
+            .in('movie_key', keysToEnrich);
+          const titleMap = {};
+          (films || []).forEach(f => { titleMap[f.movie_key] = f.title; });
+          items.forEach(i => {
+            if (titleMap[i.movieKey]) {
+              i.text = i.text.replace('a film', `<strong>${decodeHtml(titleMap[i.movieKey])}</strong>`);
+            }
+          });
+        } catch (e) {}
+      }
+
+      // Sort by date, newest first
+      items.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+      // Update badge
+      const count = items.length;
+      elNotifBadge.textContent = count > 99 ? '99+' : count;
+      elNotifBadge.classList.toggle('has-count', count > 0);
+
+      // Render dropdown items
+      elNotifList.innerHTML = '';
+      if (items.length === 0) {
+        elNotifList.innerHTML = '<div class="notif-empty">No new activity from ' + (otherUser === 'greg' ? 'Greg' : 'Peer') + '</div>';
+      } else {
+        items.slice(0, 30).forEach(item => {
+          const el = document.createElement('div');
+          el.className = 'notif-item';
+          const authorName = item.author === 'greg' ? 'Greg' : 'Peer';
+          el.innerHTML = `
+            <div class="notif-avatar ${item.author}">${item.author === 'greg' ? 'G' : 'P'}</div>
+            <div>
+              <div class="notif-text"><strong>${authorName}</strong> ${item.text}</div>
+              <div class="notif-time">${timeAgo(item.date)}</div>
+            </div>`;
+          el.onclick = () => {
+            // Search for the film — use movie_key with hyphens replaced as spaces
+            const searchTerm = item.movieKey.replace(/-/g, ' ');
+            elSearch.value = searchTerm;
+            elSearch.dispatchEvent(new Event('input'));
+            elNotifDropdown.classList.remove('open');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+          };
+          elNotifList.appendChild(el);
+        });
+      }
+    }
+
+    // Toggle dropdown
+    elNotifBell.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const isOpen = elNotifDropdown.classList.toggle('open');
+      if (isOpen) {
+        // Mark as seen when opened
+        markNotifSeen();
+        elNotifBadge.classList.remove('has-count');
+      }
+    });
+    document.addEventListener('click', (e) => {
+      if (!elNotifDropdown.contains(e.target) && e.target !== elNotifBell) {
+        elNotifDropdown.classList.remove('open');
+      }
+    });
 
     /* ═══════════════════════════════════════════
        NEW SINCE LAST VISIT
@@ -2420,6 +2704,7 @@
         closeLoginModal();
         setAuthUI();
         showToast(`Logged in as ${data.reviewer.toUpperCase()}`, 'success');
+        fetchNotifications();
         await loadArchive();
       } catch (e) {
         showToast('Login failed: ' + e.message, 'error');
@@ -2490,6 +2775,7 @@
     elLogoutBtn.addEventListener('click', () => logout(false));
 
     setAuthUI();
+    fetchNotifications();
     loadArchive();
   </script>
 </body>
