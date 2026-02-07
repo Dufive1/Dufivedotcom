@@ -445,6 +445,28 @@
       font-weight: 800;
       letter-spacing: -0.02em;
       line-height: 1.2;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      max-width: 100%;
+    }
+    .stat-card:last-child .stat-value {
+      /* Most Debated: allow wrapping but cap at 2 lines */
+      white-space: normal;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      font-size: 1rem;
+      font-weight: 700;
+      line-height: 1.3;
+      color: var(--accent);
+    }
+    .stat-card:last-child {
+      cursor: pointer;
+    }
+    .stat-card:last-child:hover .stat-value {
+      text-decoration: underline;
+      text-underline-offset: 2px;
     }
     .stat-value.greg-color { color: var(--greg); }
     .stat-value.peer-color { color: var(--peer); }
@@ -1400,6 +1422,7 @@
       .stat-card:last-child { border-right: none; }
       .stat-card:hover { box-shadow: none; transform: none; }
       .stat-value { font-size: 0.95rem; }
+      .stat-card:last-child .stat-value { font-size: 0.75rem; -webkit-line-clamp: 2; }
       .stat-label { font-size: 0.55rem; }
 
       .toolbar { gap: 10px; margin-bottom: 20px; }
@@ -1950,7 +1973,8 @@
     function computeStats(gregItems, peerMap) {
       const total = gregItems.length;
       let gregSum = 0, gregCount = 0, peerSum = 0, peerCount = 0;
-      let agreeCount = 0, bothRated = 0, maxGap = 0, controversialTitle = '\u2014';
+      let agreeCount = 0, bothRated = 0, maxGap = 0;
+      let controversialTitle = '\u2014', controversialKey = null;
 
       gregItems.forEach(entry => {
         const movieKey = getMovieKey(entry);
@@ -1964,7 +1988,11 @@
           bothRated++;
           const gap = Math.abs(gregR - peerR);
           if (gap <= 0.5) agreeCount++;
-          if (gap > maxGap) { maxGap = gap; controversialTitle = decodeHtml(entry.title); }
+          if (gap > maxGap) {
+            maxGap = gap;
+            controversialTitle = decodeHtml(entry.title);
+            controversialKey = movieKey;
+          }
         }
       });
 
@@ -1978,11 +2006,19 @@
       document.getElementById('stat-agreement').textContent = agreePct;
 
       const controversialEl = document.getElementById('stat-controversial');
-      if (controversialTitle.length > 18) {
-        controversialEl.textContent = controversialTitle.substring(0, 16) + '...';
-        controversialEl.title = controversialTitle;
-      } else {
-        controversialEl.textContent = controversialTitle;
+      controversialEl.textContent = controversialTitle;
+      controversialEl.title = controversialTitle;
+
+      // Make clickable — search for the film and scroll to it
+      const statCard = controversialEl.closest('.stat-card');
+      if (controversialKey) {
+        statCard.style.cursor = 'pointer';
+        statCard.onclick = () => {
+          elSearch.value = controversialTitle;
+          elSearch.dispatchEvent(new Event('input'));
+          elSearch.focus();
+          window.scrollTo({ top: elGrid.offsetTop - 80, behavior: 'smooth' });
+        };
       }
 
       document.getElementById('stats-bar').classList.add('visible');
