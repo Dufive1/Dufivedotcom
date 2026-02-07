@@ -629,56 +629,58 @@
       flex-shrink: 0;
     }
 
-    /* ───── Poster Corner Reaction Badges ───── */
+    /* ───── Poster Corner Reaction Stamps ───── */
     .poster-badge {
       position: absolute;
       top: 8px;
       z-index: 3;
-      width: 38px;
-      height: 38px;
+      width: 52px;
+      height: 52px;
       border-radius: 50%;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 1.35rem;
-      background: rgba(0,0,0,0.7);
-      backdrop-filter: blur(6px);
-      border: 2px solid rgba(255,255,255,0.25);
-      box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+      font-size: 1.75rem;
+      background: rgba(0,0,0,0.65);
+      backdrop-filter: blur(8px);
+      border: 2.5px solid rgba(255,255,255,0.3);
+      box-shadow: 0 3px 12px rgba(0,0,0,0.5);
       transition: var(--transition);
       cursor: default;
       line-height: 1;
     }
-    .poster-badge.left  { left: 8px; }
-    .poster-badge.right { right: 8px; }
+    .poster-badge.left  { left: 8px; transform: rotate(-8deg); }
+    .poster-badge.right { right: 8px; transform: rotate(6deg); }
     .poster-badge.clickable { cursor: pointer; }
     .poster-badge.clickable:hover {
-      transform: scale(1.15);
+      transform: scale(1.12) rotate(0deg);
       border-color: var(--accent);
+      box-shadow: 0 4px 16px rgba(0,0,0,0.6);
     }
     .poster-badge .badge-who {
       position: absolute;
-      bottom: -4px;
-      right: -4px;
-      width: 16px;
-      height: 16px;
+      bottom: -3px;
+      right: -3px;
+      width: 18px;
+      height: 18px;
       border-radius: 50%;
-      font-size: 0.55rem;
-      font-weight: 700;
+      font-size: 0.6rem;
+      font-weight: 800;
       display: flex;
       align-items: center;
       justify-content: center;
       color: #fff;
-      border: 1.5px solid rgba(0,0,0,0.6);
+      border: 1.5px solid rgba(0,0,0,0.5);
+      letter-spacing: -0.5px;
     }
     .badge-who.peer-who { background: var(--accent); }
     .badge-who.greg-who { background: #e67e22; }
     .poster-badge .kc-face {
-      width: 30px;
-      height: 30px;
+      width: 42px;
+      height: 42px;
       border-radius: 50%;
       object-fit: cover;
-      filter: grayscale(0.2);
+      filter: grayscale(0.15) contrast(1.1);
     }
 
     .react-trigger {
@@ -1197,10 +1199,10 @@
 
       .reaction-picker { gap: 6px; padding: 8px; justify-content: center; }
       .reaction-option { padding: 8px 10px; font-size: 1.4rem; }
-      .poster-badge { width: 34px; height: 34px; top: 6px; }
+      .poster-badge { width: 44px; height: 44px; font-size: 1.5rem; top: 6px; }
       .poster-badge.left { left: 6px; }
       .poster-badge.right { right: 6px; }
-      .poster-badge .kc-face { width: 26px; height: 26px; }
+      .poster-badge .kc-face { width: 36px; height: 36px; }
 
       .rating-value.editable { padding: 8px 12px; margin: -8px -12px; }
       .react-trigger { padding: 8px 0; }
