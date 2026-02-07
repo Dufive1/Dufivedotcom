@@ -124,18 +124,35 @@
       white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
     }
     .search-result-meta { font-size: 0.7rem; color: var(--text-muted); }
+    .search-result-actions { display: flex; gap: 4px; flex-shrink: 0; }
     .search-result-add {
-      font-size: 0.7rem; font-weight: 600; color: var(--accent);
+      font-size: 0.65rem; font-weight: 700; color: var(--accent);
       background: none; border: 1px solid var(--accent); border-radius: 6px;
-      padding: 4px 10px; cursor: pointer; transition: var(--transition); flex-shrink: 0;
+      padding: 4px 8px; cursor: pointer; transition: var(--transition); white-space: nowrap;
     }
     .search-result-add:hover { background: var(--accent); color: #fff; }
+    .search-result-add.greg { color: var(--greg); border-color: var(--greg); }
+    .search-result-add.greg:hover { background: var(--greg); color: #fff; }
+    .search-result-add.peer { color: var(--peer); border-color: var(--peer); }
+    .search-result-add.peer:hover { background: var(--peer); color: #fff; }
     .search-result.in-queue .search-result-add {
       color: var(--text-muted); border-color: var(--border); cursor: default;
     }
     .search-no-results {
       padding: 16px; text-align: center; font-size: 0.85rem; color: var(--text-muted);
     }
+
+    /* ───── Filter chips ───── */
+    .filters {
+      display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; margin-bottom: 24px;
+    }
+    .filter-chip {
+      font-size: 0.75rem; font-weight: 600; padding: 6px 14px; border-radius: 20px;
+      border: 1px solid var(--border); background: var(--card-bg); color: var(--text-secondary);
+      cursor: pointer; transition: var(--transition); user-select: none;
+    }
+    .filter-chip:hover { border-color: var(--accent); color: var(--accent); }
+    .filter-chip.active { background: var(--accent); color: #fff; border-color: var(--accent); }
 
     /* ───── Login prompt ───── */
     .login-prompt {
@@ -180,15 +197,19 @@
       color: var(--text-muted); line-height: 1.2;
     }
 
-    /* Suggested-by badge */
-    .suggested-badge {
+    /* Assigned-to badge */
+    .assigned-badge {
       position: absolute; top: 6px; left: 6px; font-size: 0.6rem; font-weight: 700;
       padding: 2px 7px; border-radius: 4px; text-transform: uppercase;
       letter-spacing: 0.04em; backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
     }
-    .suggested-badge.greg { background: rgba(234,88,12,0.85); color: #fff; }
-    .suggested-badge.peer { background: rgba(37,99,235,0.85); color: #fff; }
-    .suggested-badge.admin { background: rgba(120,60,200,0.85); color: #fff; }
+    .assigned-badge.greg { background: rgba(234,88,12,0.85); color: #fff; }
+    .assigned-badge.peer { background: rgba(37,99,235,0.85); color: #fff; }
+    .assigned-badge.both { background: rgba(80,80,80,0.8); color: #fff; }
+    /* Suggested-by tag (bottom) */
+    .suggested-tag {
+      font-size: 0.6rem; color: var(--text-muted); margin-top: 2px;
+    }
 
     /* Remove button */
     .queue-remove {
@@ -303,6 +324,14 @@
     </div>
   </div>
 
+  <!-- Filters -->
+  <div class="filters" id="filters">
+    <div class="filter-chip active" data-filter="all">All</div>
+    <div class="filter-chip" data-filter="greg">For Greg</div>
+    <div class="filter-chip" data-filter="peer">For Peer</div>
+    <div class="filter-chip" data-filter="both">Must Watch</div>
+  </div>
+
   <!-- Queue grid -->
   <div id="queue-area">
     <div class="loading" id="loading">Loading queue...</div>
@@ -339,6 +368,7 @@
   let allGregFilms = []; // Cache for search
   let queueItems = [];
   let watchedItems = [];
+  let activeFilter = 'all';
 
   // ───── Auth (shared with main page via localStorage) ─────
   function loadSession() {
@@ -413,21 +443,29 @@
     loading.style.display = 'none';
     grid.innerHTML = '';
 
+    // Apply filter
+    const filtered = activeFilter === 'all'
+      ? queueItems
+      : queueItems.filter(i => (i.assigned_to || 'both') === activeFilter);
+
     // Queue count
     countEl.textContent = queueItems.length === 0
       ? 'Queue empty'
-      : queueItems.length + ' film' + (queueItems.length !== 1 ? 's' : '') + ' in queue';
+      : filtered.length + ' of ' + queueItems.length + ' film' + (queueItems.length !== 1 ? 's' : '');
 
-    if (queueItems.length === 0) {
+    // Update filter chip counts
+    document.querySelectorAll('.filter-chip').forEach(chip => {
+      chip.classList.toggle('active', chip.dataset.filter === activeFilter);
+    });
+
+    if (filtered.length === 0) {
       empty.style.display = '';
       grid.style.display = 'none';
     } else {
       empty.style.display = 'none';
       grid.style.display = '';
 
-      const queueKeys = new Set(queueItems.map(i => i.movie_key));
-
-      queueItems.forEach((item, idx) => {
+      filtered.forEach((item, idx) => {
         const card = document.createElement('div');
         card.className = 'queue-card';
         card.style.animationDelay = (idx * 0.04) + 's';
@@ -456,10 +494,11 @@
           poster.appendChild(fb);
         }
 
-        // Suggested-by badge
+        // Assigned-to badge
+        const assignedTo = item.assigned_to || 'both';
         const badge = document.createElement('div');
-        badge.className = 'suggested-badge ' + item.suggested_by;
-        badge.textContent = item.suggested_by;
+        badge.className = 'assigned-badge ' + assignedTo;
+        badge.textContent = assignedTo === 'both' ? 'Must Watch' : 'For ' + assignedTo;
         poster.appendChild(badge);
 
         // Remove button (logged-in users only)
@@ -490,10 +529,10 @@
           info.appendChild(note);
         }
 
-        const date = document.createElement('div');
-        date.className = 'queue-date';
-        date.textContent = 'Added ' + formatDate(item.added_at);
-        info.appendChild(date);
+        const suggested = document.createElement('div');
+        suggested.className = 'suggested-tag';
+        suggested.textContent = 'Added by ' + (item.suggested_by || 'admin') + ' \u2022 ' + formatDate(item.added_at);
+        info.appendChild(suggested);
 
         card.appendChild(info);
 
@@ -598,17 +637,28 @@
 
       row.appendChild(info);
 
-      // Add button
-      const btn = document.createElement('button');
-      btn.className = 'search-result-add';
-      btn.textContent = inQueue ? 'In Queue' : '+ Add';
-      if (!inQueue) {
-        btn.onclick = (e) => {
-          e.stopPropagation();
-          addToQueue(film);
-        };
+      // Add buttons — assign to Greg, Peer, or Both
+      const actions = document.createElement('div');
+      actions.className = 'search-result-actions';
+      if (inQueue) {
+        const tag = document.createElement('span');
+        tag.className = 'search-result-add';
+        tag.textContent = 'In Queue';
+        tag.style.cursor = 'default';
+        tag.style.color = 'var(--text-muted)';
+        tag.style.borderColor = 'var(--border)';
+        actions.appendChild(tag);
+      } else {
+        [['greg', 'G'], ['peer', 'P'], ['both', 'Both']].forEach(([who, label]) => {
+          const btn = document.createElement('button');
+          btn.className = 'search-result-add ' + (who === 'both' ? '' : who);
+          btn.textContent = '+ ' + label;
+          btn.title = who === 'both' ? 'Must watch for both' : 'For ' + who;
+          btn.onclick = (e) => { e.stopPropagation(); addToQueue(film, who); };
+          actions.appendChild(btn);
+        });
       }
-      row.appendChild(btn);
+      row.appendChild(actions);
 
       searchResults.appendChild(row);
     });
@@ -617,7 +667,7 @@
   }
 
   // ───── Actions ─────
-  async function addToQueue(film) {
+  async function addToQueue(film, assignedTo) {
     try {
       const res = await fetch(ACTIONS_URL, {
         method: 'POST',
@@ -632,11 +682,13 @@
             title: film.title,
             posterUrl: film.poster_url || null,
             note: null,
+            assignedTo: assignedTo || 'both',
           }
         })
       });
       if (!res.ok) throw new Error('Failed');
-      showToast('Added "' + film.title + '" to the queue');
+      const label = assignedTo === 'both' ? 'Must Watch' : 'for ' + assignedTo;
+      showToast('Added "' + film.title + '" \u2014 ' + label);
       searchInput.value = '';
       searchResults.classList.remove('visible');
       await fetchWatchlist();
@@ -694,6 +746,14 @@
     if (diff < 604800000) return Math.floor(diff / 86400000) + 'd ago';
     return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
   }
+
+  // ───── Filter clicks ─────
+  document.querySelectorAll('.filter-chip').forEach(chip => {
+    chip.addEventListener('click', () => {
+      activeFilter = chip.dataset.filter;
+      render();
+    });
+  });
 
   // ───── Init ─────
   async function init() {
