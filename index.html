@@ -482,6 +482,25 @@
     }
     .search-input::placeholder { color: var(--text-muted); }
 
+    .search-clear {
+      position: absolute;
+      right: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 0.875rem;
+      color: var(--text-muted);
+      padding: 4px 6px;
+      border-radius: 4px;
+      display: none;
+      line-height: 1;
+      transition: var(--transition);
+    }
+    .search-clear:hover { color: var(--text); background: var(--border-light); }
+    .search-clear.visible { display: block; }
+
     .sort-select {
       padding: 10px 32px 10px 14px;
       border: 1px solid var(--border);
@@ -538,6 +557,11 @@
 
     @keyframes cardEnter {
       to { opacity: 1; transform: translateY(0); }
+    }
+    .entry.no-animate {
+      opacity: 1;
+      transform: none;
+      animation: none;
     }
 
     .new-badge {
@@ -1059,8 +1083,15 @@
       box-shadow: var(--shadow);
       font-family: 'Inter', sans-serif;
     }
-    .note-submit:hover { background: var(--accent-hover); box-shadow: var(--shadow-lg); transform: translateY(-1px); }
-    .note-submit:active { transform: translateY(0); }
+    .note-submit:hover:not(:disabled) { background: var(--accent-hover); box-shadow: var(--shadow-lg); transform: translateY(-1px); }
+    .note-submit:active:not(:disabled) { transform: translateY(0); }
+    .note-submit:disabled { opacity: 0.6; cursor: not-allowed; }
+    .note-char-count {
+      font-size: 0.65rem;
+      color: var(--text-muted);
+      text-align: right;
+      margin-top: -4px;
+    }
 
     /* ───── Reaction Picker ───── */
     .reaction-picker {
@@ -1445,6 +1476,7 @@
       <div class="search-wrapper">
         <span class="search-icon">&#128270;</span>
         <input type="text" class="search-input" id="search-input" placeholder="Search films..." autocomplete="off" />
+        <button class="search-clear" id="search-clear" aria-label="Clear search">&times;</button>
       </div>
       <select class="sort-select" id="sort-select">
         <option value="date">Newest First</option>
@@ -1544,6 +1576,7 @@
     let cachedNotesMap = {};
     let activeFilter = 'all';
     let visibleCount = PAGE_SIZE; // How many films currently shown
+    let isInitialRender = true;
 
     /* ═══════════════════════════════════════════
        TOAST NOTIFICATIONS
@@ -1561,6 +1594,7 @@
       setTimeout(() => {
         toast.classList.add('leaving');
         toast.addEventListener('animationend', () => toast.remove());
+        setTimeout(() => { if (toast.parentNode) toast.remove(); }, 500);
       }, duration);
     }
 
@@ -2001,7 +2035,7 @@
        SEARCH / SORT / FILTER
     ═══════════════════════════════════════════ */
     function getMovieKey(entry) {
-      return entry.movieKey || (entry.link ? entry.link.split('/film/')[1]?.replace('/', '') : entry.title);
+      return entry.movieKey || entry.link?.split('/film/')[1]?.replace('/', '') || entry.title;
     }
 
     function getFilteredAndSorted() {
@@ -2066,8 +2100,18 @@
             if (gB > 0 && gA <= 0) return 1;
             return gA - gB || a.title.localeCompare(b.title);
           }
-          case 'peer-high': return pB - pA || a.title.localeCompare(b.title);
-          case 'peer-low': return pA - pB || a.title.localeCompare(b.title);
+          case 'peer-high': {
+            if (pA > 0 && pB <= 0) return -1;
+            if (pB > 0 && pA <= 0) return 1;
+            if (pA <= 0 && pB <= 0) return a.title.localeCompare(b.title);
+            return pB - pA || a.title.localeCompare(b.title);
+          }
+          case 'peer-low': {
+            if (pA > 0 && pB <= 0) return -1;
+            if (pB > 0 && pA <= 0) return 1;
+            if (pA <= 0 && pB <= 0) return a.title.localeCompare(b.title);
+            return pA - pB || a.title.localeCompare(b.title);
+          }
           case 'gap': {
             const gapA = (gA > 0 && pA > 0) ? Math.abs(gA - pA) : -1;
             const gapB = (gB > 0 && pB > 0) ? Math.abs(gB - pB) : -1;
@@ -2086,7 +2130,19 @@
       renderLedger(items, cachedPeerMap, cachedReactions, cachedNotesMap);
     }
 
-    elSearch.addEventListener('input', () => rerender(true));
+    const elSearchClear = document.getElementById('search-clear');
+    let searchDebounce;
+    elSearch.addEventListener('input', () => {
+      clearTimeout(searchDebounce);
+      elSearchClear.classList.toggle('visible', elSearch.value.length > 0);
+      searchDebounce = setTimeout(() => rerender(true), 200);
+    });
+    elSearchClear.addEventListener('click', () => {
+      elSearch.value = '';
+      elSearchClear.classList.remove('visible');
+      rerender(true);
+      elSearch.focus();
+    });
     elSort.addEventListener('change', () => rerender(true));
 
     document.querySelectorAll('.filter-chip').forEach(chip => {
@@ -2127,8 +2183,8 @@
         const peerR = Number(peerMap[movieKey]) || 0;
 
         const card = document.createElement('div');
-        card.className = 'entry';
-        card.style.animationDelay = `${Math.min(index * 0.04, 0.4)}s`;
+        card.className = isInitialRender ? 'entry' : 'entry no-animate';
+        if (isInitialRender) card.style.animationDelay = `${Math.min(index * 0.04, 0.4)}s`;
 
         // New badge
         if (hasNewNotes) {
@@ -2386,15 +2442,29 @@
             input.placeholder = `Share your thoughts as ${currentUser.toUpperCase()}...`;
             input.maxLength = 200;
 
+            const charCount = document.createElement('div');
+            charCount.className = 'note-char-count';
+            charCount.textContent = '0 / 200';
+            input.addEventListener('input', () => {
+              charCount.textContent = `${input.value.length} / 200`;
+              charCount.style.color = input.value.length >= 180 ? 'var(--greg)' : '';
+            });
+
             const submit = document.createElement('button');
             submit.className = 'note-submit';
             submit.textContent = 'Post Note';
-            submit.onclick = (e) => {
+            submit.onclick = async (e) => {
               e.stopPropagation();
-              if (input.value.trim()) submitNote(movieKey, input.value.trim());
+              if (!input.value.trim()) return;
+              submit.disabled = true;
+              submit.textContent = 'Posting...';
+              await submitNote(movieKey, input.value.trim());
+              submit.disabled = false;
+              submit.textContent = 'Post Note';
             };
 
             form.appendChild(input);
+            form.appendChild(charCount);
             form.appendChild(submit);
             discussionSection.appendChild(form);
           }
@@ -2427,8 +2497,10 @@
         btn.className = 'load-more-btn';
         btn.textContent = `Load More Films`;
         btn.onclick = () => {
+          const scrollPos = window.scrollY;
           visibleCount += PAGE_SIZE;
           rerender(false);
+          window.scrollTo(0, scrollPos);
         };
 
         const count = document.createElement('div');
@@ -2596,8 +2668,9 @@
       }
 
       if (!res.ok) {
-        const errorData = await res.json();
-        throw new Error(errorData.error || 'Request failed');
+        let errorMsg = 'Request failed (status ' + res.status + ')';
+        try { const errorData = await res.json(); errorMsg = errorData.error || errorMsg; } catch (_) {}
+        throw new Error(errorMsg);
       }
 
       return await res.json();
@@ -2684,6 +2757,7 @@
         renderLedger(items, peerMap, reactions, notesMap);
 
         setLastVisit();
+        isInitialRender = false;
 
         if (preserveScroll) window.scrollTo(0, scrollY);
       } catch (e) {

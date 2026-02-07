@@ -33,7 +33,7 @@
       --peer: #60a5fa; --peer-bg: rgba(96, 165, 250, 0.1);
       --shadow: 0 1px 3px rgba(0,0,0,0.3); --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.4);
       --bar-track: #2d2d2d;
-      --heat-1: #fbbf24; --heat-2: #f59e0b; --heat-3: #ef4444; --heat-4: #dc2626; --heat-5: #991b1b;
+      --heat-1: #fde68a; --heat-2: #fbbf24; --heat-3: #f87171; --heat-4: #ef4444; --heat-5: #dc2626;
     }
 
     * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -180,6 +180,11 @@
     .debate-no-notes {
       font-size: 0.72rem; color: var(--text-muted); font-style: italic;
     }
+    .debate-note-toggle {
+      font-size: 0.72rem; color: var(--accent); cursor: pointer;
+      font-weight: 600; margin-top: 4px;
+    }
+    .debate-note-toggle:hover { text-decoration: underline; }
 
     /* ───── Empty / Loading ───── */
     .loading {
@@ -270,6 +275,10 @@
       <div class="stat">
         <div class="stat-value" id="stat-biggest">0</div>
         <div class="stat-label">Biggest Gap</div>
+      </div>
+      <div class="stat">
+        <div class="stat-value" id="stat-tougher" style="font-size:0.85rem;">—</div>
+        <div class="stat-label">Tough Critic</div>
       </div>
     </div>
 
@@ -406,19 +415,45 @@
         const avgDiff = debates.length > 0 ? (totalDiff / debates.length).toFixed(1) : '0';
         const biggest = debates.length > 0 ? debates[0].diff : 0;
 
+        // Who rates higher (tough critic = rates lower more often)
+        const gregHigherCount = debates.filter(d => d.gregHigher).length;
+        const peerHigherCount = debates.filter(d => !d.gregHigher).length;
+        let tougherText = '—';
+        if (gregHigherCount > peerHigherCount) tougherText = `Peer (${Math.round(peerHigherCount / debates.length * 100)}% lower)`;
+        else if (peerHigherCount > gregHigherCount) tougherText = `Greg (${Math.round(gregHigherCount / debates.length * 100)}% lower)`;
+        else if (debates.length > 0) tougherText = 'Tied!';
+
         document.getElementById('stat-total').textContent = totalBothRated;
         document.getElementById('stat-disagree').textContent = debates.length;
         document.getElementById('stat-avg-diff').textContent = avgDiff + '★';
         document.getElementById('stat-biggest').textContent = biggest + '★';
+        document.getElementById('stat-tougher').textContent = tougherText;
         document.getElementById('stats-strip').style.display = 'flex';
         document.getElementById('filters').style.display = 'flex';
 
+        updateFilterCounts();
         renderDebates();
 
       } catch (err) {
         document.getElementById('debate-list').innerHTML =
           `<div class="empty-state"><div class="empty-text">Error: ${err.message}</div></div>`;
       }
+    }
+
+    function updateFilterCounts() {
+      const counts = {
+        'all': allDebates.length,
+        '3': allDebates.filter(d => d.diff >= 3).length,
+        '2': allDebates.filter(d => d.diff >= 2).length,
+        '1': allDebates.filter(d => d.diff >= 1).length,
+        'greg-higher': allDebates.filter(d => d.gregHigher).length,
+        'peer-higher': allDebates.filter(d => !d.gregHigher).length,
+      };
+      document.querySelectorAll('.filter-chip').forEach(chip => {
+        const key = chip.dataset.filter;
+        const label = chip.textContent.replace(/\s*\(\d+\)$/, '');
+        chip.textContent = `${label} (${counts[key] || 0})`;
+      });
     }
 
     function renderDebates() {
@@ -453,12 +488,19 @@
           ? `<img src="${d.posterUrl}" alt="${decodeHtml(d.title)}" loading="lazy" onerror="this.parentElement.innerHTML='<div class=\\'debate-poster-placeholder\\'>🎬</div>'">`
           : `<div class="debate-poster-placeholder">\u{1F3AC}</div>`;
 
+        const notesId = `notes-${d.movieKey}`;
+        const hasMore = d.notes.length > 3;
         const notesHtml = d.notes.length > 0
           ? `<div class="debate-notes">
                ${d.notes.slice(0, 3).map(n =>
                  `<div class="debate-note"><strong>${n.author === 'greg' ? 'Greg' : 'Peer'}:</strong> ${decodeHtml(n.argument)}</div>`
                ).join('')}
-               ${d.notes.length > 3 ? `<div class="debate-note" style="color:var(--text-muted)">+ ${d.notes.length - 3} more...</div>` : ''}
+               ${hasMore ? `<div class="debate-notes-extra" id="${notesId}" style="display:none;">
+                 ${d.notes.slice(3).map(n =>
+                   `<div class="debate-note"><strong>${n.author === 'greg' ? 'Greg' : 'Peer'}:</strong> ${decodeHtml(n.argument)}</div>`
+                 ).join('')}
+               </div>
+               <div class="debate-note-toggle" onclick="const el=document.getElementById('${notesId}');const show=el.style.display==='none';el.style.display=show?'block':'none';this.textContent=show?'Show less':'+ ${d.notes.length - 3} more...'">+ ${d.notes.length - 3} more...</div>` : ''}
              </div>`
           : `<div class="debate-no-notes">No reviews yet — be the first to weigh in!</div>`;
 
@@ -467,7 +509,7 @@
             <div class="debate-rank ${rank <= 3 ? 'top-3' : ''}">${rank}</div>
             <div class="debate-poster">${posterHtml}</div>
             <div class="debate-body">
-              <div class="debate-title">${decodeHtml(d.title)}</div>
+              <div class="debate-title">${d.link ? `<a href="${d.link}" target="_blank" rel="noopener" style="color:inherit;text-decoration:none;" onmouseover="this.style.color='var(--accent)'" onmouseout="this.style.color='inherit'">${decodeHtml(d.title)}</a>` : decodeHtml(d.title)}</div>
               <div class="debate-ratings">
                 <div class="debate-reviewer">
                   <span class="reviewer-dot greg"></span>
