@@ -1532,6 +1532,17 @@
 
     const EMPTY_POSTER = 'empty-poster'; // Letterboxd placeholder token
 
+    // Fix Letterboxd CDN poster URLs — only the og:image 1200x1200 format is publicly accessible.
+    // The enricher stored 0-230-0-345 size which returns 403. Convert to the working format.
+    function fixPosterUrl(url) {
+      if (!url || url.includes(EMPTY_POSTER)) return null;
+      // Convert any resized format to the working 1200x1200 og:image format
+      if (url.includes('ltrbxd.com') && url.includes('-0-230-0-345-crop')) {
+        return url.replace(/-0-230-0-345-crop\.jpg/, '-1200-1200-675-675-crop-000000.jpg');
+      }
+      return url;
+    }
+
     async function fetchGregFilms() {
       const { data, error } = await supabaseClient
         .from('greg_films')
@@ -1542,7 +1553,7 @@
       return (data || []).map(f => ({
         title: f.title,
         movieKey: f.movie_key,
-        posterUrl: (f.poster_url && !f.poster_url.includes(EMPTY_POSTER)) ? f.poster_url : null,
+        posterUrl: fixPosterUrl(f.poster_url),
         gregRating: f.greg_rating,
         link: f.letterboxd_url || '',
         pubDate: f.updated_at,
