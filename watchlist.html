@@ -221,17 +221,31 @@
     .assigned-badge.greg { background: rgba(234,88,12,0.85); color: #fff; }
     .assigned-badge.peer { background: rgba(37,99,235,0.85); color: #fff; }
     .assigned-badge.both { background: rgba(80,80,80,0.8); color: #fff; }
+    /* Priority badge (top-right of poster) */
+    .priority-badge {
+      position: absolute; top: 6px; right: 6px; font-size: 0.6rem; font-weight: 700;
+      padding: 2px 7px; border-radius: 4px; text-transform: uppercase;
+      letter-spacing: 0.04em; backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+      z-index: 3; cursor: pointer; transition: var(--transition); user-select: none;
+    }
+    .priority-badge.high { background: rgba(239, 68, 68, 0.85); color: #fff; }
+    .priority-badge.low { background: rgba(120, 120, 120, 0.7); color: #fff; font-weight: 600; }
+    .priority-badge:hover { transform: scale(1.08); }
+    .queue-card:hover .priority-badge { opacity: 1 !important; }
+    /* Medium = no badge shown until hover, keeps it clean */
+
     /* Suggested-by tag (bottom) */
     .suggested-tag {
       font-size: 0.6rem; color: var(--text-muted); margin-top: 2px;
     }
 
-    /* Remove button */
+    /* Remove button — bottom-right so it doesn't collide with badges */
     .queue-remove {
-      position: absolute; top: 6px; right: 6px; width: 22px; height: 22px;
+      position: absolute; bottom: 6px; right: 6px; width: 22px; height: 22px;
       border-radius: 50%; background: rgba(0,0,0,0.6); color: #fff; border: none;
       font-size: 0.75rem; cursor: pointer; display: none; align-items: center;
       justify-content: center; transition: var(--transition); backdrop-filter: blur(4px);
+      z-index: 4;
     }
     .queue-card:hover .queue-remove { display: flex; }
     .queue-remove:hover { background: #ef4444; }
@@ -342,6 +356,7 @@
   <!-- Filters -->
   <div class="filters" id="filters">
     <div class="filter-chip active" data-filter="all">All</div>
+    <div class="filter-chip" data-filter="high">&#128293; Priority</div>
     <div class="filter-chip" data-filter="greg">For Greg</div>
     <div class="filter-chip" data-filter="peer">For Peer</div>
     <div class="filter-chip" data-filter="both">Must Watch</div>
@@ -460,9 +475,23 @@
     grid.innerHTML = '';
 
     // Apply filter
-    const filtered = activeFilter === 'all'
-      ? queueItems
-      : queueItems.filter(i => (i.assigned_to || 'both') === activeFilter);
+    let filtered;
+    if (activeFilter === 'all') {
+      filtered = [...queueItems];
+    } else if (activeFilter === 'high') {
+      filtered = queueItems.filter(i => (i.priority || 'medium') === 'high');
+    } else {
+      filtered = queueItems.filter(i => (i.assigned_to || 'both') === activeFilter);
+    }
+
+    // Sort: high priority first, then medium, then low; within each tier, newest first
+    const priorityOrder = { high: 0, medium: 1, low: 2 };
+    filtered.sort((a, b) => {
+      const pa = priorityOrder[a.priority || 'medium'] ?? 1;
+      const pb = priorityOrder[b.priority || 'medium'] ?? 1;
+      if (pa !== pb) return pa - pb;
+      return new Date(b.added_at) - new Date(a.added_at);
+    });
 
     // Queue count
     countEl.textContent = queueItems.length === 0
@@ -516,6 +545,33 @@
         badge.className = 'assigned-badge ' + assignedTo;
         badge.textContent = assignedTo === 'both' ? 'Must Watch' : 'For ' + assignedTo;
         poster.appendChild(badge);
+
+        // Priority badge (only for high / low — medium is the clean default)
+        const priority = item.priority || 'medium';
+        if (priority !== 'medium') {
+          const prBadge = document.createElement('div');
+          prBadge.className = 'priority-badge ' + priority;
+          prBadge.textContent = priority === 'high' ? '\uD83D\uDD25 Priority' : '\u2193 Low';
+          prBadge.title = 'Click to change priority';
+          if (canAct()) {
+            prBadge.onclick = (e) => { e.stopPropagation(); cyclePriority(item.movie_key, priority); };
+          }
+          poster.appendChild(prBadge);
+        } else if (canAct()) {
+          // For medium items, add a subtle clickable zone to set priority
+          const prBadge = document.createElement('div');
+          prBadge.className = 'priority-badge';
+          prBadge.style.opacity = '0';
+          prBadge.style.background = 'rgba(0,0,0,0.5)';
+          prBadge.style.color = '#fff';
+          prBadge.textContent = '\u2195';
+          prBadge.title = 'Set priority';
+          prBadge.onclick = (e) => { e.stopPropagation(); cyclePriority(item.movie_key, 'medium'); };
+          // Show on card hover
+          const card_ref = poster.parentElement || poster;
+          poster._prBadge = prBadge;
+          poster.appendChild(prBadge);
+        }
 
         // Remove button (logged-in users only)
         if (canAct()) {
@@ -773,6 +829,33 @@
       render();
     } catch (e) {
       showToast('Error adding film');
+    }
+  }
+
+  // ───── Cycle priority: high → medium → low → high ─────
+  async function cyclePriority(movieKey, currentPriority) {
+    const cycle = { high: 'medium', medium: 'low', low: 'high' };
+    const next = cycle[currentPriority] || 'medium';
+    try {
+      const res = await fetch(ACTIONS_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + authToken,
+        },
+        body: JSON.stringify({
+          action: 'watchlist_update',
+          movieKey,
+          data: { priority: next }
+        })
+      });
+      if (!res.ok) throw new Error('Failed');
+      const label = next === 'high' ? 'High priority' : next === 'low' ? 'Low priority' : 'Normal priority';
+      showToast(label);
+      await fetchWatchlist();
+      render();
+    } catch (e) {
+      showToast('Error updating priority');
     }
   }
 
