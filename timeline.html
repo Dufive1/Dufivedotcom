@@ -274,7 +274,6 @@
     <div class="timeline-filters">
       <div class="tl-filter active" data-filter="all">All Activity</div>
       <div class="tl-filter" data-filter="ratings">Ratings</div>
-      <div class="tl-filter" data-filter="watched">Watched</div>
       <div class="tl-filter" data-filter="reactions">Reactions</div>
       <div class="tl-filter" data-filter="notes">Notes</div>
       <div class="tl-filter" data-filter="greg">Greg Only</div>
@@ -348,25 +347,7 @@
     async function fetchAllActivity() {
       const events = [];
 
-      // Greg's Letterboxd films (the core content — logged/rated films)
-      try {
-        const { data: films } = await supabaseClient
-          .from('greg_films')
-          .select('movie_key, title, greg_rating, updated_at')
-          .order('id', { ascending: true });
-        (films || []).forEach(f => {
-          events.push({
-            type: f.greg_rating > 0 ? 'rating' : 'watched',
-            author: 'greg',
-            movieKey: f.movie_key,
-            movieTitle: f.title || f.movie_key,
-            value: f.greg_rating,
-            date: f.updated_at || new Date().toISOString()
-          });
-        });
-      } catch (e) { console.error('Greg films fetch error:', e); }
-
-      // Website ratings (Peer + Greg's app ratings)
+      // Website ratings (Peer + Greg's app ratings — real timestamps)
       try {
         const { data: ratings } = await supabaseClient.from('ratings').select('*');
         (ratings || []).forEach(r => {
@@ -440,7 +421,6 @@
       // Apply filter
       let filtered = events;
       if (activeFilter === 'ratings') filtered = events.filter(e => e.type === 'rating');
-      else if (activeFilter === 'watched') filtered = events.filter(e => e.type === 'watched');
       else if (activeFilter === 'reactions') filtered = events.filter(e => e.type === 'reaction');
       else if (activeFilter === 'notes') filtered = events.filter(e => e.type === 'note');
       else if (activeFilter === 'greg') filtered = events.filter(e => e.author === 'greg');
@@ -450,7 +430,10 @@
         elTimeline.innerHTML = `
           <div class="timeline-empty">
             <div class="timeline-empty-icon">\u{1F39E}</div>
-            <div class="timeline-empty-text">No activity found</div>
+            <div class="timeline-empty-text">No activity yet</div>
+            <div style="color:var(--text-muted);font-size:0.85rem;margin-top:8px;">
+              Ratings, reactions, and notes will appear here as you and Greg use the app.
+            </div>
           </div>`;
         return;
       }
@@ -501,8 +484,6 @@
             const stars = starsFromNumeric(ev.value);
             const src = ev.source === 'website' ? ' <span style="opacity:0.5;font-size:0.75em">(via app)</span>' : '';
             action.innerHTML = `<strong>${authorName}</strong> rated ${movieSpan} <span class="tl-stars">${stars || ev.value}</span>${src}`;
-          } else if (ev.type === 'watched') {
-            action.innerHTML = `<strong>${authorName}</strong> watched ${movieSpan}`;
           } else if (ev.type === 'reaction') {
             const emoji = REACTIONS_MAP[ev.value] || ev.value;
             action.innerHTML = `<strong>${authorName}</strong> reacted <span class="tl-emoji">${emoji}</span> to ${movieSpan}`;
