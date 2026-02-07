@@ -2027,7 +2027,8 @@
       const { data, error } = await supabaseClient
         .from('greg_films')
         .select('id, movie_key, title, poster_url, greg_rating, letterboxd_url, updated_at, watched_date')
-        .order('id', { ascending: true });
+        .order('id', { ascending: true })
+        .limit(10000);
       if (error) throw new Error('Greg Films Error: ' + error.message);
       // Normalise into the shape the rest of the code expects
       return (data || []).map(f => ({
