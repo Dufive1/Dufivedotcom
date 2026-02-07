@@ -2994,6 +2994,22 @@
     setAuthUI();
     fetchNotifications();
     loadArchive();
+
+    // ─── Realtime: live updates when the other person rates/reacts/notes ───
+    supabaseClient
+      .channel('ledger-live')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'ratings' }, () => {
+        loadArchive(true);
+        fetchNotifications();
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'rating_reactions' }, () => {
+        loadArchive(true);
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'film_arguments' }, () => {
+        loadArchive(true);
+        fetchNotifications();
+      })
+      .subscribe();
   </script>
 </body>
 </html>
