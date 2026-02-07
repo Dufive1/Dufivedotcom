@@ -1253,6 +1253,36 @@
       font-weight: 500;
     }
 
+    /* ───── Footer ───── */
+    .site-footer {
+      margin-top: 60px;
+      padding: 24px 0;
+      border-top: 1px solid var(--border-light);
+      text-align: center;
+    }
+    .footer-support {
+      display: inline-block;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      text-decoration: none;
+      padding: 8px 20px;
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      transition: var(--transition);
+      letter-spacing: 0.03em;
+    }
+    .footer-support:hover {
+      color: var(--text-secondary);
+      border-color: var(--text-muted);
+      background: var(--border-light);
+    }
+    .footer-copy {
+      font-size: 0.65rem;
+      color: var(--text-muted);
+      margin-top: 12px;
+      opacity: 0.6;
+    }
+
     /* ───── Error Log ───── */
     #error-log {
       position: fixed; bottom: 16px; left: 16px; font-size: 0.75rem; color: #dc2626;
@@ -1414,6 +1444,11 @@
     </div>
 
     <main class="grid" id="ledger-grid" style="margin-top: 24px;"></main>
+
+    <footer class="site-footer">
+      <a href="https://venmo.com/Greg-Dufore" target="_blank" rel="noopener" class="footer-support">Support the Ledger</a>
+      <div class="footer-copy">DUFIVE</div>
+    </footer>
   </div>
 
   <div id="error-log"></div>
