@@ -2024,14 +2024,26 @@
     }
 
     async function fetchGregFilms() {
-      const { data, error } = await supabaseClient
-        .from('greg_films')
-        .select('id, movie_key, title, poster_url, greg_rating, letterboxd_url, updated_at, watched_date')
-        .order('id', { ascending: true })
-        .limit(10000);
-      if (error) throw new Error('Greg Films Error: ' + error.message);
+      // Supabase caps responses at max-rows (default 1000).
+      // Paginate with .range() to fetch ALL films in batches.
+      const BATCH = 1000;
+      let allData = [];
+      let from = 0;
+      let keepGoing = true;
+      while (keepGoing) {
+        const { data, error } = await supabaseClient
+          .from('greg_films')
+          .select('id, movie_key, title, poster_url, greg_rating, letterboxd_url, updated_at, watched_date')
+          .order('id', { ascending: true })
+          .range(from, from + BATCH - 1);
+        if (error) throw new Error('Greg Films Error: ' + error.message);
+        const rows = data || [];
+        allData = allData.concat(rows);
+        keepGoing = rows.length === BATCH;
+        from += BATCH;
+      }
       // Normalise into the shape the rest of the code expects
-      return (data || []).map(f => ({
+      return allData.map(f => ({
         title: f.title,
         movieKey: f.movie_key,
         posterUrl: fixPosterUrl(f.poster_url),
