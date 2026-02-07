@@ -239,6 +239,25 @@
     .auth-controls { display: flex; gap: 12px; align-items: center; }
 
     /* ───── Notification Bell ───── */
+    .sync-btn {
+      display: none;
+      background: none;
+      border: 1px solid var(--border-light);
+      border-radius: 8px;
+      padding: 6px 10px;
+      cursor: pointer;
+      font-size: 0.8125rem;
+      color: var(--text-secondary);
+      transition: var(--transition);
+      white-space: nowrap;
+    }
+    .sync-btn.visible { display: inline-flex; align-items: center; gap: 6px; }
+    .sync-btn:hover { background: var(--border-light); color: var(--text); }
+    .sync-btn.syncing { opacity: 0.6; pointer-events: none; }
+    .sync-btn .sync-icon { display: inline-block; transition: transform 0.3s; }
+    .sync-btn.syncing .sync-icon { animation: spin 1s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
     .notif-wrapper {
       position: relative;
       display: none;  /* hidden until logged in */
@@ -363,6 +382,7 @@
     .login-trigger:hover { color: var(--accent); background: var(--border-light); }
     .login-trigger.greg-active { color: var(--greg); background: var(--greg-bg); }
     .login-trigger.peer-active { color: var(--peer); background: var(--peer-bg); }
+    .login-trigger.admin-active { color: #a855f7; background: rgba(168, 85, 247, 0.08); }
 
     .logout-btn {
       cursor: pointer;
@@ -1169,6 +1189,7 @@
     .reviewer-select { margin-bottom: 24px; }
     .reviewer-label { font-size: 0.8125rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 12px; display: block; }
     .reviewer-options { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .reviewer-options.has-admin { grid-template-columns: 1fr 1fr 1fr; }
 
     .reviewer-option {
       padding: 16px;
@@ -1185,6 +1206,8 @@
     .reviewer-option:hover { border-color: var(--accent); background: var(--border-light); }
     .reviewer-option.selected { border-color: var(--accent); background: var(--peer-bg); color: var(--accent); }
     .reviewer-option.greg.selected { border-color: var(--greg); background: var(--greg-bg); color: var(--greg); }
+    .reviewer-option.admin { font-size: 0.75rem; }
+    .reviewer-option.admin.selected { border-color: #a855f7; background: rgba(168, 85, 247, 0.08); color: #a855f7; }
 
     .password-field { margin-bottom: 24px; }
     .password-label { font-size: 0.8125rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 8px; display: block; }
@@ -1427,6 +1450,9 @@
         <button id="theme-toggle" class="theme-toggle" title="Toggle dark mode" aria-label="Toggle dark mode">
           <span id="theme-icon">&#9790;</span>
         </button>
+        <button class="sync-btn" id="sync-btn" title="Sync latest from Letterboxd">
+          <span class="sync-icon">&#x21bb;</span> Sync
+        </button>
         <div class="notif-wrapper" id="notif-wrapper">
           <div class="notif-bell" id="notif-bell" title="Notifications">
             &#128276;
@@ -1524,9 +1550,10 @@
       <p class="modal-subtitle">Choose your profile and enter your access key to participate in ratings and discussions.</p>
       <div class="reviewer-select">
         <label class="reviewer-label">Select Reviewer</label>
-        <div class="reviewer-options">
+        <div class="reviewer-options has-admin">
           <div class="reviewer-option greg" data-reviewer="greg">Greg</div>
           <div class="reviewer-option peer" data-reviewer="peer">Peer</div>
+          <div class="reviewer-option admin" data-reviewer="admin">Admin</div>
         </div>
       </div>
       <div class="password-field">
@@ -1568,6 +1595,9 @@
     let currentUser = localStorage.getItem('reviewer');
     let sessionToken = localStorage.getItem('session_token');
     let selectedReviewer = null;
+    const isAdmin = () => currentUser === 'admin';
+    // Admin can act as either reviewer
+    const canActAs = (who) => currentUser === who || isAdmin();
 
     let cachedGregItems = [];
     let cachedPeerMap = {};
@@ -1672,15 +1702,18 @@
     function setAuthUI() {
       if (currentUser) {
         elAuthBtn.textContent = `${currentUser.toUpperCase()} \u2022 Online`;
+        elAuthBtn.classList.remove('greg-active', 'peer-active', 'admin-active');
         elAuthBtn.classList.add(`${currentUser}-active`);
         elLogoutBtn.classList.add('visible');
         elNotifWrapper.classList.add('visible');
+        elSyncBtn.classList.add('visible');
       } else {
         elAuthBtn.textContent = 'Reviewer Login';
-        elAuthBtn.classList.remove('greg-active', 'peer-active');
+        elAuthBtn.classList.remove('greg-active', 'peer-active', 'admin-active');
         elLogoutBtn.classList.remove('visible');
         elNotifWrapper.classList.remove('visible');
         elNotifDropdown.classList.remove('open');
+        elSyncBtn.classList.remove('visible');
       }
     }
 
@@ -1712,6 +1745,7 @@
     /* ═══════════════════════════════════════════
        NOTIFICATION BELL
     ═══════════════════════════════════════════ */
+    const elSyncBtn = document.getElementById('sync-btn');
     const elNotifWrapper = document.getElementById('notif-wrapper');
     const elNotifBell = document.getElementById('notif-bell');
     const elNotifBadge = document.getElementById('notif-badge');
@@ -1736,22 +1770,23 @@
       if (!currentUser) { elNotifWrapper.classList.remove('visible'); return; }
       elNotifWrapper.classList.add('visible');
 
-      const otherUser = currentUser === 'peer' ? 'greg' : 'peer';
+      // Admin sees all activity; greg/peer see the other user's activity
+      const otherUser = isAdmin() ? null : (currentUser === 'peer' ? 'greg' : 'peer');
       const since = getNotifSeen();
       const items = [];
 
-      // Ratings by the other user
+      // Ratings by the other user (admin sees all)
       try {
-        const { data } = await supabaseClient
-          .from('ratings')
+        let q = supabaseClient.from('ratings')
           .select('movie_key, movie_title, rating, reviewer, created_at')
-          .eq('reviewer', otherUser)
           .gt('created_at', since)
           .order('created_at', { ascending: false })
           .limit(20);
+        if (otherUser) q = q.eq('reviewer', otherUser);
+        const { data } = await q;
         (data || []).forEach(r => {
           items.push({
-            author: otherUser,
+            author: r.reviewer,
             text: `rated <strong>${decodeHtml(r.movie_title || r.movie_key)}</strong> ${starsFromNumeric(r.rating) || r.rating}`,
             movieKey: r.movie_key,
             date: r.created_at
@@ -1759,19 +1794,19 @@
         });
       } catch (e) { console.error('Notif ratings error:', e); }
 
-      // Reactions by the other user
+      // Reactions by the other user (admin sees all)
       try {
-        const { data } = await supabaseClient
-          .from('rating_reactions')
+        let q = supabaseClient.from('rating_reactions')
           .select('movie_key, reactor, reaction, created_at')
-          .eq('reactor', otherUser)
           .gt('created_at', since)
           .order('created_at', { ascending: false })
           .limit(20);
+        if (otherUser) q = q.eq('reactor', otherUser);
+        const { data } = await q;
         (data || []).forEach(r => {
           const emoji = REACTIONS[r.reaction] === 'costner' ? '🤠' : (REACTIONS[r.reaction] || r.reaction);
           items.push({
-            author: otherUser,
+            author: r.reactor,
             text: `reacted ${emoji} to a film`,
             movieKey: r.movie_key,
             date: r.created_at
@@ -1779,15 +1814,15 @@
         });
       } catch (e) { console.error('Notif reactions error:', e); }
 
-      // Notes by the other user
+      // Notes by the other user (admin sees all)
       try {
-        const { data } = await supabaseClient
-          .from('film_arguments')
+        let q = supabaseClient.from('film_arguments')
           .select('movie_key, author, argument, created_at')
-          .eq('author', otherUser)
           .gt('created_at', since)
           .order('created_at', { ascending: false })
           .limit(20);
+        if (otherUser) q = q.eq('author', otherUser);
+        const { data } = await q;
         (data || []).forEach(n => {
           items.push({
             author: otherUser,
@@ -1827,7 +1862,7 @@
       // Render dropdown items
       elNotifList.innerHTML = '';
       if (items.length === 0) {
-        elNotifList.innerHTML = '<div class="notif-empty">No new activity from ' + (otherUser === 'greg' ? 'Greg' : 'Peer') + '</div>';
+        elNotifList.innerHTML = '<div class="notif-empty">No new activity' + (otherUser ? ' from ' + (otherUser === 'greg' ? 'Greg' : 'Peer') : '') + '</div>';
       } else {
         items.slice(0, 30).forEach(item => {
           const el = document.createElement('div');
@@ -2155,6 +2190,43 @@
     });
 
     /* ═══════════════════════════════════════════
+       SYNC BUTTON
+       ═══════════════════════════════════════════ */
+    elSyncBtn.addEventListener('click', async () => {
+      if (elSyncBtn.classList.contains('syncing')) return;
+      elSyncBtn.classList.add('syncing');
+      elSyncBtn.querySelector('.sync-icon').textContent = '\u21bb';
+
+      try {
+        // Step 1: Sync films from Letterboxd grid + diary
+        const syncRes = await fetch(SB_URL + '/functions/v1/sync-letterboxd', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: '{}'
+        });
+        const syncData = await syncRes.json().catch(() => ({}));
+        console.log('[Sync]', syncData);
+
+        // Step 2: Reload all data from DB
+        const [gregItems, peerMap, reactions, notesMap] = await Promise.all([
+          fetchGregFilms(), fetchPeerRatings(), fetchReactions(), fetchNotes()
+        ]);
+        cachedGregItems = gregItems;
+        cachedPeerMap = peerMap;
+        cachedReactions = reactions;
+        cachedNotesMap = notesMap;
+        rerender(true);
+
+        showToast('Synced ' + (syncData.synced || 0) + ' films from Letterboxd');
+      } catch (err) {
+        console.error('[Sync] Error:', err);
+        showToast('Sync failed — try again');
+      } finally {
+        elSyncBtn.classList.remove('syncing');
+      }
+    });
+
+    /* ═══════════════════════════════════════════
        RENDER
     ═══════════════════════════════════════════ */
     function renderLedger(gregItems, peerMap, reactions, notesMap) {
@@ -2204,7 +2276,7 @@
 
         function makeBadge(reactionKey, who, side) {
           const badge = document.createElement('div');
-          badge.className = 'poster-badge ' + side + (currentUser === who ? ' clickable' : '');
+          badge.className = 'poster-badge ' + side + (canActAs(who) ? ' clickable' : '');
           badge.title = (who === 'peer' ? "Peer" : "Greg") + "'s reaction: " + reactionKey;
           if (reactionKey === 'costner') {
             badge.innerHTML = `<img class="kc-face" src="${KC_IMG}" alt="Costner">`;
@@ -2215,7 +2287,7 @@
           whoTag.className = 'badge-who ' + (who === 'peer' ? 'peer-who' : 'greg-who');
           whoTag.textContent = who === 'peer' ? 'P' : 'G';
           badge.appendChild(whoTag);
-          if (currentUser === who) {
+          if (canActAs(who)) {
             badge.dataset.hasReaction = 'true';
             badge.onclick = (e) => { e.stopPropagation(); showReactionPicker(movieKey, who, badge); };
           }
@@ -2272,18 +2344,18 @@
         const gregValSpan = document.createElement('span');
 
         if (gregStars) {
-          gregValSpan.className = 'rating-value' + (currentUser === 'greg' ? ' editable' : '');
+          gregValSpan.className = 'rating-value' + (canActAs('greg') ? ' editable' : '');
           gregValSpan.textContent = gregStars;
-          if (currentUser === 'greg') {
-            gregValSpan.onclick = () => showStarPicker(movieKey, title, entry.gregRating);
+          if (canActAs('greg')) {
+            gregValSpan.onclick = () => showStarPicker(movieKey, title, entry.gregRating, 'greg');
           }
         } else {
           gregValSpan.className = 'rating-value';
           const unrated = document.createElement('span');
-          unrated.className = 'unrated-prompt' + (currentUser === 'greg' ? ' clickable' : '');
-          unrated.textContent = currentUser === 'greg' ? 'Tap to rate' : '\u2014';
-          if (currentUser === 'greg') {
-            unrated.onclick = () => showStarPicker(movieKey, title, null);
+          unrated.className = 'unrated-prompt' + (canActAs('greg') ? ' clickable' : '');
+          unrated.textContent = canActAs('greg') ? 'Tap to rate' : '\u2014';
+          if (canActAs('greg')) {
+            unrated.onclick = () => showStarPicker(movieKey, title, null, 'greg');
           }
           gregValSpan.appendChild(unrated);
         }
@@ -2304,18 +2376,18 @@
         const peerRatingSpan = document.createElement('span');
 
         if (peerStars) {
-          peerRatingSpan.className = 'rating-value' + (currentUser === 'peer' ? ' editable' : '');
+          peerRatingSpan.className = 'rating-value' + (canActAs('peer') ? ' editable' : '');
           peerRatingSpan.textContent = peerStars;
-          if (currentUser === 'peer') {
-            peerRatingSpan.onclick = () => showStarPicker(movieKey, title, peerMap[movieKey]);
+          if (canActAs('peer')) {
+            peerRatingSpan.onclick = () => showStarPicker(movieKey, title, peerMap[movieKey], 'peer');
           }
         } else {
           peerRatingSpan.className = 'rating-value';
           const unrated = document.createElement('span');
-          unrated.className = 'unrated-prompt' + (currentUser === 'peer' ? ' clickable' : '');
-          unrated.textContent = currentUser === 'peer' ? 'Tap to rate' : '\u2014';
-          if (currentUser === 'peer') {
-            unrated.onclick = () => showStarPicker(movieKey, title, null);
+          unrated.className = 'unrated-prompt' + (canActAs('peer') ? ' clickable' : '');
+          unrated.textContent = canActAs('peer') ? 'Tap to rate' : '\u2014';
+          if (canActAs('peer')) {
+            unrated.onclick = () => showStarPicker(movieKey, title, null, 'peer');
           }
           peerRatingSpan.appendChild(unrated);
         }
@@ -2346,14 +2418,14 @@
         content.appendChild(ratingsContainer);
 
         // React triggers
-        if (currentUser === 'peer' && !peerReactionToGreg) {
+        if (canActAs('peer') && !peerReactionToGreg) {
           const reactBtn = document.createElement('div');
           reactBtn.className = 'react-trigger';
           reactBtn.textContent = 'React to Greg\u2019s rating';
           reactBtn.onclick = (e) => { e.stopPropagation(); showReactionPicker(movieKey, 'peer', reactBtn); };
           content.appendChild(reactBtn);
         }
-        if (currentUser === 'greg' && !gregReactionToPeer) {
+        if (canActAs('greg') && !gregReactionToPeer) {
           const reactBtn = document.createElement('div');
           reactBtn.className = 'react-trigger';
           reactBtn.textContent = 'React to Peer\u2019s rating';
@@ -2412,7 +2484,7 @@
               noteTime.textContent = timeAgo(note.created_at);
               noteMeta.appendChild(noteTime);
 
-              if (currentUser && note.author === currentUser) {
+              if (currentUser && (note.author === currentUser || isAdmin())) {
                 const delBtn = document.createElement('span');
                 delBtn.className = 'note-delete';
                 delBtn.textContent = '\u2715';
@@ -2525,8 +2597,10 @@
     /* ═══════════════════════════════════════════
        STAR PICKER
     ═══════════════════════════════════════════ */
-    function showStarPicker(movieKey, movieTitle, currentRating) {
+    function showStarPicker(movieKey, movieTitle, currentRating, actingAs) {
       if (!currentUser) return;
+      // actingAs: which reviewer this rating is for (used by admin)
+      const ratingAs = actingAs || currentUser;
 
       const overlay = document.getElementById('star-picker');
       let selectedValue = currentRating ? Number(currentRating) : null;
@@ -2570,14 +2644,14 @@
         document.getElementById('star-cancel').onclick = () => { overlay.style.display = 'none'; };
         document.getElementById('star-confirm').onclick = async () => {
           overlay.style.display = 'none';
-          if (selectedValue) await submitRating(movieKey, movieTitle, selectedValue);
+          if (selectedValue) await submitRating(movieKey, movieTitle, selectedValue, ratingAs);
         };
 
         const removeBtn = document.getElementById('star-remove');
         if (removeBtn) {
           removeBtn.onclick = async () => {
             overlay.style.display = 'none';
-            await submitRating(movieKey, movieTitle, 0);
+            await submitRating(movieKey, movieTitle, 0, ratingAs);
           };
         }
 
@@ -2710,11 +2784,14 @@
       } catch (e) { showToast('Error: ' + e.message, 'error'); }
     }
 
-    async function submitRating(movieKey, movieTitle, rating) {
+    async function submitRating(movieKey, movieTitle, rating, actingAs) {
       if (!currentUser) return;
       try {
-        await authenticatedRequest('rate', movieKey, { rating, movieTitle });
-        showToast(rating > 0 ? `Rated ${decodeHtml(movieTitle)} ${starsFromNumeric(rating)}` : 'Rating removed', 'success', 2500);
+        const payload = { rating, movieTitle };
+        if (isAdmin() && actingAs) payload.actingAs = actingAs;
+        await authenticatedRequest('rate', movieKey, payload);
+        const who = actingAs || currentUser;
+        showToast(rating > 0 ? `Rated ${decodeHtml(movieTitle)} ${starsFromNumeric(rating)} as ${who.toUpperCase()}` : 'Rating removed', 'success', 2500);
         await loadArchive(true);
       } catch (e) { showToast('Error: ' + e.message, 'error'); }
     }
