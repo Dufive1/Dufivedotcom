@@ -1493,7 +1493,6 @@
       <div class="filter-chip" data-filter="both-rated">Both Rated</div>
       <div class="filter-chip" data-filter="peer-unrated">Peer Unrated</div>
       <div class="filter-chip" data-filter="greg-unrated">Greg Unrated</div>
-      <div class="filter-chip" data-filter="disagree">Disagree (2+ gap)</div>
     </div>
 
     <main class="grid" id="ledger-grid" style="margin-top: 24px;"></main>
@@ -1992,7 +1991,7 @@
     async function fetchGregFilms() {
       const { data, error } = await supabaseClient
         .from('greg_films')
-        .select('id, movie_key, title, poster_url, greg_rating, letterboxd_url, updated_at')
+        .select('id, movie_key, title, poster_url, greg_rating, letterboxd_url, updated_at, watched_date')
         .order('id', { ascending: true });
       if (error) throw new Error('Greg Films Error: ' + error.message);
       // Normalise into the shape the rest of the code expects
@@ -2003,7 +2002,8 @@
         gregRating: f.greg_rating,
         link: f.letterboxd_url || '',
         pubDate: f.updated_at,
-        sortId: f.id
+        sortId: f.id,
+        watchedDate: f.watched_date || null
       }));
     }
 
@@ -2068,12 +2068,6 @@
           const gR = Number(e.gregRating);
           return !Number.isFinite(gR) || gR <= 0;
         });
-      } else if (activeFilter === 'disagree') {
-        items = items.filter(e => {
-          const pR = Number(cachedPeerMap[getMovieKey(e)]);
-          const gR = Number(e.gregRating);
-          return Number.isFinite(gR) && gR > 0 && Number.isFinite(pR) && pR > 0 && Math.abs(gR - pR) >= 2;
-        });
       }
 
       items.sort((a, b) => {
@@ -2084,8 +2078,14 @@
 
         switch (sortBy) {
           case 'date': {
-            // Newest first — use sortId which reflects Letterboxd page order
-            // (lower id = page 1 = newest films on Letterboxd)
+            // Newest first — use watched_date from Letterboxd diary
+            // Films with a diary date sort by date descending (newest first).
+            // Films without a diary date fall to the end, sorted by sortId.
+            const dateA = a.watchedDate ? new Date(a.watchedDate).getTime() : 0;
+            const dateB = b.watchedDate ? new Date(b.watchedDate).getTime() : 0;
+            if (dateA && dateB) return dateB - dateA;
+            if (dateA && !dateB) return -1;
+            if (!dateA && dateB) return 1;
             return (a.sortId || 0) - (b.sortId || 0);
           }
           case 'greg-high': {
