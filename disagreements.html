@@ -324,10 +324,6 @@
 
     function fixPosterUrl(url) {
       if (!url || url.includes(EMPTY_POSTER)) return null;
-      if (url.includes('/film-poster/')) return url;
-      if (url.includes('ltrbxd.com') && url.includes('-0-230-0-345-crop')) {
-        return url.replace(/-0-230-0-345-crop\.jpg/, '-1200-1200-675-675-crop-000000.jpg');
-      }
       return url;
     }
 
@@ -342,12 +338,31 @@
     let allDebates = [];
     let activeFilter = 'all';
 
+    // Paginated fetch to bypass Supabase 1000-row default limit
+    async function fetchAllGregFilms() {
+      const BATCH = 1000;
+      let allData = [];
+      let from = 0;
+      let keepGoing = true;
+      while (keepGoing) {
+        const { data, error } = await supabaseClient
+          .from('greg_films')
+          .select('movie_key, title, poster_url, greg_rating, letterboxd_url')
+          .range(from, from + BATCH - 1);
+        if (error) throw new Error(error.message);
+        const rows = data || [];
+        allData = allData.concat(rows);
+        keepGoing = rows.length === BATCH;
+        from += BATCH;
+      }
+      return allData;
+    }
+
     async function loadData() {
       try {
-        // Fetch greg_films, peer ratings, greg website ratings, and notes in parallel
-        const [gregRes, peerRes, gregWebRes, notesRes] = await Promise.all([
-          supabaseClient.from('greg_films')
-            .select('movie_key, title, poster_url, greg_rating, letterboxd_url'),
+        // Fetch greg_films (paginated), peer ratings, greg website ratings, and notes in parallel
+        const [gregFilms, peerRes, gregWebRes, notesRes] = await Promise.all([
+          fetchAllGregFilms(),
           supabaseClient.from('ratings')
             .select('movie_key, movie_title, rating')
             .eq('reviewer', 'peer'),
@@ -359,7 +374,6 @@
             .order('created_at', { ascending: true })
         ]);
 
-        if (gregRes.error) throw new Error(gregRes.error.message);
         if (peerRes.error) throw new Error(peerRes.error.message);
 
         // Build maps
@@ -377,7 +391,7 @@
 
         // Find films both have rated
         const debates = [];
-        (gregRes.data || []).forEach(film => {
+        gregFilms.forEach(film => {
           const peerRating = peerMap[film.movie_key];
           // Greg's effective rating: website override > letterboxd
           const gregRating = gregWebMap[film.movie_key] ?? film.greg_rating;
@@ -406,7 +420,7 @@
         allDebates = debates;
 
         // Stats
-        const totalBothRated = (gregRes.data || []).filter(f => {
+        const totalBothRated = gregFilms.filter(f => {
           const gr = gregWebMap[f.movie_key] ?? f.greg_rating;
           return peerMap[f.movie_key] > 0 && gr > 0;
         }).length;
