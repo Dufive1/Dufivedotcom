@@ -1317,10 +1317,31 @@
       .page-title { font-size: 2rem; }
       .tagline { font-size: 0.9375rem; }
 
-      .stats-bar { grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 20px; }
-      .stat-card { padding: 12px 14px; }
-      .stat-value { font-size: 1.25rem; }
-      .stat-label { font-size: 0.625rem; }
+      .stats-bar {
+        display: flex;
+        overflow-x: auto;
+        gap: 0;
+        margin-bottom: 16px;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        background: var(--card-bg);
+      }
+      .stats-bar::-webkit-scrollbar { display: none; }
+      .stat-card {
+        flex: 1;
+        min-width: 0;
+        padding: 10px 8px;
+        border: none;
+        border-radius: 0;
+        box-shadow: none;
+        border-right: 1px solid var(--border-light);
+      }
+      .stat-card:last-child { border-right: none; }
+      .stat-card:hover { box-shadow: none; transform: none; }
+      .stat-value { font-size: 0.95rem; }
+      .stat-label { font-size: 0.55rem; }
 
       .toolbar { gap: 10px; margin-bottom: 20px; }
       .search-input { font-size: 0.875rem; padding: 10px 12px 10px 36px; }
