@@ -2752,7 +2752,9 @@
 
     async function saveReaction(movieKey, reactor, reaction) {
       try {
-        await authenticatedRequest('save_reaction', movieKey, { reaction });
+        const payload = { reaction };
+        if (isAdmin()) payload.actingAs = reactor;
+        await authenticatedRequest('save_reaction', movieKey, payload);
         showToast('Reaction saved', 'success', 2000);
         await loadArchive(true);
       } catch (e) { showToast('Error: ' + e.message, 'error'); }
@@ -2760,7 +2762,9 @@
 
     async function deleteReaction(movieKey, reactor) {
       try {
-        await authenticatedRequest('delete_reaction', movieKey, {});
+        const payload = {};
+        if (isAdmin()) payload.actingAs = reactor;
+        await authenticatedRequest('delete_reaction', movieKey, payload);
         showToast('Reaction removed', 'info', 2000);
         await loadArchive(true);
       } catch (e) { showToast('Error: ' + e.message, 'error'); }
