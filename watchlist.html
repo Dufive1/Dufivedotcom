@@ -141,6 +141,21 @@
     .search-no-results {
       padding: 16px; text-align: center; font-size: 0.85rem; color: var(--text-muted);
     }
+    .search-divider {
+      padding: 8px 14px; font-size: 0.7rem; font-weight: 600; color: var(--text-muted);
+      text-transform: uppercase; letter-spacing: 0.06em; background: var(--bg-secondary);
+      border-bottom: 1px solid var(--border-light);
+    }
+    .search-external-btn {
+      display: block; width: 100%; padding: 12px; text-align: center;
+      font-size: 0.8rem; font-weight: 600; color: var(--accent); cursor: pointer;
+      background: none; border: none; border-top: 1px solid var(--border-light);
+      transition: var(--transition); font-family: inherit;
+    }
+    .search-external-btn:hover { background: var(--border-light); }
+    .search-loading {
+      padding: 12px; text-align: center; font-size: 0.8rem; color: var(--text-muted);
+    }
 
     /* ───── Filter chips ───── */
     .filters {
@@ -319,7 +334,7 @@
   <div class="add-section hidden" id="add-section">
     <div class="add-label">Add a film to the queue</div>
     <div class="search-row">
-      <input type="text" class="search-input" id="film-search" placeholder="Search Greg's films..." autocomplete="off" />
+      <input type="text" class="search-input" id="film-search" placeholder="Search films..." autocomplete="off" />
       <div class="search-results" id="search-results"></div>
     </div>
   </div>
@@ -361,6 +376,7 @@
   const SB_URL = 'https://brgxorrpfberfcyeugzq.supabase.co';
   const SB_KEY = 'sb_publishable_VbVFBh-gtIBAbr9Qtp240w_GS8Kn4Jf';
   const ACTIONS_URL = 'https://brgxorrpfberfcyeugzq.supabase.co/functions/v1/bright-function';
+  const SEARCH_URL = 'https://brgxorrpfberfcyeugzq.supabase.co/functions/v1/search-films';
   const supabaseClient = window.supabase.createClient(SB_URL, SB_KEY);
 
   let currentUser = null;
@@ -584,86 +600,148 @@
     }
   });
 
+  function buildResultRow(film, queueKeys) {
+    const inQueue = queueKeys.has(film.movie_key);
+    const row = document.createElement('div');
+    row.className = 'search-result' + (inQueue ? ' in-queue' : '');
+
+    // Poster thumbnail
+    if (film.poster_url) {
+      const img = document.createElement('img');
+      img.className = 'search-result-poster';
+      img.src = film.poster_url;
+      img.alt = '';
+      img.loading = 'lazy';
+      row.appendChild(img);
+    } else {
+      const ph = document.createElement('div');
+      ph.className = 'search-result-poster';
+      ph.style.background = 'var(--border)';
+      row.appendChild(ph);
+    }
+
+    // Info
+    const info = document.createElement('div');
+    info.className = 'search-result-info';
+    const t = document.createElement('div');
+    t.className = 'search-result-title';
+    t.textContent = film.title + (film.year ? ' (' + film.year + ')' : '');
+    info.appendChild(t);
+
+    if (film.source) {
+      const meta = document.createElement('div');
+      meta.className = 'search-result-meta';
+      meta.textContent = film.source;
+      info.appendChild(meta);
+    }
+
+    row.appendChild(info);
+
+    // Add buttons
+    const actions = document.createElement('div');
+    actions.className = 'search-result-actions';
+    if (inQueue) {
+      const tag = document.createElement('span');
+      tag.className = 'search-result-add';
+      tag.textContent = 'In Queue';
+      tag.style.cursor = 'default';
+      tag.style.color = 'var(--text-muted)';
+      tag.style.borderColor = 'var(--border)';
+      actions.appendChild(tag);
+    } else {
+      [['greg', 'G'], ['peer', 'P'], ['both', 'Both']].forEach(([who, label]) => {
+        const btn = document.createElement('button');
+        btn.className = 'search-result-add ' + (who === 'both' ? '' : who);
+        btn.textContent = '+ ' + label;
+        btn.title = who === 'both' ? 'Must watch for both' : 'For ' + who;
+        btn.onclick = (e) => { e.stopPropagation(); addToQueue(film, who); };
+        actions.appendChild(btn);
+      });
+    }
+    row.appendChild(actions);
+    return row;
+  }
+
   function doSearch() {
     const q = searchInput.value.trim().toLowerCase();
     if (q.length < 2) { searchResults.classList.remove('visible'); return; }
 
     const queueKeys = new Set(queueItems.map(i => i.movie_key));
-    const matches = allGregFilms
-      .filter(f => f.title.toLowerCase().includes(q))
-      .slice(0, 15);
 
-    if (matches.length === 0) {
-      searchResults.innerHTML = '<div class="search-no-results">No films found for "' + escHtml(q) + '"</div>';
-      searchResults.classList.add('visible');
-      return;
-    }
+    // Local results from Greg's library
+    const localMatches = allGregFilms
+      .filter(f => f.title.toLowerCase().includes(q))
+      .slice(0, 8)
+      .map(f => ({ ...f, source: 'In Greg\u2019s library' }));
 
     searchResults.innerHTML = '';
-    matches.forEach(film => {
-      const inQueue = queueKeys.has(film.movie_key);
-      const row = document.createElement('div');
-      row.className = 'search-result' + (inQueue ? ' in-queue' : '');
 
-      // Poster thumbnail
-      if (film.poster_url) {
-        const img = document.createElement('img');
-        img.className = 'search-result-poster';
-        img.src = film.poster_url;
-        img.alt = '';
-        img.loading = 'lazy';
-        row.appendChild(img);
-      } else {
-        const ph = document.createElement('div');
-        ph.className = 'search-result-poster';
-        ph.style.background = 'var(--border)';
-        row.appendChild(ph);
-      }
+    if (localMatches.length > 0) {
+      const header = document.createElement('div');
+      header.className = 'search-divider';
+      header.textContent = 'Greg\u2019s Library';
+      searchResults.appendChild(header);
 
-      // Info
-      const info = document.createElement('div');
-      info.className = 'search-result-info';
-      const t = document.createElement('div');
-      t.className = 'search-result-title';
-      t.textContent = film.title;
-      info.appendChild(t);
+      localMatches.forEach(film => {
+        searchResults.appendChild(buildResultRow(film, queueKeys));
+      });
+    }
 
-      if (film.greg_rating) {
-        const meta = document.createElement('div');
-        meta.className = 'search-result-meta';
-        meta.textContent = 'Greg: ' + '\u2605'.repeat(film.greg_rating);
-        info.appendChild(meta);
-      }
-
-      row.appendChild(info);
-
-      // Add buttons — assign to Greg, Peer, or Both
-      const actions = document.createElement('div');
-      actions.className = 'search-result-actions';
-      if (inQueue) {
-        const tag = document.createElement('span');
-        tag.className = 'search-result-add';
-        tag.textContent = 'In Queue';
-        tag.style.cursor = 'default';
-        tag.style.color = 'var(--text-muted)';
-        tag.style.borderColor = 'var(--border)';
-        actions.appendChild(tag);
-      } else {
-        [['greg', 'G'], ['peer', 'P'], ['both', 'Both']].forEach(([who, label]) => {
-          const btn = document.createElement('button');
-          btn.className = 'search-result-add ' + (who === 'both' ? '' : who);
-          btn.textContent = '+ ' + label;
-          btn.title = who === 'both' ? 'Must watch for both' : 'For ' + who;
-          btn.onclick = (e) => { e.stopPropagation(); addToQueue(film, who); };
-          actions.appendChild(btn);
-        });
-      }
-      row.appendChild(actions);
-
-      searchResults.appendChild(row);
-    });
+    // Always show "Search Letterboxd" button for external search
+    const extBtn = document.createElement('button');
+    extBtn.className = 'search-external-btn';
+    extBtn.textContent = '\uD83C\uDF10 Search all of Letterboxd for \u201C' + escHtml(searchInput.value.trim()) + '\u201D';
+    extBtn.onclick = () => searchExternal(searchInput.value.trim());
+    searchResults.appendChild(extBtn);
 
     searchResults.classList.add('visible');
+  }
+
+  async function searchExternal(query) {
+    const queueKeys = new Set(queueItems.map(i => i.movie_key));
+    const localKeys = new Set(allGregFilms.map(f => f.movie_key));
+
+    // Replace the external button with loading
+    const extBtns = searchResults.querySelectorAll('.search-external-btn');
+    extBtns.forEach(b => { b.textContent = 'Searching Letterboxd...'; b.disabled = true; });
+
+    try {
+      const res = await fetch(SEARCH_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query })
+      });
+      const data = await res.json();
+      const results = (data.results || []).filter(r => !localKeys.has(r.movieKey));
+
+      // Remove the loading button
+      extBtns.forEach(b => b.remove());
+
+      if (results.length > 0) {
+        const header = document.createElement('div');
+        header.className = 'search-divider';
+        header.textContent = 'From Letterboxd';
+        searchResults.appendChild(header);
+
+        results.forEach(r => {
+          const film = {
+            movie_key: r.movieKey,
+            title: r.title,
+            year: r.year || '',
+            poster_url: r.posterUrl,
+            source: r.year ? r.year : 'Letterboxd',
+          };
+          searchResults.appendChild(buildResultRow(film, queueKeys));
+        });
+      } else {
+        const noRes = document.createElement('div');
+        noRes.className = 'search-no-results';
+        noRes.textContent = 'No additional results on Letterboxd';
+        searchResults.appendChild(noRes);
+      }
+    } catch (e) {
+      extBtns.forEach(b => { b.textContent = 'Search failed — try again'; b.disabled = false; });
+    }
   }
 
   // ───── Actions ─────
