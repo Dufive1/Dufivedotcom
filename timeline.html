@@ -274,6 +274,7 @@
     <div class="timeline-filters">
       <div class="tl-filter active" data-filter="all">All Activity</div>
       <div class="tl-filter" data-filter="ratings">Ratings</div>
+      <div class="tl-filter" data-filter="watched">Watched</div>
       <div class="tl-filter" data-filter="reactions">Reactions</div>
       <div class="tl-filter" data-filter="notes">Notes</div>
       <div class="tl-filter" data-filter="greg">Greg Only</div>
@@ -289,12 +290,14 @@
     const SB_URL = 'https://brgxorrpfberfcyeugzq.supabase.co';
     const SB_KEY = 'sb_publishable_VbVFBh-gtIBAbr9Qtp240w_GS8Kn4Jf';
 
-    const REACTIONS_MAP = { fire: '\u{1F525}', agree: '\u{1F91D}', disagree: '\u{1F914}' };
+    const REACTIONS_MAP = { fire: '\u{1F525}', agree: '\u{1F91D}', disagree: '\u{1F914}', costner: '\u{1F920}' };
 
     const supabaseClient = window.supabase.createClient(SB_URL, SB_KEY);
     const elTimeline = document.getElementById('timeline');
+    const PAGE_SIZE = 50;
     let allEvents = [];
     let activeFilter = 'all';
+    let visibleCount = PAGE_SIZE;
 
     /* ── Dark mode ── */
     function getTheme() { return localStorage.getItem('dufive-theme') || 'light'; }
@@ -345,18 +348,37 @@
     async function fetchAllActivity() {
       const events = [];
 
-      // Peer ratings (with timestamps if available)
+      // Greg's Letterboxd films (the core content — logged/rated films)
+      try {
+        const { data: films } = await supabaseClient
+          .from('greg_films')
+          .select('movie_key, title, greg_rating, updated_at')
+          .order('id', { ascending: true });
+        (films || []).forEach(f => {
+          events.push({
+            type: f.greg_rating > 0 ? 'rating' : 'watched',
+            author: 'greg',
+            movieKey: f.movie_key,
+            movieTitle: f.title || f.movie_key,
+            value: f.greg_rating,
+            date: f.updated_at || new Date().toISOString()
+          });
+        });
+      } catch (e) { console.error('Greg films fetch error:', e); }
+
+      // Website ratings (Peer + Greg's app ratings)
       try {
         const { data: ratings } = await supabaseClient.from('ratings').select('*');
         (ratings || []).forEach(r => {
           if (r.rating > 0) {
             events.push({
               type: 'rating',
-              author: 'peer',
+              author: r.reviewer || 'peer',
               movieKey: r.movie_key,
               movieTitle: r.movie_title || r.movie_key,
               value: r.rating,
-              date: r.updated_at || r.created_at || new Date().toISOString()
+              date: r.updated_at || r.created_at || new Date().toISOString(),
+              source: 'website'
             });
           }
         });
@@ -392,19 +414,18 @@
         });
       } catch (e) { console.error('Notes fetch error:', e); }
 
-      // Enrich movie titles from greg_films table
-      try {
-        const { data: films } = await supabaseClient
-          .from('greg_films')
-          .select('movie_key, title');
-        if (films) {
-          const titleMap = {};
-          films.forEach(f => { titleMap[f.movie_key] = f.title; });
-          events.forEach(ev => {
-            if (titleMap[ev.movieKey]) ev.movieTitle = titleMap[ev.movieKey];
-          });
+      // Enrich titles for reactions/notes that only have movie_key
+      const titleMap = {};
+      events.forEach(ev => {
+        if (ev.movieTitle && ev.movieTitle !== ev.movieKey) {
+          titleMap[ev.movieKey] = ev.movieTitle;
         }
-      } catch (e) { console.error('Title lookup error:', e); }
+      });
+      events.forEach(ev => {
+        if (ev.movieTitle === ev.movieKey && titleMap[ev.movieKey]) {
+          ev.movieTitle = titleMap[ev.movieKey];
+        }
+      });
 
       // Sort newest first
       events.sort((a, b) => new Date(b.date) - new Date(a.date));
@@ -412,12 +433,14 @@
     }
 
     /* ── Render ── */
-    function renderTimeline(events) {
+    function renderTimeline(events, resetPage) {
       elTimeline.innerHTML = '';
+      if (resetPage) visibleCount = PAGE_SIZE;
 
       // Apply filter
       let filtered = events;
       if (activeFilter === 'ratings') filtered = events.filter(e => e.type === 'rating');
+      else if (activeFilter === 'watched') filtered = events.filter(e => e.type === 'watched');
       else if (activeFilter === 'reactions') filtered = events.filter(e => e.type === 'reaction');
       else if (activeFilter === 'notes') filtered = events.filter(e => e.type === 'note');
       else if (activeFilter === 'greg') filtered = events.filter(e => e.author === 'greg');
@@ -432,9 +455,13 @@
         return;
       }
 
+      // Paginate
+      const pageItems = filtered.slice(0, visibleCount);
+      const totalFiltered = filtered.length;
+
       // Group by day
       const days = {};
-      filtered.forEach(ev => {
+      pageItems.forEach(ev => {
         const dk = dateKey(ev.date);
         if (!days[dk]) days[dk] = { label: formatDate(ev.date), events: [] };
         days[dk].events.push(ev);
@@ -472,7 +499,10 @@
 
           if (ev.type === 'rating') {
             const stars = starsFromNumeric(ev.value);
-            action.innerHTML = `<strong>${authorName}</strong> rated ${movieSpan} <span class="tl-stars">${stars || ev.value}</span>`;
+            const src = ev.source === 'website' ? ' <span style="opacity:0.5;font-size:0.75em">(via app)</span>' : '';
+            action.innerHTML = `<strong>${authorName}</strong> rated ${movieSpan} <span class="tl-stars">${stars || ev.value}</span>${src}`;
+          } else if (ev.type === 'watched') {
+            action.innerHTML = `<strong>${authorName}</strong> watched ${movieSpan}`;
           } else if (ev.type === 'reaction') {
             const emoji = REACTIONS_MAP[ev.value] || ev.value;
             action.innerHTML = `<strong>${authorName}</strong> reacted <span class="tl-emoji">${emoji}</span> to ${movieSpan}`;
@@ -502,6 +532,20 @@
 
         elTimeline.appendChild(dayEl);
       });
+
+      // Load More button
+      if (visibleCount < totalFiltered) {
+        const loadMoreWrap = document.createElement('div');
+        loadMoreWrap.style.cssText = 'text-align:center;padding:24px 0;';
+        const btn = document.createElement('button');
+        btn.style.cssText = 'background:var(--accent);color:#fff;border:none;padding:12px 32px;border-radius:8px;font-size:0.9rem;font-weight:600;cursor:pointer;transition:var(--transition);';
+        btn.textContent = `Load More (${visibleCount} of ${totalFiltered})`;
+        btn.onmouseover = () => { btn.style.background = 'var(--accent-hover)'; };
+        btn.onmouseout = () => { btn.style.background = 'var(--accent)'; };
+        btn.onclick = () => { visibleCount += PAGE_SIZE; renderTimeline(allEvents, false); };
+        loadMoreWrap.appendChild(btn);
+        elTimeline.appendChild(loadMoreWrap);
+      }
     }
 
     /* ── Filter chips ── */
@@ -510,7 +554,7 @@
         document.querySelectorAll('.tl-filter').forEach(c => c.classList.remove('active'));
         chip.classList.add('active');
         activeFilter = chip.dataset.filter;
-        renderTimeline(allEvents);
+        renderTimeline(allEvents, true);
       });
     });
 
@@ -518,7 +562,7 @@
     async function init() {
       try {
         allEvents = await fetchAllActivity();
-        renderTimeline(allEvents);
+        renderTimeline(allEvents, true);
       } catch (e) {
         elTimeline.innerHTML = `<div class="timeline-empty"><div class="timeline-empty-text">Error loading activity: ${e.message}</div></div>`;
       }
