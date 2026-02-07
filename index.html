@@ -2008,18 +2008,10 @@
     const EMPTY_POSTER = 'empty-poster'; // Letterboxd placeholder token
 
     // Fix Letterboxd CDN poster URLs for hotlinking.
-    // - film-poster/ URLs work at 0-230-0-345 (real poster art, publicly accessible)
-    // - sm/upload/ at 0-230-0-345 may be broken (enricher-converted) → try 1200 format
-    // - 1200-1200-675-675 og:image format always works for sm/upload/ & alternative-backdrop/
+    // Both film-poster/ and sm/upload/ URLs work at the 0-230-0-345-crop size.
+    // We only need to filter out empty-poster placeholders.
     function fixPosterUrl(url) {
       if (!url || url.includes(EMPTY_POSTER)) return null;
-      // film-poster/ URLs work fine at poster size — use as-is
-      if (url.includes('/film-poster/')) return url;
-      // sm/upload/ at 0-230-0-345 was converted by enricher and returns 403 —
-      // convert to 1200 format which works (shows scene still until re-enriched)
-      if (url.includes('ltrbxd.com') && url.includes('-0-230-0-345-crop')) {
-        return url.replace(/-0-230-0-345-crop\.jpg/, '-1200-1200-675-675-crop-000000.jpg');
-      }
       return url;
     }
 
