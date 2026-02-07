@@ -715,6 +715,11 @@
     }
     .rating-value.editable:hover { background: rgba(37, 99, 235, 0.06); }
 
+    .rating-value.blind-rating {
+      color: var(--text-muted); font-style: italic; font-size: 0.85rem;
+      letter-spacing: 0.05em; cursor: default; user-select: none;
+    }
+
     .unrated-prompt {
       font-size: 0.8125rem;
       color: var(--text-muted);
@@ -2346,10 +2351,18 @@
         gregLabelGroup.innerHTML = '<div class="avatar greg-avatar">G</div><span class="rating-label">Greg</span>';
 
         // Greg rating: show Letterboxd rating, allow Greg to edit via app
+        // Blind mode: when Peer is logged in and hasn't rated this film,
+        // hide Greg's rating so Peer isn't influenced.
+        const peerHasRated = peerMap[movieKey] > 0;
+        const blindMode = currentUser === 'peer' && !peerHasRated;
         const gregStars = starsFromNumeric(entry.gregRating);
         const gregValSpan = document.createElement('span');
 
-        if (gregStars) {
+        if (blindMode && gregStars) {
+          gregValSpan.className = 'rating-value blind-rating';
+          gregValSpan.textContent = '???';
+          gregValSpan.title = 'Rate this film first to reveal Greg\u2019s rating';
+        } else if (gregStars) {
           gregValSpan.className = 'rating-value' + (canActAs('greg') ? ' editable' : '');
           gregValSpan.textContent = gregStars;
           if (canActAs('greg')) {
