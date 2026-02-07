@@ -342,17 +342,12 @@
 
   // ───── Auth (shared with main page via localStorage) ─────
   function loadSession() {
-    const s = localStorage.getItem('dufive_session');
-    if (!s) return;
-    try {
-      const parsed = JSON.parse(s);
-      if (parsed.expires && new Date(parsed.expires) > new Date()) {
-        currentUser = parsed.reviewer;
-        authToken = parsed.token;
-      } else {
-        localStorage.removeItem('dufive_session');
-      }
-    } catch (e) {}
+    const reviewer = localStorage.getItem('reviewer');
+    const token = localStorage.getItem('session_token');
+    if (reviewer && token) {
+      currentUser = reviewer;
+      authToken = token;
+    }
   }
 
   function isAdmin() { return currentUser === 'admin'; }
