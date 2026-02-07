@@ -1523,8 +1523,20 @@
        DATA FETCHING
     ═══════════════════════════════════════════ */
     async function fetchPeerRatings() {
-      const { data, error } = await supabaseClient.from('ratings').select('movie_key,movie_title,rating');
+      const { data, error } = await supabaseClient
+        .from('ratings').select('movie_key,movie_title,rating')
+        .eq('reviewer', 'peer');
       if (error) throw new Error('Ratings Error: ' + error.message);
+      const map = Object.create(null);
+      (data || []).forEach(r => { if (r?.movie_key) map[r.movie_key] = r.rating; });
+      return map;
+    }
+
+    async function fetchGregWebRatings() {
+      const { data, error } = await supabaseClient
+        .from('ratings').select('movie_key,rating')
+        .eq('reviewer', 'greg');
+      if (error) { console.error('Greg web ratings error:', error); return Object.create(null); }
       const map = Object.create(null);
       (data || []).forEach(r => { if (r?.movie_key) map[r.movie_key] = r.rating; });
       return map;
@@ -2233,12 +2245,22 @@
       if (!preserveScroll) showSkeletons(6);
 
       try {
-        const [peerMap, gregItems, reactions, notesMap] = await Promise.all([
+        const [peerMap, gregItems, gregWebMap, reactions, notesMap] = await Promise.all([
           fetchPeerRatings(),
           fetchGregFilms(),
+          fetchGregWebRatings(),
           fetchReactions(),
           fetchNotes()
         ]);
+
+        // Merge Greg's website ratings into gregItems — website rating takes priority
+        // over the Letterboxd rating so the daily sync can't overwrite manual changes.
+        gregItems.forEach(entry => {
+          const webRating = gregWebMap[entry.movieKey];
+          if (webRating != null && webRating > 0) {
+            entry.gregRating = webRating;
+          }
+        });
 
         cachedGregItems = gregItems;
         cachedPeerMap = peerMap;
