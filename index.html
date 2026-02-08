@@ -576,24 +576,14 @@
     }
 
     .search-wrapper {
-      flex: 1;
-      min-width: 200px;
+      flex: 0 1 320px;
+      min-width: 180px;
       position: relative;
-    }
-
-    .search-icon {
-      position: absolute;
-      right: 14px;
-      top: 50%;
-      transform: translateY(-50%);
-      font-size: 0.875rem;
-      color: var(--text-muted);
-      pointer-events: none;
     }
 
     .search-input {
       width: 100%;
-      padding: 12px 38px 12px 14px;
+      padding: 12px 14px 12px 14px;
       border: 2px solid var(--text);
       border-radius: 0;
       font-family: inherit;
@@ -987,13 +977,13 @@
       transition: var(--transition);
       cursor: default;
       line-height: 1;
-      filter: grayscale(0.65) contrast(0.9);
+      filter: none;
     }
     .poster-badge.left  { left: 6px; }
     .poster-badge.right { right: 6px; }
     .poster-badge.clickable { cursor: pointer; }
     .poster-badge.clickable:hover {
-      filter: grayscale(0) contrast(1);
+      filter: none;
       background: rgba(0,0,0,0.9);
       border-color: rgba(255,255,255,0.4);
     }
@@ -1312,8 +1302,8 @@
     .reaction-option {
       font-size: 1.4rem;
       cursor: pointer;
-      filter: grayscale(0.7) contrast(0.9);
-      opacity: 0.6;
+      filter: none;
+      opacity: 1;
       transition: var(--transition);
       padding: 8px 10px;
       border-radius: 0;
@@ -1322,7 +1312,7 @@
       justify-content: center;
     }
     .reaction-option:hover {
-      filter: grayscale(0) contrast(1);
+      filter: none;
       opacity: 1;
       background: var(--border-light);
     }
@@ -1627,7 +1617,8 @@
       .stat-label { font-size: 0.55rem; }
 
       .toolbar { gap: 10px; margin-bottom: 20px; }
-      .search-input { font-size: 0.875rem; padding: 10px 32px 10px 12px; }
+      .search-input { font-size: 0.875rem; padding: 10px 12px; }
+      .search-wrapper { flex: 1; }
       .sort-select { font-size: 0.7rem; }
 
       .filter-chips { gap: 4px; }
@@ -1755,10 +1746,10 @@
       padding: 8px 14px; border-radius: 0;
       background: var(--bg); border: 1px solid var(--border);
       font-size: 1rem; color: var(--text);
-      filter: grayscale(0.6);
+      filter: none;
       transition: var(--transition);
     }
-    .fm-reaction-chip:hover { filter: grayscale(0); }
+    .fm-reaction-chip:hover { filter: none; }
     .fm-reaction-chip .kc-face { width: 22px; height: 22px; }
 
     .fm-section-title {
@@ -1926,7 +1917,6 @@
 
     <div class="toolbar">
       <div class="search-wrapper">
-        <span class="search-icon">&#8981;</span>
         <input type="text" class="search-input" id="search-input" placeholder="Search films..." autocomplete="off" />
         <button class="search-clear" id="search-clear" aria-label="Clear search">&times;</button>
       </div>
