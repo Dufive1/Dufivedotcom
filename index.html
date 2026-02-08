@@ -747,6 +747,58 @@
       letter-spacing: 0.04em;
     }
 
+    /* ───── Delete Film Button ───── */
+    .delete-film-btn {
+      font-family: var(--mono);
+      font-size: 0.55rem; font-weight: 600;
+      text-transform: uppercase; letter-spacing: 0.06em;
+      padding: 4px 8px; margin-top: 6px;
+      border: 1px solid var(--border); border-radius: 0;
+      background: transparent; color: var(--text-muted);
+      cursor: pointer; transition: var(--transition);
+      display: block; width: 100%; text-align: center;
+      opacity: 0;
+    }
+    .entry:hover .delete-film-btn { opacity: 1; }
+    .delete-film-btn:hover {
+      border-color: #dc2626; color: #dc2626;
+    }
+
+    /* ───── Confirmation Modal (shared) ───── */
+    .confirm-overlay {
+      position: fixed; inset: 0;
+      background: var(--overlay-bg); backdrop-filter: blur(4px);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 10001;
+      animation: fadeIn 0.2s ease;
+    }
+    .confirm-panel {
+      background: var(--bg); border: 1px solid var(--border);
+      max-width: 380px; width: 90%; padding: 28px; text-align: center;
+      animation: slideUp 0.3s cubic-bezier(0.4,0,0.2,1);
+    }
+    .confirm-title {
+      font-family: 'Playfair Display', serif; font-size: 1.1rem; font-weight: 400;
+      color: var(--text); margin-bottom: 8px; line-height: 1.3;
+    }
+    .confirm-subtitle {
+      font-size: 0.8rem; color: var(--text-muted); margin-bottom: 20px; line-height: 1.4;
+    }
+    .confirm-actions { display: flex; gap: 10px; justify-content: center; }
+    .confirm-btn {
+      font-family: var(--mono); font-size: 0.65rem; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.08em;
+      padding: 8px 20px; border-radius: 0; cursor: pointer; transition: var(--transition);
+    }
+    .confirm-btn.primary {
+      background: var(--text); color: var(--bg); border: 1px solid var(--text);
+    }
+    .confirm-btn.primary:hover { opacity: 0.8; }
+    .confirm-btn.secondary {
+      background: transparent; color: var(--text); border: 1px solid var(--border);
+    }
+    .confirm-btn.secondary:hover { border-color: var(--text); }
+
     .filter-chips { display: flex; gap: 4px; flex-wrap: wrap; align-items: center; }
 
     .filter-chip {
@@ -1892,7 +1944,8 @@
       .badges-section, .discussion-section, .react-trigger, .poster-badge,
       .poster-info, .star-picker-overlay, .reveal-overlay, .reviewer-picker-overlay,
       .shortcuts-overlay, .reaction-picker-modal, #error-log, .new-badge,
-      .search-wrapper, .sort-select, .search-clear, .log-film-btn, .log-film-overlay { display: none !important; }
+      .search-wrapper, .sort-select, .search-clear, .log-film-btn, .log-film-overlay,
+      .delete-film-btn, .confirm-overlay { display: none !important; }
 
       .container { max-width: 100%; padding: 0; }
 
@@ -3230,6 +3283,18 @@
           card.appendChild(content);
         }
 
+        // Delete film button (logged-in only)
+        if (currentUser) {
+          const delBtn = document.createElement('button');
+          delBtn.className = 'delete-film-btn';
+          delBtn.textContent = 'Delete';
+          delBtn.onclick = (e) => {
+            e.stopPropagation();
+            showDeleteFilmModal(title, movieKey);
+          };
+          card.appendChild(delBtn);
+        }
+
         // Click poster to reveal TMDB info (fade dissolve)
         posterFrame.style.cursor = 'pointer';
         posterFrame.addEventListener('click', async (e) => {
@@ -3866,6 +3931,60 @@
       setAuthUI();
       if (!silent) showToast('Logged out', 'info', 2000);
       loadArchive();
+    }
+
+    /* ═══════════════════════════════════════════
+       DELETE FILM (CONFIRMATION MODAL)
+    ═══════════════════════════════════════════ */
+    function showConfirmModal(titleText, subtitleText, onConfirm) {
+      const existing = document.getElementById('confirm-modal');
+      if (existing) existing.remove();
+
+      const overlay = document.createElement('div');
+      overlay.className = 'confirm-overlay';
+      overlay.id = 'confirm-modal';
+
+      overlay.innerHTML = `
+        <div class="confirm-panel">
+          <div class="confirm-title">${titleText}</div>
+          <div class="confirm-subtitle">${subtitleText}</div>
+          <div class="confirm-actions">
+            <button class="confirm-btn secondary" id="confirm-cancel">Cancel</button>
+            <button class="confirm-btn primary" id="confirm-ok">Confirm</button>
+          </div>
+        </div>
+      `;
+
+      document.body.appendChild(overlay);
+
+      function dismiss() { overlay.remove(); document.removeEventListener('keydown', onKey); }
+
+      document.getElementById('confirm-cancel').onclick = dismiss;
+      document.getElementById('confirm-ok').onclick = () => { dismiss(); onConfirm(); };
+      overlay.addEventListener('click', (e) => { if (e.target === overlay) dismiss(); });
+
+      function onKey(e) { if (e.key === 'Escape') dismiss(); }
+      document.addEventListener('keydown', onKey);
+    }
+
+    function showDeleteFilmModal(filmTitle, movieKey) {
+      showConfirmModal(
+        'Remove \u201C' + filmTitle + '\u201D from The Ledger?',
+        'This will delete all ratings, reactions, and notes for this film.',
+        () => deleteFilm(movieKey, filmTitle)
+      );
+    }
+
+    async function deleteFilm(movieKey, filmTitle) {
+      try {
+        const result = await authenticatedRequest('delete_film', movieKey, {});
+        if (result) {
+          showToast('Film removed', 'info', 2500);
+          await loadArchive(false);
+        }
+      } catch (e) {
+        showToast('Error: ' + e.message, 'error');
+      }
     }
 
     /* ═══════════════════════════════════════════
