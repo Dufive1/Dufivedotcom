@@ -764,6 +764,24 @@
       border-color: #dc2626; color: #dc2626;
     }
 
+    /* ───── Add to Queue Button ───── */
+    .add-queue-btn {
+      font-family: var(--mono);
+      font-size: 0.55rem; font-weight: 600;
+      text-transform: uppercase; letter-spacing: 0.06em;
+      padding: 4px 8px; margin-top: 4px;
+      border: 1px solid var(--border); border-radius: 0;
+      background: transparent; color: var(--text-muted);
+      cursor: pointer; transition: var(--transition);
+      display: block; width: 100%; text-align: center;
+      opacity: 0;
+    }
+    .entry:hover .add-queue-btn { opacity: 1; }
+    .add-queue-btn:hover {
+      border-color: var(--text); color: var(--text);
+    }
+    .add-queue-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
     /* ───── Confirmation Modal (shared) ───── */
     .confirm-overlay {
       position: fixed; inset: 0;
@@ -1253,19 +1271,34 @@
       filter: grayscale(0.15) contrast(1.1);
     }
 
-    .react-trigger {
-      font-size: 0.75rem;
-      color: var(--accent);
-      cursor: pointer;
-      opacity: 0.7;
-      transition: var(--transition);
-      user-select: none;
-      margin-top: 6px;
-      display: inline-block;
-      padding: 6px 0;
-      font-weight: 500;
+    /* ───── Inline Reaction Pills ───── */
+    .reaction-pills {
+      display: flex; align-items: center; gap: 6px;
+      margin-top: 6px; flex-wrap: wrap;
     }
-    .react-trigger:hover { opacity: 1; }
+    .reaction-pills-label {
+      font-family: var(--mono); font-size: 0.6rem; font-weight: 600;
+      text-transform: uppercase; letter-spacing: 0.06em;
+      color: var(--text-muted); white-space: nowrap;
+    }
+    .reaction-pill {
+      padding: 4px 6px; border: 1px solid var(--border); border-radius: 0;
+      background: transparent; cursor: pointer;
+      font-size: 1.1rem; line-height: 1;
+      display: flex; align-items: center; justify-content: center;
+      transition: var(--transition);
+    }
+    .reaction-pill:hover {
+      background: var(--border-light); border-color: var(--text);
+    }
+    .reaction-pill.active {
+      background: var(--text); border-color: var(--text);
+    }
+    .reaction-pill .kc-pill {
+      width: 20px; height: 20px; border-radius: 50%;
+      object-fit: cover; filter: grayscale(0.15) contrast(1.1);
+    }
+    .reaction-pill.active .kc-pill { filter: brightness(1.2); }
 
     /* Old inline .reaction kept for backwards compat but hidden */
     .reaction { display: none; }
@@ -1533,45 +1566,7 @@
       margin-top: -4px;
     }
 
-    /* ───── Reaction Picker ───── */
-    .reaction-picker {
-      display: flex;
-      gap: 4px;
-      margin-top: 10px;
-      padding: 6px;
-      background: var(--bg);
-      border: 1px solid var(--border);
-      flex-wrap: wrap;
-    }
-
-    .reaction-option {
-      font-size: 1.4rem;
-      cursor: pointer;
-      filter: none;
-      opacity: 1;
-      transition: var(--transition);
-      padding: 8px 10px;
-      border-radius: 0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-    .reaction-option:hover {
-      filter: none;
-      opacity: 1;
-      background: var(--border-light);
-    }
-    .reaction-option .kc-pick {
-      width: 28px;
-      height: 28px;
-      border-radius: 50%;
-      object-fit: cover;
-      border: 1px solid var(--text);
-      filter: none;
-    }
-    .reaction-option:hover .kc-pick {
-      filter: grayscale(0);
-    }
+    /* (old .reaction-picker removed — replaced by inline .reaction-pills) */
 
     /* ───── Login Modal ───── */
     .modal-overlay {
@@ -1905,8 +1900,7 @@
       .note { padding: 12px; }
       .note-input { min-height: 60px; font-size: 0.875rem; }
 
-      .reaction-picker { gap: 2px; padding: 4px; justify-content: center; flex-direction: column; }
-      .reaction-option { padding: 6px 10px; font-size: 0.65rem; }
+      .reaction-pill { font-size: 0.95rem; padding: 3px 5px; }
       .poster-badge { font-size: 1.4rem; padding: 5px 8px; bottom: 6px; }
       .poster-badge.left { left: 4px; }
       .poster-badge.right { right: 4px; }
@@ -1914,7 +1908,8 @@
       .poster-badge .badge-who { width: 14px; height: 14px; font-size: 0.45rem; }
 
       .rating-value.editable { padding: 8px 12px; margin: -8px -12px; }
-      .react-trigger { padding: 8px 0; }
+      .reaction-pills { margin-top: 8px; }
+      .delete-film-btn, .add-queue-btn { opacity: 1; }
       .note-delete { opacity: 0.5; padding: 8px 12px; }
 
       .login-modal { padding: 24px 20px; }
@@ -1941,11 +1936,11 @@
       /* Hide interactive elements */
       nav, .hamburger, .nav-controls, .toolbar, .filter-chips, .scroll-top-btn,
       .toast-container, .pull-indicator, .sync-btn, .notif-wrapper, .auth-controls,
-      .badges-section, .discussion-section, .react-trigger, .poster-badge,
+      .badges-section, .discussion-section, .reaction-pills, .poster-badge,
       .poster-info, .star-picker-overlay, .reveal-overlay, .reviewer-picker-overlay,
       .shortcuts-overlay, .reaction-picker-modal, #error-log, .new-badge,
       .search-wrapper, .sort-select, .search-clear, .log-film-btn, .log-film-overlay,
-      .delete-film-btn, .confirm-overlay { display: none !important; }
+      .delete-film-btn, .add-queue-btn, .confirm-overlay { display: none !important; }
 
       .container { max-width: 100%; padding: 0; }
 
@@ -3019,7 +3014,8 @@
           badge.appendChild(whoTag);
           if (canActAs(who)) {
             badge.dataset.hasReaction = 'true';
-            badge.onclick = (e) => { e.stopPropagation(); showReactionPicker(movieKey, who, badge); };
+            badge.title += ' (click to remove)';
+            badge.onclick = (e) => { e.stopPropagation(); deleteReaction(movieKey, who); };
           }
           return badge;
         }
@@ -3144,20 +3140,12 @@
         content.appendChild(h2);
         content.appendChild(ratingsContainer);
 
-        // React triggers
-        if (canActAs('peer') && !peerReactionToGreg) {
-          const reactBtn = document.createElement('div');
-          reactBtn.className = 'react-trigger';
-          reactBtn.textContent = 'React to Greg\u2019s rating';
-          reactBtn.onclick = (e) => { e.stopPropagation(); showReactionPicker(movieKey, 'peer', reactBtn); };
-          content.appendChild(reactBtn);
+        // Inline reaction pills (always visible when logged in)
+        if (canActAs('peer')) {
+          content.appendChild(buildReactionPills('React to Greg', movieKey, 'peer', peerReactionToGreg));
         }
-        if (canActAs('greg') && !gregReactionToPeer) {
-          const reactBtn = document.createElement('div');
-          reactBtn.className = 'react-trigger';
-          reactBtn.textContent = 'React to Peer\u2019s rating';
-          reactBtn.onclick = (e) => { e.stopPropagation(); showReactionPicker(movieKey, 'greg', reactBtn); };
-          content.appendChild(reactBtn);
+        if (canActAs('greg')) {
+          content.appendChild(buildReactionPills('React to Peer', movieKey, 'greg', gregReactionToPeer));
         }
 
         // Discussion
@@ -3293,6 +3281,36 @@
             showDeleteFilmModal(title, movieKey);
           };
           card.appendChild(delBtn);
+        }
+
+        // Add to Queue button (logged-in only)
+        if (currentUser) {
+          const queueBtn = document.createElement('button');
+          queueBtn.className = 'add-queue-btn';
+          queueBtn.textContent = '+ Queue';
+          queueBtn.onclick = async (e) => {
+            e.stopPropagation();
+            queueBtn.disabled = true;
+            queueBtn.textContent = 'Adding\u2026';
+            try {
+              const assignTo = isAdmin() ? 'both' : currentUser;
+              const res = await authenticatedRequest('watchlist_add', movieKey, {
+                title: title,
+                posterUrl: entry.posterUrl || null,
+                assignedTo: assignTo,
+                priority: 'medium'
+              });
+              if (!res) throw new Error('Request failed');
+              showToast('Added to The Queue', 'success', 2000);
+              queueBtn.textContent = '\u2713 Queued';
+              setTimeout(() => { queueBtn.textContent = '+ Queue'; queueBtn.disabled = false; }, 2000);
+            } catch (err) {
+              showToast('Failed to add to queue', 'error');
+              queueBtn.textContent = '+ Queue';
+              queueBtn.disabled = false;
+            }
+          };
+          card.appendChild(queueBtn);
         }
 
         // Click poster to reveal TMDB info (fade dissolve)
@@ -3586,55 +3604,36 @@
     }
 
     /* ═══════════════════════════════════════════
-       REACTION PICKER
+       REACTION PILLS
     ═══════════════════════════════════════════ */
-    function showReactionPicker(movieKey, reactor, triggerElement) {
-      document.querySelectorAll('.reaction-picker').forEach(p => p.remove());
-
-      const picker = document.createElement('div');
-      picker.className = 'reaction-picker';
-
-      const hasExisting = triggerElement?.dataset?.hasReaction === 'true';
-
-      if (hasExisting) {
-        const removeOpt = document.createElement('span');
-        removeOpt.className = 'reaction-option';
-        removeOpt.textContent = '\u2715';
-        removeOpt.title = 'Remove reaction';
-        removeOpt.onclick = (e) => { e.stopPropagation(); deleteReaction(movieKey, reactor); };
-        picker.appendChild(removeOpt);
-      }
+    function buildReactionPills(label, movieKey, reactor, currentReaction) {
+      const row = document.createElement('div');
+      row.className = 'reaction-pills';
+      const lbl = document.createElement('span');
+      lbl.className = 'reaction-pills-label';
+      lbl.textContent = label;
+      row.appendChild(lbl);
 
       Object.entries(REACTIONS).forEach(([key, emoji]) => {
-        const opt = document.createElement('span');
-        opt.className = 'reaction-option';
-        opt.title = key === 'costner' ? 'Costner Award (terrible movie)' : key;
+        const pill = document.createElement('span');
+        pill.className = 'reaction-pill' + (currentReaction === key ? ' active' : '');
+        pill.title = key === 'costner' ? 'Costner Award (terrible movie)' : key;
         if (key === 'costner') {
-          opt.innerHTML = `<img class="kc-pick" src="${KC_IMG}" alt="Costner Award">`;
+          pill.innerHTML = `<img class="kc-pill" src="${KC_IMG}" alt="Costner Award">`;
         } else {
-          opt.textContent = emoji;
+          pill.textContent = emoji;
         }
-        opt.onclick = (e) => { e.stopPropagation(); saveReaction(movieKey, reactor, key); };
-        picker.appendChild(opt);
-      });
-
-      // If triggered from poster badge, append to the card's content area instead
-      const card = triggerElement.closest('.entry');
-      if (card) {
-        const content = card.querySelector('.entry-content') || card;
-        content.appendChild(picker);
-      } else {
-        triggerElement.parentElement.appendChild(picker);
-      }
-
-      setTimeout(() => {
-        document.addEventListener('click', function closeHandler(e) {
-          if (!picker.contains(e.target)) {
-            picker.remove();
-            document.removeEventListener('click', closeHandler);
+        pill.onclick = (e) => {
+          e.stopPropagation();
+          if (currentReaction === key) {
+            deleteReaction(movieKey, reactor);
+          } else {
+            saveReaction(movieKey, reactor, key);
           }
-        });
-      }, 0);
+        };
+        row.appendChild(pill);
+      });
+      return row;
     }
 
     /* ═══════════════════════════════════════════
