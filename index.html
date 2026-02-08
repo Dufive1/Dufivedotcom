@@ -661,6 +661,20 @@
     }
     .log-film-btn:hover { background: var(--text); color: var(--bg); }
 
+    /* ───── Backup Button (admin only) ───── */
+    .backup-btn {
+      font-family: var(--mono);
+      font-size: 0.6rem; font-weight: 600;
+      text-transform: uppercase; letter-spacing: 0.08em;
+      padding: 8px 12px;
+      border: 1px solid var(--border); border-radius: 0;
+      background: transparent; color: var(--text-muted);
+      cursor: pointer; white-space: nowrap;
+      transition: var(--transition);
+    }
+    .backup-btn:hover { border-color: var(--text); color: var(--text); }
+    .backup-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
     /* ───── Log Film Modal ───── */
     .log-film-overlay {
       position: fixed; inset: 0;
@@ -1886,7 +1900,8 @@
       .search-input { font-size: 0.875rem; padding: 10px 12px; }
       .search-wrapper { flex: 1; }
       .log-film-btn { font-size: 0.6rem; padding: 6px 10px; order: 2; }
-      .sort-select { font-size: 0.7rem; order: 3; }
+      .backup-btn { font-size: 0.55rem; padding: 6px 8px; order: 3; }
+      .sort-select { font-size: 0.7rem; order: 4; }
 
       .filter-chips { gap: 4px; }
       .filter-chip { font-size: 0.6rem; }
@@ -1940,7 +1955,7 @@
       .poster-info, .star-picker-overlay, .reveal-overlay, .reviewer-picker-overlay,
       .shortcuts-overlay, .reaction-picker-modal, #error-log, .new-badge,
       .search-wrapper, .sort-select, .search-clear, .log-film-btn, .log-film-overlay,
-      .delete-film-btn, .add-queue-btn, .confirm-overlay { display: none !important; }
+      .delete-film-btn, .add-queue-btn, .backup-btn, .confirm-overlay { display: none !important; }
 
       .container { max-width: 100%; padding: 0; }
 
@@ -2053,6 +2068,7 @@
         <button class="search-clear" id="search-clear" aria-label="Clear search">&times;</button>
       </div>
       <button class="log-film-btn" id="log-film-btn" style="display:none;">+ Log Film</button>
+      <button class="backup-btn" id="backup-btn" style="display:none;">Backup</button>
       <select class="sort-select" id="sort-select">
         <option value="date">Newest First</option>
         <option value="greg-high">Greg: High &rarr; Low</option>
@@ -2387,6 +2403,7 @@
     }
 
     function setAuthUI() {
+      const elBackupBtn = document.getElementById('backup-btn');
       if (currentUser) {
         elAuthBtn.textContent = `${currentUser.toUpperCase()} \u2022 Online`;
         elAuthBtn.classList.remove('greg-active', 'peer-active', 'admin-active');
@@ -2395,6 +2412,7 @@
         elNotifWrapper.classList.add('visible');
         elSyncBtn.classList.add('visible');
         elLogFilmBtn.style.display = '';
+        elBackupBtn.style.display = isAdmin() ? '' : 'none';
       } else {
         elAuthBtn.textContent = 'Reviewer Login';
         elAuthBtn.classList.remove('greg-active', 'peer-active', 'admin-active');
@@ -2403,6 +2421,7 @@
         elNotifDropdown.classList.remove('open');
         elSyncBtn.classList.remove('visible');
         elLogFilmBtn.style.display = 'none';
+        elBackupBtn.style.display = 'none';
       }
     }
 
@@ -4182,6 +4201,73 @@
         }
       }
     }
+
+    /* ═══════════════════════════════════════════
+       ADMIN BACKUP DOWNLOAD
+    ═══════════════════════════════════════════ */
+    (function initBackupBtn() {
+      const btn = document.getElementById('backup-btn');
+      if (!btn) return;
+
+      const BACKUP_TABLES = [
+        'greg_films', 'ratings', 'rating_reactions',
+        'film_arguments', 'watchlist', 'achievements', 'weekly_recaps'
+      ];
+
+      btn.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        if (!isAdmin()) return;
+        btn.disabled = true;
+        btn.textContent = 'Exporting\u2026';
+
+        try {
+          const tables = {};
+          for (const table of BACKUP_TABLES) {
+            const BATCH = 1000;
+            let allRows = [];
+            let from = 0;
+            while (true) {
+              const { data, error } = await supabaseClient
+                .from(table)
+                .select('*')
+                .range(from, from + BATCH - 1);
+              if (error) { console.warn('Backup read error on ' + table, error); break; }
+              if (!data || data.length === 0) break;
+              allRows = allRows.concat(data);
+              if (data.length < BATCH) break;
+              from += BATCH;
+            }
+            tables[table] = allRows;
+          }
+
+          const backup = {
+            created_at: new Date().toISOString(),
+            version: '1.0',
+            tables
+          };
+
+          const json = JSON.stringify(backup, null, 2);
+          const blob = new Blob([json], { type: 'application/json' });
+          const url = URL.createObjectURL(blob);
+          const dateStr = new Date().toISOString().split('T')[0];
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = 'dufive-backup-' + dateStr + '.json';
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+
+          const totalRows = Object.values(tables).reduce((s, t) => s + t.length, 0);
+          showToast('Backup downloaded (' + totalRows + ' rows)', 'success', 3000);
+        } catch (err) {
+          showToast('Backup failed: ' + err.message, 'error');
+        }
+
+        btn.textContent = 'Backup';
+        btn.disabled = false;
+      });
+    })();
 
     /* ═══════════════════════════════════════════
        INIT
