@@ -3,19 +3,19 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>DUFIVE | Suggestions</title>
+  <title>DUFIVE | The Queue</title>
 
   <!-- Open Graph / Social -->
   <meta property="og:type" content="website" />
   <meta property="og:url" content="https://dufive.com/watchlist.html" />
-  <meta property="og:title" content="DUFIVE | Suggestions" />
-  <meta property="og:description" content="Nominate a film for Greg and Peer to watch and review next." />
+  <meta property="og:title" content="DUFIVE | The Queue" />
+  <meta property="og:description" content="Films waiting for Greg and Peer. Add yours to the backlog." />
   <meta property="og:image" content="https://dufive.com/og-image.png" />
   <meta name="twitter:card" content="summary_large_image" />
-  <meta name="twitter:title" content="DUFIVE | Suggestions" />
-  <meta name="twitter:description" content="Nominate a film for the next review." />
+  <meta name="twitter:title" content="DUFIVE | The Queue" />
+  <meta name="twitter:description" content="Films waiting for Greg and Peer. Add yours to the backlog." />
   <meta name="twitter:image" content="https://dufive.com/og-image.png" />
-  <meta name="description" content="Nominate films for Greg and Peer to watch and review on DUFIVE." />
+  <meta name="description" content="The Queue — films waiting for Greg and Peer to watch and review on DUFIVE." />
   <meta name="theme-color" content="#0a0a0a" />
   <link rel="manifest" href="/manifest.json" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -80,10 +80,11 @@
     }
     .brand-monogram {
       width: 80px; height: 80px; flex-shrink: 0;
-      border: 4px solid currentColor;
+      border: 4px solid var(--text);
       border-radius: 50%;
       position: relative;
       overflow: hidden;
+      color: var(--text);
     }
     .brand-monogram .d, .brand-monogram .five {
       position: absolute;
@@ -91,7 +92,7 @@
       font-weight: 700;
       font-size: 3.4rem;
       line-height: 1;
-      color: currentColor;
+      color: var(--text);
     }
     .brand-monogram .d { top: 2px; left: 6px; }
     .brand-monogram .five { top: 16px; left: 40px; }
@@ -123,12 +124,9 @@
       font-family: 'Playfair Display', serif; font-size: clamp(2.2rem, 5vw, 3.5rem);
       font-weight: 400; letter-spacing: -0.03em; margin-bottom: 12px;
     }
-    .tagline { font-size: 0.75rem; color: var(--text-muted); letter-spacing: 0.08em; text-transform: uppercase; }
-    .queue-count {
-      display: inline-block; font-family: var(--mono); font-size: 0.7rem; font-weight: 600; color: var(--text);
-      background: none; border: 1px solid var(--border);
-      padding: 4px 12px; border-radius: 0; margin-top: 10px;
-      letter-spacing: 0.06em;
+    .tagline {
+      font-family: var(--mono); font-size: 0.7rem; color: var(--text-muted);
+      letter-spacing: 0.06em; text-transform: uppercase;
     }
 
     /* ───── Add Film Section (always visible) ───── */
@@ -503,8 +501,7 @@
     <button class="hamburger" id="hamburger" aria-label="Menu">&#9776;</button>
     <div class="nav-controls" id="nav-controls">
       <a href="/" class="nav-link">The Ledger</a>
-      <a href="disagreements.html" class="nav-link">Debates</a>
-      <a href="watchlist.html" class="nav-link active">Suggestions</a>
+      <a href="watchlist.html" class="nav-link active">The Queue</a>
       <button id="theme-toggle" class="theme-toggle" title="Toggle dark mode">
         <span id="theme-icon">&#9790;</span>
       </button>
@@ -512,14 +509,13 @@
   </nav>
 
   <header>
-    <h1 class="page-title">Suggestions.</h1>
-    <p class="tagline">Nominate a Film.</p>
-    <div class="queue-count" id="queue-count"></div>
+    <h1 class="page-title">The Queue.</h1>
+    <p class="tagline" id="queue-tagline">Current status: loading the backlog.</p>
   </header>
 
-  <!-- Add film search — always visible, anyone can suggest -->
+  <!-- Add film search — always visible, anyone can add -->
   <div class="add-section" id="add-section">
-    <div class="add-label">Nominate a Film</div>
+    <div class="add-label">Add to the Queue</div>
     <div class="search-row">
       <input type="text" class="search-input" id="film-search" placeholder="Search for a film..." autocomplete="off" />
       <div class="search-results" id="search-results"></div>
@@ -548,8 +544,8 @@
     <div class="queue-grid" id="queue-grid"></div>
     <div class="empty-state" id="empty-state" style="display:none">
       <div class="empty-icon">—</div>
-      <div class="empty-title">No nominations.</div>
-      <div class="empty-text">Search for a film above to nominate it.</div>
+      <div class="empty-title">The queue is empty.</div>
+      <div class="empty-text">Search for a film above to add it.</div>
     </div>
   </div>
 
@@ -657,7 +653,7 @@
     const grid = document.getElementById('queue-grid');
     const empty = document.getElementById('empty-state');
     const loading = document.getElementById('loading');
-    const countEl = document.getElementById('queue-count');
+    const countEl = document.getElementById('queue-tagline');
     const watchedSection = document.getElementById('watched-section');
     const watchedList = document.getElementById('watched-list');
 
@@ -685,8 +681,8 @@
 
     // Count
     countEl.textContent = queueItems.length === 0
-      ? 'No nominations'
-      : filtered.length + ' of ' + queueItems.length + ' film' + (queueItems.length !== 1 ? 's' : '');
+      ? 'The backlog is empty.'
+      : 'Current status: ' + queueItems.length + ' film' + (queueItems.length !== 1 ? 's' : '') + ' in the backlog.';
 
     // Update active chip
     document.querySelectorAll('.filter-chip').forEach(chip => {
@@ -956,10 +952,10 @@
         actions.appendChild(btn);
       });
     } else {
-      // Visitors: single "+ Suggest" button (no assignment)
+      // Visitors: single "+ Queue" button (no assignment)
       const btn = document.createElement('button');
       btn.className = 'search-result-add';
-      btn.textContent = '+ Nominate';
+      btn.textContent = '+ Queue';
       btn.onclick = (e) => { e.stopPropagation(); addToQueue(film, null); };
       actions.appendChild(btn);
     }
@@ -1194,7 +1190,7 @@
       ? `<img class="pick-poster" src="${item.poster_url}" alt="${escHtml(item.title)}" onerror="this.outerHTML='<div class=\\'pick-poster-fallback\\'>D5</div>'">`
       : `<div class="pick-poster-fallback">D5</div>`;
 
-    const subtitle = item.suggested_by ? `Suggested by ${item.suggested_by}` : '';
+    const subtitle = item.suggested_by ? `Queued by ${item.suggested_by}` : '';
 
     overlay.innerHTML = `
       <div class="pick-card">

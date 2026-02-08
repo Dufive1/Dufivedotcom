@@ -76,10 +76,11 @@
     }
     .brand-monogram {
       width: 80px; height: 80px; flex-shrink: 0;
-      border: 4px solid currentColor;
+      border: 4px solid var(--text);
       border-radius: 50%;
       position: relative;
       overflow: hidden;
+      color: var(--text);
     }
     .brand-monogram .d, .brand-monogram .five {
       position: absolute;
@@ -87,7 +88,7 @@
       font-weight: 700;
       font-size: 3.4rem;
       line-height: 1;
-      color: currentColor;
+      color: var(--text);
     }
     .brand-monogram .d { top: 2px; left: 6px; }
     .brand-monogram .five { top: 16px; left: 40px; }
@@ -387,8 +388,7 @@
       <button class="hamburger" id="hamburger" aria-label="Menu">&#9776;</button>
       <div class="nav-controls" id="nav-controls">
         <a href="/" class="nav-link">The Ledger</a>
-        <a href="disagreements.html" class="nav-link active">Debates</a>
-        <a href="watchlist.html" class="nav-link">Suggestions</a>
+        <a href="watchlist.html" class="nav-link">The Queue</a>
         <button id="theme-toggle" class="theme-toggle" title="Toggle dark mode" aria-label="Toggle dark mode">
           <span id="theme-icon">&#9790;</span>
         </button>
