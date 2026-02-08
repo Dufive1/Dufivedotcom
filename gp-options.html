@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>G / P Avatar Options</title>
+<link href="https://fonts.googleapis.com/css2?family=Lora:wght@400;700&family=Playfair+Display:wght@400;700;900&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Space Mono', monospace;
+    background: #f5f1eb;
+    color: #1a1a1a;
+    padding: 40px 32px;
+  }
+  h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: 2rem;
+    font-weight: 400;
+    letter-spacing: -0.02em;
+    margin-bottom: 8px;
+  }
+  .subtitle {
+    font-size: 0.75rem;
+    color: #888;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: 40px;
+  }
+
+  .option-row {
+    display: flex;
+    align-items: center;
+    gap: 32px;
+    margin-bottom: 36px;
+    padding: 24px;
+    border: 1px solid #d4cfc9;
+    background: #fff;
+  }
+  .option-label {
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: #888;
+    width: 90px;
+    flex-shrink: 0;
+  }
+  .option-preview {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+  .option-desc {
+    font-size: 0.65rem;
+    color: #666;
+    line-height: 1.6;
+    max-width: 320px;
+  }
+
+  /* ───── Simulated rating row context ───── */
+  .context-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: 'Space Mono', monospace;
+  }
+  .context-name {
+    font-size: 0.65rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: #1a1a1a;
+  }
+  .context-stars {
+    font-size: 0.9rem;
+    letter-spacing: 0.12em;
+    color: #1a1a1a;
+  }
+
+  /* ═══════════════════════════════════════
+     OPTION 1: Playfair Serif Circle
+  ═══════════════════════════════════════ */
+  .opt1 {
+    width: 20px; height: 20px;
+    border-radius: 50%;
+    border: 1px solid #1a1a1a;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Playfair Display', serif;
+    font-size: 0.55rem;
+    font-weight: 700;
+    color: #1a1a1a;
+    background: transparent;
+  }
+
+  /* ═══════════════════════════════════════
+     OPTION 2: Lora Serif Circle (matches D5)
+  ═══════════════════════════════════════ */
+  .opt2 {
+    width: 20px; height: 20px;
+    border-radius: 50%;
+    border: 1.5px solid #1a1a1a;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Lora', serif;
+    font-size: 0.6rem;
+    font-weight: 700;
+    color: #1a1a1a;
+    background: transparent;
+  }
+
+  /* ═══════════════════════════════════════
+     OPTION 3: Monospace Square Stamp
+  ═══════════════════════════════════════ */
+  .opt3 {
+    width: 18px; height: 18px;
+    border-radius: 0;
+    border: 1px solid #1a1a1a;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.55rem;
+    font-weight: 700;
+    color: #1a1a1a;
+    background: transparent;
+  }
+
+  /* ═══════════════════════════════════════
+     OPTION 4: Larger Lora Circle (D5 mini)
+  ═══════════════════════════════════════ */
+  .opt4 {
+    width: 24px; height: 24px;
+    border-radius: 50%;
+    border: 1.5px solid #1a1a1a;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Lora', serif;
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: #1a1a1a;
+    background: transparent;
+    position: relative;
+  }
+
+  /* ═══════════════════════════════════════
+     OPTION 5: Playfair Italic Circle
+  ═══════════════════════════════════════ */
+  .opt5 {
+    width: 20px; height: 20px;
+    border-radius: 50%;
+    border: 1px solid #1a1a1a;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Playfair Display', serif;
+    font-size: 0.6rem;
+    font-weight: 400;
+    font-style: italic;
+    color: #1a1a1a;
+    background: transparent;
+  }
+
+  /* ═══════════════════════════════════════
+     OPTION 6: No border, just bold serif letter
+  ═══════════════════════════════════════ */
+  .opt6 {
+    width: 20px; height: 20px;
+    border-radius: 0;
+    border: none;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Playfair Display', serif;
+    font-size: 0.85rem;
+    font-weight: 900;
+    color: #1a1a1a;
+    background: transparent;
+  }
+
+  /* ═══════════════════════════════════════
+     OPTION 7: Thin circle, Lora, slightly offset (D5 echo)
+  ═══════════════════════════════════════ */
+  .opt7 {
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    border: 1px solid #1a1a1a;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Lora', serif;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #1a1a1a;
+    background: transparent;
+    position: relative;
+  }
+  .opt7 span {
+    position: relative;
+    top: -0.5px;
+  }
+
+  /* ═══════════════════════════════════════
+     OPTION 8: Thick circle, compact
+  ═══════════════════════════════════════ */
+  .opt8 {
+    width: 18px; height: 18px;
+    border-radius: 50%;
+    border: 2px solid #1a1a1a;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Lora', serif;
+    font-size: 0.5rem;
+    font-weight: 700;
+    color: #1a1a1a;
+    background: transparent;
+  }
+
+  /* ═══════════════════════════════════════
+     OPTION 9: Period after initial (G. / P.)
+  ═══════════════════════════════════════ */
+  .opt9 {
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Playfair Display', serif;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #1a1a1a;
+    background: transparent;
+    letter-spacing: -0.02em;
+  }
+
+  /* ═══════════════════════════════════════
+     OPTION 10: Parenthetical footnote style
+  ═══════════════════════════════════════ */
+  .opt10 {
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Lora', serif;
+    font-size: 0.65rem;
+    font-weight: 400;
+    font-style: italic;
+    color: #1a1a1a;
+    background: transparent;
+  }
+
+  /* ───── Dark mode toggle ───── */
+  body.dark {
+    background: #0f0e0c;
+    color: #e8e3dd;
+  }
+  body.dark .option-row {
+    border-color: #2a2824;
+    background: #1a1917;
+  }
+  body.dark .option-label { color: #888; }
+  body.dark .option-desc { color: #888; }
+  body.dark .context-name { color: #e8e3dd; }
+  body.dark .context-stars { color: #e8e3dd; }
+  body.dark .opt1, body.dark .opt2, body.dark .opt3,
+  body.dark .opt4, body.dark .opt5, body.dark .opt7,
+  body.dark .opt8 {
+    border-color: #e8e3dd;
+    color: #e8e3dd;
+  }
+  body.dark .opt6, body.dark .opt9, body.dark .opt10 {
+    color: #e8e3dd;
+  }
+
+  .toggle-btn {
+    position: fixed;
+    top: 16px; right: 16px;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.7rem;
+    padding: 6px 14px;
+    border: 1px solid #1a1a1a;
+    background: transparent;
+    color: #1a1a1a;
+    cursor: pointer;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+  body.dark .toggle-btn {
+    border-color: #e8e3dd;
+    color: #e8e3dd;
+  }
+</style>
+</head>
+<body>
+
+<button class="toggle-btn" onclick="document.body.classList.toggle('dark')">Toggle Dark</button>
+
+<h1>G / P Avatar Stamps</h1>
+<p class="subtitle">Pick the one that fits the Criterion feel. Each shown in context with a rating row.</p>
+
+<!-- Option 1 -->
+<div class="option-row">
+  <div class="option-label">Option 1</div>
+  <div class="option-preview">
+    <div class="context-row">
+      <div class="opt1">G</div>
+      <span class="context-name">Greg</span>
+      <span class="context-stars">✦✦✦✦</span>
+    </div>
+    <div class="context-row">
+      <div class="opt1">P</div>
+      <span class="context-name">Peer</span>
+      <span class="context-stars">✦✦✦</span>
+    </div>
+  </div>
+  <div class="option-desc">Playfair Display, 20px circle, 1px border. Clean and precise.</div>
+</div>
+
+<!-- Option 2 -->
+<div class="option-row">
+  <div class="option-label">Option 2</div>
+  <div class="option-preview">
+    <div class="context-row">
+      <div class="opt2">G</div>
+      <span class="context-name">Greg</span>
+      <span class="context-stars">✦✦✦✦</span>
+    </div>
+    <div class="context-row">
+      <div class="opt2">P</div>
+      <span class="context-name">Peer</span>
+      <span class="context-stars">✦✦✦</span>
+    </div>
+  </div>
+  <div class="option-desc">Lora serif (same font as D5 monogram), 20px circle, 1.5px border. Direct family match.</div>
+</div>
+
+<!-- Option 3 -->
+<div class="option-row">
+  <div class="option-label">Option 3</div>
+  <div class="option-preview">
+    <div class="context-row">
+      <div class="opt3">G</div>
+      <span class="context-name">Greg</span>
+      <span class="context-stars">✦✦✦✦</span>
+    </div>
+    <div class="context-row">
+      <div class="opt3">P</div>
+      <span class="context-name">Peer</span>
+      <span class="context-stars">✦✦✦</span>
+    </div>
+  </div>
+  <div class="option-desc">Monospace, sharp square. Industrial ledger feel. No curves.</div>
+</div>
+
+<!-- Option 4 -->
+<div class="option-row">
+  <div class="option-label">Option 4</div>
+  <div class="option-preview">
+    <div class="context-row">
+      <div class="opt4">G</div>
+      <span class="context-name">Greg</span>
+      <span class="context-stars">✦✦✦✦</span>
+    </div>
+    <div class="context-row">
+      <div class="opt4">P</div>
+      <span class="context-name">Peer</span>
+      <span class="context-stars">✦✦✦</span>
+    </div>
+  </div>
+  <div class="option-desc">Larger Lora circle (24px). More presence, mini version of D5 monogram.</div>
+</div>
+
+<!-- Option 5 -->
+<div class="option-row">
+  <div class="option-label">Option 5</div>
+  <div class="option-preview">
+    <div class="context-row">
+      <div class="opt5">G</div>
+      <span class="context-name">Greg</span>
+      <span class="context-stars">✦✦✦✦</span>
+    </div>
+    <div class="context-row">
+      <div class="opt5">P</div>
+      <span class="context-name">Peer</span>
+      <span class="context-stars">✦✦✦</span>
+    </div>
+  </div>
+  <div class="option-desc">Playfair italic in circle. Elegant, like a handwritten monogram.</div>
+</div>
+
+<!-- Option 6 -->
+<div class="option-row">
+  <div class="option-label">Option 6</div>
+  <div class="option-preview">
+    <div class="context-row">
+      <div class="opt6">G</div>
+      <span class="context-name">Greg</span>
+      <span class="context-stars">✦✦✦✦</span>
+    </div>
+    <div class="context-row">
+      <div class="opt6">P</div>
+      <span class="context-name">Peer</span>
+      <span class="context-stars">✦✦✦</span>
+    </div>
+  </div>
+  <div class="option-desc">No border at all. Just a bold Playfair letter. Maximally minimal — the letter IS the mark.</div>
+</div>
+
+<!-- Option 7 -->
+<div class="option-row">
+  <div class="option-label">Option 7</div>
+  <div class="option-preview">
+    <div class="context-row">
+      <div class="opt7"><span>G</span></div>
+      <span class="context-name">Greg</span>
+      <span class="context-stars">✦✦✦✦</span>
+    </div>
+    <div class="context-row">
+      <div class="opt7"><span>P</span></div>
+      <span class="context-name">Peer</span>
+      <span class="context-stars">✦✦✦</span>
+    </div>
+  </div>
+  <div class="option-desc">Lora, 22px circle, thin border, slight vertical nudge. Echoes the D5 stamp precisely.</div>
+</div>
+
+<!-- Option 8 -->
+<div class="option-row">
+  <div class="option-label">Option 8</div>
+  <div class="option-preview">
+    <div class="context-row">
+      <div class="opt8">G</div>
+      <span class="context-name">Greg</span>
+      <span class="context-stars">✦✦✦✦</span>
+    </div>
+    <div class="context-row">
+      <div class="opt8">P</div>
+      <span class="context-name">Peer</span>
+      <span class="context-stars">✦✦✦</span>
+    </div>
+  </div>
+  <div class="option-desc">Compact 18px circle, thick 2px border. Bold wax-seal stamp feel.</div>
+</div>
+
+<!-- Option 9 -->
+<div class="option-row">
+  <div class="option-label">Option 9</div>
+  <div class="option-preview">
+    <div class="context-row">
+      <div class="opt9">G.</div>
+      <span class="context-name">Greg</span>
+      <span class="context-stars">✦✦✦✦</span>
+    </div>
+    <div class="context-row">
+      <div class="opt9">P.</div>
+      <span class="context-name">Peer</span>
+      <span class="context-stars">✦✦✦</span>
+    </div>
+  </div>
+  <div class="option-desc">Period after initial, no border. Like a typeset abbreviation — "G." for Greg. Pure editorial.</div>
+</div>
+
+<!-- Option 10 -->
+<div class="option-row">
+  <div class="option-label">Option 10</div>
+  <div class="option-preview">
+    <div class="context-row">
+      <div class="opt10">(G)</div>
+      <span class="context-name">Greg</span>
+      <span class="context-stars">✦✦✦✦</span>
+    </div>
+    <div class="context-row">
+      <div class="opt10">(P)</div>
+      <span class="context-name">Peer</span>
+      <span class="context-stars">✦✦✦</span>
+    </div>
+  </div>
+  <div class="option-desc">Parenthetical italic Lora. Like a footnote citation — scholarly, quiet.</div>
+</div>
+
+</body>
+</html>
