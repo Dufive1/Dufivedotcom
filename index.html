@@ -723,8 +723,81 @@
       object-fit: cover;
       object-position: center 20%;
       display: block;
-      transition: none;
+      transition: opacity 0.4s ease;
     }
+    .poster-frame.revealed img,
+    .poster-frame.revealed .poster-fallback { opacity: 0; }
+
+    /* ═══ Poster Info Overlay (Fade Dissolve) ═══ */
+    .poster-info {
+      position: absolute; inset: 0;
+      opacity: 0; pointer-events: none;
+      transition: opacity 0.4s ease;
+      background: var(--bg);
+      border: none;
+      padding: 16px 14px 32px;
+      overflow-y: auto;
+      display: flex; flex-direction: column; gap: 6px;
+      z-index: 3;
+    }
+    .poster-frame.revealed .poster-info { opacity: 1; pointer-events: auto; }
+    .poster-info-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 1rem; font-weight: 700;
+      letter-spacing: -0.02em;
+      color: var(--text);
+      line-height: 1.2;
+    }
+    .poster-info-meta {
+      font-family: var(--mono);
+      font-size: 0.65rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      line-height: 1.4;
+    }
+    .poster-info-genres {
+      display: flex; flex-wrap: wrap; gap: 4px;
+    }
+    .poster-info-genre {
+      font-family: var(--mono);
+      font-size: 0.55rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      padding: 2px 6px;
+      border: 1px solid var(--border);
+      color: var(--text-secondary);
+    }
+    .poster-info-synopsis {
+      font-family: 'Lora', serif;
+      font-size: 0.75rem;
+      font-style: italic;
+      color: var(--text);
+      line-height: 1.5;
+      flex: 1;
+      overflow-y: auto;
+      margin-top: 2px;
+    }
+    .poster-info-loading {
+      display: flex; align-items: center; justify-content: center;
+      height: 100%;
+      font-family: var(--mono);
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
+    .poster-info-tmdb {
+      position: absolute;
+      bottom: 6px; right: 8px;
+      opacity: 0.2;
+      filter: grayscale(1);
+      transition: opacity 0.3s ease;
+      width: 36px; height: auto;
+      display: block;
+    }
+    .poster-info-tmdb:hover { opacity: 0.5; }
+    .poster-info-tmdb svg { width: 100%; height: auto; display: block; }
 
     /* Poster Fallback — editorial flat card */
     .poster-fallback {
@@ -740,6 +813,7 @@
       border: 1px solid var(--border);
       position: relative;
       overflow: hidden;
+      transition: opacity 0.4s ease;
     }
     .poster-fallback-text {
       font-family: 'Playfair Display', serif;
@@ -1660,143 +1734,7 @@
       .toast-container { bottom: 16px; right: 16px; left: 16px; }
       .toast { max-width: 100%; }
 
-      .film-modal { padding: 20px; }
-      .film-modal-poster { max-height: 50vh; }
-      .fm-notes-list { max-height: 40vh; }
     }
-
-    /* ═══ Film Detail Modal ═══ */
-    .film-modal-overlay {
-      position: fixed; inset: 0;
-      background: rgba(0,0,0,0.82);
-      backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
-      z-index: 10000;
-      display: none; align-items: center; justify-content: center;
-      animation: fadeIn 0.2s ease;
-      padding: 16px;
-      overflow-y: auto;
-    }
-    .film-modal-overlay.open { display: flex; }
-
-    .film-modal {
-      background: var(--bg);
-      border: 1px solid var(--border);
-      border-radius: 0;
-      max-width: 640px; width: 100%;
-      overflow: hidden;
-      animation: slideUp 0.35s cubic-bezier(0.4,0,0.2,1);
-      max-height: 90vh; overflow-y: auto;
-    }
-
-    .film-modal-close {
-      position: sticky; top: 0; z-index: 2;
-      display: flex; justify-content: flex-end; padding: 12px 16px 0;
-    }
-    .film-modal-close button {
-      background: rgba(0,0,0,0.5); border: none; color: #fff;
-      width: 32px; height: 32px; border-radius: 0;
-      font-size: 1.1rem; cursor: pointer;
-      display: flex; align-items: center; justify-content: center;
-      transition: background 0.2s;
-    }
-    .film-modal-close button:hover { background: rgba(0,0,0,0.7); }
-
-    .film-modal-hero { position: relative; text-align: center; padding: 0 24px 16px; }
-    .film-modal-poster {
-      max-height: 60vh; max-width: 100%; border-radius: 0;
-      border: 1px solid var(--border);
-      object-fit: contain;
-    }
-
-    .film-modal-body { padding: 0 28px 28px; }
-    .fm-title {
-      font-family: 'Playfair Display', serif;
-      font-size: 1.75rem; font-weight: 400;
-      letter-spacing: -0.02em; margin-bottom: 4px; color: var(--text);
-    }
-    .fm-year { font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 20px; }
-
-    .fm-ratings {
-      display: flex; gap: 32px; margin-bottom: 20px;
-      padding: 16px; background: var(--bg); border-radius: 0;
-    }
-    .fm-rating-col { flex: 1; text-align: center; }
-    .fm-rating-name {
-      font-size: 0.75rem; font-weight: 600;
-      text-transform: uppercase; letter-spacing: 0.06em;
-      color: var(--text-secondary); margin-bottom: 6px;
-    }
-    .fm-rating-stars { font-size: 1.4rem; letter-spacing: 1px; }
-    .fm-rating-num { font-family: var(--mono); font-size: 0.7rem; color: var(--text-secondary); margin-top: 2px; }
-    .fm-vs {
-      display: flex; align-items: center; justify-content: center;
-      font-weight: 800; font-size: 0.8rem; color: var(--text-secondary);
-    }
-    .fm-gap-badge {
-      display: inline-block; padding: 3px 10px; border-radius: 0;
-      font-size: 0.7rem; font-weight: 700; margin-top: 12px; text-align: center;
-    }
-    .fm-gap-badge.agree { background: var(--border-light); color: var(--text-secondary); }
-    .fm-gap-badge.disagree { background: var(--border-light); color: var(--text); }
-    .fm-gap-badge.neutral { background: var(--border-light); color: var(--text-secondary); }
-
-    .fm-reactions {
-      display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 20px;
-    }
-    .fm-reaction-chip {
-      display: flex; align-items: center; gap: 8px;
-      padding: 8px 14px; border-radius: 0;
-      background: var(--bg); border: 1px solid var(--border);
-      font-size: 1rem; color: var(--text);
-      filter: none;
-      transition: var(--transition);
-    }
-    .fm-reaction-chip:hover { filter: none; }
-    .fm-reaction-chip .kc-face { width: 22px; height: 22px; }
-
-    .fm-section-title {
-      font-size: 0.8rem; font-weight: 700;
-      text-transform: uppercase; letter-spacing: 0.06em;
-      color: var(--text-secondary); margin-bottom: 10px;
-    }
-    .fm-notes-list {
-      max-height: 50vh; overflow-y: auto;
-      display: flex; flex-direction: column; gap: 10px;
-      margin-bottom: 16px;
-    }
-    .fm-note {
-      padding: 10px 14px; border-radius: 0;
-      background: var(--bg); border: 1px solid var(--border);
-    }
-    .fm-note-header {
-      display: flex; align-items: center; gap: 8px; margin-bottom: 4px;
-    }
-    .fm-note-avatar {
-      width: 20px; height: 20px; border-radius: 0;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 0.6rem; font-weight: 700; color: #fff;
-    }
-    .fm-note-avatar.greg { background: var(--greg); }
-    .fm-note-avatar.peer { background: var(--peer); }
-    .fm-note-author { font-weight: 700; font-size: 0.75rem; text-transform: uppercase; color: var(--text); }
-    .fm-note-time { font-size: 0.7rem; color: var(--text-secondary); margin-left: auto; }
-    .fm-note-text { font-size: 0.85rem; color: var(--text); line-height: 1.5; }
-
-    .fm-actions {
-      display: flex; gap: 10px; flex-wrap: wrap; margin-top: 16px;
-    }
-    .fm-action-btn {
-      flex: 1; min-width: 120px;
-      padding: 10px 16px; border-radius: 0;
-      border: 1px solid var(--border); background: var(--bg);
-      color: var(--text); cursor: pointer; font-size: 0.8rem;
-      font-weight: 600; text-align: center;
-      transition: background 0.2s, border-color 0.2s;
-      text-decoration: none; display: inline-block;
-    }
-    .fm-action-btn:hover { background: var(--border-light); border-color: var(--text-secondary); }
-    .fm-action-btn.primary { background: var(--peer); color: #fff; border-color: var(--peer); }
-    .fm-action-btn.primary:hover { opacity: 0.9; }
 
     /* ═══ Print Stylesheet — Catalog Page ═══ */
     @media print {
@@ -1808,7 +1746,7 @@
       nav, .hamburger, .nav-controls, .toolbar, .filter-chips, .scroll-top-btn,
       .toast-container, .pull-indicator, .sync-btn, .notif-wrapper, .auth-controls,
       .badges-section, .discussion-section, .react-trigger, .poster-badge,
-      .film-modal-overlay, .star-picker-overlay, .reveal-overlay, .reviewer-picker-overlay,
+      .poster-info, .star-picker-overlay, .reveal-overlay, .reviewer-picker-overlay,
       .shortcuts-overlay, .reaction-picker-modal, #error-log, .new-badge,
       .search-wrapper, .sort-select, .search-clear { display: none !important; }
 
@@ -1989,9 +1927,6 @@
   <!-- Star Picker Modal -->
   <div id="star-picker" class="star-picker-overlay" style="display:none;"></div>
 
-  <!-- Film Detail Modal -->
-  <div class="film-modal-overlay" id="film-modal"></div>
-
   <!-- Keyboard Shortcuts Help -->
   <div class="shortcuts-overlay" id="shortcuts-overlay">
     <div class="shortcuts-panel">
@@ -2019,6 +1954,52 @@
     const KC_IMG = 'data:image/jpeg;base64,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';
     const REACTIONS = { fire: '\u{1F525}', agree: '\u{1F91D}', disagree: '\u{1F914}', costner: 'costner' };
     const PAGE_SIZE = 24; // Films shown per "page"
+
+    // ───── TMDB API (for poster info reveal) ─────
+    const TMDB_KEY = 'bfb6e869cd271ba3ac952a29f9279f09';
+    const TMDB_BASE = 'https://api.themoviedb.org/3';
+    const tmdbCache = {};
+    const TMDB_LOGO_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 190 28"><path fill="currentColor" d="M17.87 4.78h8.81V1.28H0v3.5h8.81v22.94h4.53V4.78h4.53zm13.56-3.5h-4.53v26.44h4.53V1.28zm13.56 0h-8.81v26.44h4.53V17.09h4.28c5.1 0 8.37-2.78 8.37-7.9s-3.27-7.91-8.37-7.91zm-.44 12.31h-3.84V4.78h3.84c3.06 0 4.28 1.64 4.28 4.41s-1.22 4.4-4.28 4.4zm27.06-12.31H58.8v26.44h12.81v-3.5H63.33V16.1h6.94v-3.5h-6.94V4.78h8.28v-3.5zm23.53 0h-4.96l-5.37 10.81L79.44 1.28h-4.97v26.44h4.53V9.87l3.84 7.72h3.5l3.84-7.72v17.85h4.53V1.28h-.17zm18.13 0h-4.53v26.44h4.53V1.28zm13.56 0h-8.81v26.44h4.53V17.09h4.28c5.1 0 8.37-2.78 8.37-7.9s-3.27-7.91-8.37-7.91zm-.44 12.31h-3.84V4.78h3.84c3.06 0 4.28 1.64 4.28 4.41s-1.22 4.4-4.28 4.4zm28.37-.87c2.84-1.22 4.28-3.5 4.28-6.56 0-4.68-3.27-7.47-8.37-7.47h-9.25v26.44h9.69c5.53 0 8.81-2.78 8.81-7.91 0-3.06-1.66-5.5-5.16-6.5zM152.5 4.78h4.28c2.62 0 3.84 1.22 3.84 3.97s-1.22 3.97-3.84 3.97h-4.28V4.78zm4.72 19.94h-4.72v-8.81h4.72c3.06 0 4.72 1.64 4.72 4.4 0 2.77-1.66 4.41-4.72 4.41z"/></svg>`;
+
+    async function fetchTMDBDetails(title, year) {
+      const cacheKey = title + '-' + (year || '');
+      if (tmdbCache[cacheKey]) return tmdbCache[cacheKey];
+      try {
+        // Step 1: Search for the movie
+        let searchUrl = TMDB_BASE + '/search/movie?api_key=' + TMDB_KEY + '&query=' + encodeURIComponent(title);
+        if (year) searchUrl += '&year=' + year;
+        const searchRes = await fetch(searchUrl);
+        if (!searchRes.ok) return null;
+        const searchData = await searchRes.json();
+        if (!searchData.results || searchData.results.length === 0) return null;
+        const movieId = searchData.results[0].id;
+
+        // Step 2: Get full details with credits
+        const detailUrl = TMDB_BASE + '/movie/' + movieId + '?api_key=' + TMDB_KEY + '&append_to_response=credits';
+        const detailRes = await fetch(detailUrl);
+        if (!detailRes.ok) return null;
+        const d = await detailRes.json();
+
+        const director = d.credits?.crew?.find(c => c.job === 'Director')?.name || '';
+        const genres = (d.genres || []).map(g => g.name).slice(0, 3);
+        const runtime = d.runtime ? d.runtime + ' min' : '';
+
+        const result = {
+          title: d.title || title,
+          year: d.release_date ? d.release_date.substring(0, 4) : (year || ''),
+          director: director,
+          runtime: runtime,
+          genres: genres,
+          overview: d.overview || '',
+          tmdb_id: movieId
+        };
+        tmdbCache[cacheKey] = result;
+        return result;
+      } catch (e) {
+        console.warn('TMDB fetch failed:', e);
+        return null;
+      }
+    }
 
     const supabaseClient = window.supabase.createClient(SB_URL, SB_KEY);
     const elGrid = document.getElementById('ledger-grid');
@@ -2083,6 +2064,10 @@
     });
     document.addEventListener('click', (e) => {
       if (!e.target.closest('nav')) elNavControls.classList.remove('open');
+      // Dismiss any open poster info panels when clicking outside
+      if (!e.target.closest('.poster-frame')) {
+        document.querySelectorAll('.poster-frame.revealed').forEach(pf => pf.classList.remove('revealed'));
+      }
     });
 
     document.getElementById('theme-toggle').addEventListener('click', () => {
@@ -2827,6 +2812,11 @@
           posterFrame.appendChild(fallback);
         }
 
+        // Info overlay (populated on first click via TMDB)
+        const infoPanel = document.createElement('div');
+        infoPanel.className = 'poster-info';
+        posterFrame.appendChild(infoPanel);
+
         const content = document.createElement('div');
         content.className = 'entry-content';
 
@@ -3054,11 +3044,40 @@
           card.appendChild(content);
         }
 
-        // Click card poster to open detail modal
+        // Click poster to reveal TMDB info (fade dissolve)
         posterFrame.style.cursor = 'pointer';
-        posterFrame.addEventListener('click', (e) => {
-          if (e.target.closest('.poster-badge')) return; // don't intercept reaction badge clicks
-          openFilmModal(entry);
+        posterFrame.addEventListener('click', async (e) => {
+          if (e.target.closest('.poster-badge')) return;
+          if (e.target.closest('.poster-info-tmdb')) return; // let TMDB link work
+
+          // Close any other open poster-info panels
+          document.querySelectorAll('.poster-frame.revealed').forEach(pf => {
+            if (pf !== posterFrame) pf.classList.remove('revealed');
+          });
+
+          posterFrame.classList.toggle('revealed');
+
+          if (posterFrame.classList.contains('revealed')) {
+            const info = posterFrame.querySelector('.poster-info');
+            if (!info.dataset.loaded) {
+              info.innerHTML = '<div class="poster-info-loading">Loading\u2026</div>';
+              const year = entry.year || movieKey.match(/-(\d{4})$/)?.[1] || '';
+              const data = await fetchTMDBDetails(title, year);
+              if (data) {
+                const genreHtml = data.genres.map(g => '<span class="poster-info-genre">' + g + '</span>').join('');
+                const metaParts = [data.director, data.runtime, data.year].filter(Boolean);
+                info.innerHTML =
+                  '<div class="poster-info-title">' + data.title + '</div>' +
+                  '<div class="poster-info-meta">' + metaParts.join(' \u2022 ') + '</div>' +
+                  (genreHtml ? '<div class="poster-info-genres">' + genreHtml + '</div>' : '') +
+                  (data.overview ? '<div class="poster-info-synopsis">' + data.overview + '</div>' : '') +
+                  '<a class="poster-info-tmdb" href="https://www.themoviedb.org/movie/' + data.tmdb_id + '" target="_blank" rel="noopener" title="Film data from TMDB">' + TMDB_LOGO_SVG + '</a>';
+              } else {
+                info.innerHTML = '<div class="poster-info-loading">No details found</div>';
+              }
+              info.dataset.loaded = 'true';
+            }
+          }
         });
 
         elGrid.appendChild(card);
@@ -3097,130 +3116,6 @@
         count.appendChild(countText);
         elGrid.appendChild(count);
       }
-    }
-
-    /* ═══════════════════════════════════════════
-       FILM DETAIL MODAL
-    ═══════════════════════════════════════════ */
-    function openFilmModal(entry) {
-      const overlay = document.getElementById('film-modal');
-      const movieKey = getMovieKey(entry);
-      const title = decodeHtml(entry.title);
-      const gregR = Number(entry.gregRating) || 0;
-      const peerR = Number(peerMap[movieKey]) || 0;
-      const gap = Math.abs(gregR - peerR);
-      const notes = notesMap[movieKey] || [];
-      const peerReaction = reactions[movieKey]?.peer;
-      const gregReaction = reactions[movieKey]?.greg;
-      const year = entry.year || movieKey.match(/-(\d{4})$/)?.[1] || '';
-      const tmdbUrl = `https://www.themoviedb.org/search?query=${encodeURIComponent(title)}`;
-
-      // Build poster HTML
-      let posterHtml = '';
-      if (entry.posterUrl) {
-        posterHtml = `<img class="film-modal-poster" src="${entry.posterUrl}" alt="${title}" onerror="this.style.display='none'">`;
-      }
-
-      // Rating gap badge
-      let gapClass = 'neutral';
-      let gapText = 'Not yet compared';
-      if (gregR > 0 && peerR > 0) {
-        if (gap <= 1) { gapClass = 'agree'; gapText = `Agree — ${gap === 0 ? 'Exact match!' : gap + '✦ gap'}`; }
-        else if (gap >= 3) { gapClass = 'disagree'; gapText = `Disagree — ${gap}✦ gap`; }
-        else { gapClass = 'neutral'; gapText = `${gap}✦ gap`; }
-      }
-
-      // Reaction chips
-      let reactionsHtml = '';
-      if (peerReaction || gregReaction) {
-        reactionsHtml = '<div class="fm-reactions">';
-        if (peerReaction) {
-          const display = peerReaction === 'costner'
-            ? `<img class="kc-face" src="${KC_IMG}" alt="Costner">`
-            : REACTIONS[peerReaction];
-          reactionsHtml += `<div class="fm-reaction-chip"><strong>Peer:</strong> ${display}</div>`;
-        }
-        if (gregReaction) {
-          const display = gregReaction === 'costner'
-            ? `<img class="kc-face" src="${KC_IMG}" alt="Costner">`
-            : REACTIONS[gregReaction];
-          reactionsHtml += `<div class="fm-reaction-chip"><strong>Greg:</strong> ${display}</div>`;
-        }
-        reactionsHtml += '</div>';
-      }
-
-      // Notes
-      let notesHtml = '';
-      if (notes.length > 0) {
-        notesHtml = `<div class="fm-section-title">Discussion (${notes.length})</div><div class="fm-notes-list">`;
-        notes.forEach(n => {
-          notesHtml += `<div class="fm-note">
-            <div class="fm-note-header">
-              <div class="fm-note-avatar ${n.author}">${n.author === 'greg' ? 'G' : 'P'}</div>
-              <div class="fm-note-author">${n.author}</div>
-              <div class="fm-note-time">${timeAgo(n.created_at)}</div>
-            </div>
-            <div class="fm-note-text">${n.argument.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</div>
-          </div>`;
-        });
-        notesHtml += '</div>';
-      } else {
-        notesHtml = '<div style="color:var(--text-secondary);font-size:0.85rem;margin-bottom:12px;">No discussion yet — add the first note from the card.</div>';
-      }
-
-      // Blind mode
-      const peerHasRated = peerR > 0;
-      const blindMode = currentUser === 'peer' && !peerHasRated;
-      const gregDisplay = blindMode ? '???' : (gregR > 0 ? starsFromNumeric(gregR) : '—');
-      const gregNum = blindMode ? '' : (gregR > 0 ? `(${gregR}/10)` : 'Not rated');
-
-      overlay.innerHTML = `
-        <div class="film-modal">
-          <div class="film-modal-close"><button onclick="closeFilmModal()" aria-label="Close">&times;</button></div>
-          <div class="film-modal-hero">${posterHtml}</div>
-          <div class="film-modal-body">
-            <div class="fm-title">${title}</div>
-            ${year ? `<div class="fm-year">${year}</div>` : ''}
-            <div class="fm-ratings">
-              <div class="fm-rating-col">
-                <div class="fm-rating-name">Greg</div>
-                <div class="fm-rating-stars">${gregDisplay}</div>
-                <div class="fm-rating-num">${gregNum}</div>
-              </div>
-              <div class="fm-vs">VS</div>
-              <div class="fm-rating-col">
-                <div class="fm-rating-name">Peer</div>
-                <div class="fm-rating-stars">${peerR > 0 ? starsFromNumeric(peerR) : '—'}</div>
-                <div class="fm-rating-num">${peerR > 0 ? `(${peerR}/10)` : 'Not rated'}</div>
-              </div>
-            </div>
-            ${gregR > 0 && peerR > 0 ? `<div style="text-align:center;margin-bottom:16px;"><span class="fm-gap-badge ${gapClass}">${gapText}</span></div>` : ''}
-            ${reactionsHtml}
-            ${notesHtml}
-            <div class="fm-actions">
-              <a class="fm-action-btn" href="${tmdbUrl}" target="_blank" rel="noopener">View on TMDB</a>
-              <button class="fm-action-btn primary" id="fm-share-btn">Share This Debate</button>
-            </div>
-          </div>
-        </div>
-      `;
-
-      overlay.classList.add('open');
-      document.body.style.overflow = 'hidden';
-
-      // Share button
-      document.getElementById('fm-share-btn').onclick = () => {
-        generateShareCard(entry);
-      };
-
-      // Close on backdrop click
-      overlay.onclick = (e) => { if (e.target === overlay) closeFilmModal(); };
-    }
-
-    function closeFilmModal() {
-      const overlay = document.getElementById('film-modal');
-      overlay.classList.remove('open');
-      document.body.style.overflow = '';
     }
 
     /* ═══════════════════════════════════════════
@@ -3819,7 +3714,8 @@
         if (e.key === 'Escape') {
           const sc = document.getElementById('shortcuts-overlay');
           if (sc.classList.contains('open')) { sc.classList.remove('open'); return; }
-          if (document.getElementById('film-modal').classList.contains('open')) { closeFilmModal(); return; }
+          const revealedPosters = document.querySelectorAll('.poster-frame.revealed');
+          if (revealedPosters.length) { revealedPosters.forEach(pf => pf.classList.remove('revealed')); return; }
           if (document.getElementById('login-modal').classList.contains('visible')) closeLoginModal();
           const sp = document.getElementById('star-picker');
           if (sp.style.display === 'flex') sp.style.display = 'none';
