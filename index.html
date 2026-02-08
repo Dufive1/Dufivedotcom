@@ -385,19 +385,22 @@
     .notif-item:last-child { border-bottom: none; }
     .notif-item:hover { background: var(--border-light); }
     .notif-avatar {
-      width: 24px;
-      height: 24px;
-      border-radius: 0;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 0.65rem;
+      font-family: 'Playfair Display', serif;
+      font-size: 0.6rem;
       font-weight: 700;
-      color: #fff;
+      color: var(--text);
+      background: transparent;
+      border: 1px solid var(--text);
       flex-shrink: 0;
     }
-    .notif-avatar.greg { background: var(--greg); }
-    .notif-avatar.peer { background: var(--accent); }
+    .notif-avatar.greg { background: transparent; }
+    .notif-avatar.peer { background: transparent; }
     .notif-text {
       font-size: 0.8rem;
       color: var(--text);
@@ -596,7 +599,7 @@
     }
     .search-input:focus {
       outline: none;
-      border-color: var(--greg);
+      border-color: var(--text);
     }
     .search-input::placeholder { color: var(--text-muted); letter-spacing: 0.02em; }
 
@@ -757,6 +760,20 @@
       letter-spacing: 0.06em;
       line-height: 1.4;
     }
+    .poster-info-cast {
+      font-family: var(--mono);
+      font-size: 0.6rem;
+      color: var(--text-secondary);
+      letter-spacing: 0.03em;
+      line-height: 1.4;
+    }
+    .poster-info-tagline {
+      font-family: 'Lora', serif;
+      font-size: 0.7rem;
+      font-style: italic;
+      color: var(--text-secondary);
+      line-height: 1.4;
+    }
     .poster-info-genres {
       display: flex; flex-wrap: wrap; gap: 4px;
     }
@@ -855,22 +872,25 @@
       gap: 8px;
     }
 
-    /* ───── User Avatars ───── */
+    /* ───── User Avatars (Monotype Stamp) ───── */
     .avatar {
-      width: 20px;
-      height: 20px;
-      border-radius: 0;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
       display: flex;
       align-items: center;
       justify-content: center;
+      font-family: 'Playfair Display', serif;
       font-size: 0.55rem;
       font-weight: 700;
-      letter-spacing: 0.04em;
-      color: white;
+      letter-spacing: 0;
+      color: var(--text);
+      background: transparent;
+      border: 1px solid var(--text);
       flex-shrink: 0;
     }
-    .avatar.greg-avatar { background: var(--greg); }
-    .avatar.peer-avatar { background: var(--peer); }
+    .avatar.greg-avatar { background: transparent; }
+    .avatar.peer-avatar { background: transparent; }
 
     .rating-label {
       font-size: 0.65rem;
@@ -890,7 +910,7 @@
     }
 
     .rating-value.editable {
-      color: var(--peer);
+      color: var(--text);
       cursor: pointer;
       transition: var(--transition);
       padding: 6px 10px;
@@ -954,8 +974,8 @@
       font-family: var(--mono); font-size: 0.6rem; font-weight: 700; text-transform: uppercase;
       letter-spacing: 0.1em;
     }
-    .badges-row-label.greg { color: var(--greg); }
-    .badges-row-label.peer { color: var(--peer); }
+    .badges-row-label.greg { color: var(--text); }
+    .badges-row-label.peer { color: var(--text); }
     .badge-chip {
       display: inline-flex; align-items: center; gap: 3px;
       padding: 0 6px; border-radius: 0;
@@ -1010,10 +1030,10 @@
     }
     .unrated-prompt.clickable {
       cursor: pointer;
-      color: var(--peer);
+      color: var(--text-secondary);
       font-style: normal;
       font-weight: 500;
-      border: 1px dashed var(--peer);
+      border: 1px dashed var(--text-secondary);
       padding: 4px 10px;
       border-radius: 0;
       opacity: 0.7;
@@ -1263,19 +1283,22 @@
     .note-author-group { display: flex; align-items: center; gap: 8px; }
 
     .note-avatar {
-      width: 20px;
-      height: 20px;
-      border-radius: 0;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 0.5625rem;
+      font-family: 'Playfair Display', serif;
+      font-size: 0.5rem;
       font-weight: 700;
-      color: white;
+      color: var(--text);
+      background: transparent;
+      border: 1px solid var(--text);
       flex-shrink: 0;
     }
-    .note-avatar.greg { background: var(--greg); }
-    .note-avatar.peer { background: var(--peer); }
+    .note-avatar.greg { background: transparent; }
+    .note-avatar.peer { background: transparent; }
 
     .note-author {
       font-size: 0.6875rem;
@@ -1283,8 +1306,8 @@
       letter-spacing: 0.06em;
       text-transform: uppercase;
     }
-    .note-author.greg { color: var(--greg); }
-    .note-author.peer { color: var(--peer); }
+    .note-author.greg { color: var(--text); }
+    .note-author.peer { color: var(--text); }
 
     .note-meta { display: flex; align-items: center; gap: 10px; }
     .note-time { font-size: 0.6875rem; color: var(--text-muted); }
@@ -1387,8 +1410,8 @@
       height: 28px;
       border-radius: 50%;
       object-fit: cover;
-      border: 1.5px solid var(--greg);
-      filter: grayscale(0.3);
+      border: 1px solid var(--text);
+      filter: none;
     }
     .reaction-option:hover .kc-pick {
       filter: grayscale(0);
@@ -2012,6 +2035,8 @@
         const director = d.credits?.crew?.find(c => c.job === 'Director')?.name || '';
         const genres = (d.genres || []).map(g => g.name).slice(0, 3);
         const runtime = d.runtime ? d.runtime + ' min' : '';
+        const cast = (d.credits?.cast || []).slice(0, 4).map(c => c.name);
+        const tagline = d.tagline || '';
 
         const result = {
           title: d.title || title,
@@ -2019,6 +2044,8 @@
           director: director,
           runtime: runtime,
           genres: genres,
+          cast: cast,
+          tagline: tagline,
           overview: d.overview || '',
           tmdb_id: movieId
         };
@@ -3036,7 +3063,7 @@
             charCount.textContent = '0 / 200';
             input.addEventListener('input', () => {
               charCount.textContent = `${input.value.length} / 200`;
-              charCount.style.color = input.value.length >= 180 ? 'var(--greg)' : '';
+              charCount.style.color = input.value.length >= 180 ? 'var(--text)' : '';
             });
 
             const submit = document.createElement('button');
@@ -3093,10 +3120,13 @@
               if (data) {
                 const genreHtml = data.genres.map(g => '<span class="poster-info-genre">' + g + '</span>').join('');
                 const metaParts = [data.director, data.runtime, data.year].filter(Boolean);
+                const castLine = data.cast.length ? data.cast.join(', ') : '';
                 info.innerHTML =
                   '<div class="poster-info-title">' + data.title + '</div>' +
                   '<div class="poster-info-meta">' + metaParts.join(' \u2022 ') + '</div>' +
+                  (castLine ? '<div class="poster-info-cast">' + castLine + '</div>' : '') +
                   (genreHtml ? '<div class="poster-info-genres">' + genreHtml + '</div>' : '') +
+                  (data.tagline ? '<div class="poster-info-tagline">\u201C' + data.tagline + '\u201D</div>' : '') +
                   (data.overview ? '<div class="poster-info-synopsis">' + data.overview + '</div>' : '');
               } else {
                 info.innerHTML = '<div class="poster-info-loading">No details found</div>';
