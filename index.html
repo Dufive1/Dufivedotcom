@@ -3113,7 +3113,7 @@
       const peerReaction = reactions[movieKey]?.peer;
       const gregReaction = reactions[movieKey]?.greg;
       const year = entry.year || movieKey.match(/-(\d{4})$/)?.[1] || '';
-      const lbUrl = `https://letterboxd.com/film/${movieKey}/`;
+      const tmdbUrl = `https://www.themoviedb.org/search?query=${encodeURIComponent(title)}`;
 
       // Build poster HTML
       let posterHtml = '';
@@ -3198,7 +3198,7 @@
             ${reactionsHtml}
             ${notesHtml}
             <div class="fm-actions">
-              <a class="fm-action-btn" href="${lbUrl}" target="_blank" rel="noopener">View on Letterboxd</a>
+              <a class="fm-action-btn" href="${tmdbUrl}" target="_blank" rel="noopener">View on TMDB</a>
               <button class="fm-action-btn primary" id="fm-share-btn">Share This Debate</button>
             </div>
           </div>

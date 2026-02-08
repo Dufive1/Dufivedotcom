@@ -853,10 +853,11 @@
 
         card.appendChild(info);
 
-        // Click to open on Letterboxd
+        // Click to open on TMDB
         card.style.cursor = 'pointer';
         card.onclick = () => {
-          if (item.letterboxd_url) window.open(item.letterboxd_url, '_blank');
+          const searchUrl = 'https://www.themoviedb.org/search?query=' + encodeURIComponent(item.title);
+          window.open(searchUrl, '_blank');
         };
 
         grid.appendChild(card);
