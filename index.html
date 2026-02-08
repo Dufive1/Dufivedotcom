@@ -1961,16 +1961,30 @@
     const tmdbCache = {};
     const TMDB_LOGO_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 190 28"><path fill="currentColor" d="M17.87 4.78h8.81V1.28H0v3.5h8.81v22.94h4.53V4.78h4.53zm13.56-3.5h-4.53v26.44h4.53V1.28zm13.56 0h-8.81v26.44h4.53V17.09h4.28c5.1 0 8.37-2.78 8.37-7.9s-3.27-7.91-8.37-7.91zm-.44 12.31h-3.84V4.78h3.84c3.06 0 4.28 1.64 4.28 4.41s-1.22 4.4-4.28 4.4zm27.06-12.31H58.8v26.44h12.81v-3.5H63.33V16.1h6.94v-3.5h-6.94V4.78h8.28v-3.5zm23.53 0h-4.96l-5.37 10.81L79.44 1.28h-4.97v26.44h4.53V9.87l3.84 7.72h3.5l3.84-7.72v17.85h4.53V1.28h-.17zm18.13 0h-4.53v26.44h4.53V1.28zm13.56 0h-8.81v26.44h4.53V17.09h4.28c5.1 0 8.37-2.78 8.37-7.9s-3.27-7.91-8.37-7.91zm-.44 12.31h-3.84V4.78h3.84c3.06 0 4.28 1.64 4.28 4.41s-1.22 4.4-4.28 4.4zm28.37-.87c2.84-1.22 4.28-3.5 4.28-6.56 0-4.68-3.27-7.47-8.37-7.47h-9.25v26.44h9.69c5.53 0 8.81-2.78 8.81-7.91 0-3.06-1.66-5.5-5.16-6.5zM152.5 4.78h4.28c2.62 0 3.84 1.22 3.84 3.97s-1.22 3.97-3.84 3.97h-4.28V4.78zm4.72 19.94h-4.72v-8.81h4.72c3.06 0 4.72 1.64 4.72 4.4 0 2.77-1.66 4.41-4.72 4.41z"/></svg>`;
 
-    async function fetchTMDBDetails(title, year) {
+    async function fetchTMDBDetails(rawTitle, year) {
+      // Decode HTML entities (&#39; &amp; etc.) before searching
+      const txt = document.createElement('textarea');
+      txt.innerHTML = rawTitle;
+      const title = txt.value;
+
       const cacheKey = title + '-' + (year || '');
       if (tmdbCache[cacheKey]) return tmdbCache[cacheKey];
       try {
-        // Step 1: Search for the movie
+        // Step 1: Search for the movie (try with year first, fallback without)
         let searchUrl = TMDB_BASE + '/search/movie?api_key=' + TMDB_KEY + '&query=' + encodeURIComponent(title);
         if (year) searchUrl += '&year=' + year;
-        const searchRes = await fetch(searchUrl);
+        let searchRes = await fetch(searchUrl);
         if (!searchRes.ok) return null;
-        const searchData = await searchRes.json();
+        let searchData = await searchRes.json();
+
+        // If year-scoped search fails, retry without year
+        if ((!searchData.results || searchData.results.length === 0) && year) {
+          const fallbackUrl = TMDB_BASE + '/search/movie?api_key=' + TMDB_KEY + '&query=' + encodeURIComponent(title);
+          searchRes = await fetch(fallbackUrl);
+          if (!searchRes.ok) return null;
+          searchData = await searchRes.json();
+        }
+
         if (!searchData.results || searchData.results.length === 0) return null;
         const movieId = searchData.results[0].id;
 
