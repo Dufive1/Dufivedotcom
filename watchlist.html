@@ -23,7 +23,7 @@
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Instrument+Sans:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Instrument+Sans:wght@400;500;600;700&family=Lora:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,600&display=swap" rel="stylesheet">
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
@@ -79,18 +79,22 @@
       display: flex; align-items: center; gap: 12px;
     }
     .brand-monogram {
-      width: 72px; height: 72px; flex-shrink: 0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      width: 80px; height: 80px; flex-shrink: 0;
+      border: 4px solid currentColor;
+      border-radius: 50%;
+      position: relative;
+      overflow: hidden;
     }
-    .brand-monogram img {
-      width: 100%; height: 100%;
-      object-fit: contain;
+    .brand-monogram .d, .brand-monogram .five {
+      position: absolute;
+      font-family: 'Lora', serif;
+      font-weight: 700;
+      font-size: 3.4rem;
+      line-height: 1;
+      color: currentColor;
     }
-    [data-theme="dark"] .brand-monogram img {
-      filter: invert(0.88) contrast(1.1);
-    }
+    .brand-monogram .d { top: 2px; left: 6px; }
+    .brand-monogram .five { top: 16px; left: 40px; }
     .nav-controls { display: flex; gap: 16px; align-items: center; }
     .hamburger {
       display: none; background: none; border: 1px solid var(--border);
@@ -464,7 +468,10 @@
         padding: 16px 0; margin-bottom: 32px; position: relative;
       }
       .brand { font-size: 0.5rem; }
-      .brand-monogram { width: 56px; height: 56px; }
+      .brand-monogram { width: 56px; height: 56px; border-width: 3px; }
+      .brand-monogram .d, .brand-monogram .five { font-size: 2.4rem; }
+      .brand-monogram .d { top: 2px; left: 4px; }
+      .brand-monogram .five { top: 12px; left: 28px; }
       .hamburger { display: block; }
       .nav-controls {
         display: none; position: absolute; top: 100%; left: 0; right: 0;
@@ -492,7 +499,7 @@
 
 <div class="container">
   <nav>
-    <a href="/" class="brand"><span class="brand-monogram"><img src="assets/d5-monogram.svg" alt="D5"></span>dufive</a>
+    <a href="/" class="brand"><span class="brand-monogram"><span class="d">D</span><span class="five">5</span></span>dufive</a>
     <button class="hamburger" id="hamburger" aria-label="Menu">&#9776;</button>
     <div class="nav-controls" id="nav-controls">
       <a href="/" class="nav-link">The Ledger</a>

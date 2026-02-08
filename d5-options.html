@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>D5 Monogram — Pick Your Favorite</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Lora:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'IBM Plex Mono', monospace;
+      transition: background 0.3s, color 0.3s;
+    }
+    body.light { background: #f5f0eb; color: #1a1a1a; }
+    body.dark { background: #0f0f0f; color: #e8e4df; }
+
+    .toggle {
+      position: fixed; top: 20px; right: 20px; z-index: 100;
+      padding: 8px 16px; border: 1px solid currentColor; background: none;
+      color: inherit; cursor: pointer; font-size: 0.7rem;
+      letter-spacing: 0.08em; text-transform: uppercase; font-family: inherit;
+    }
+
+    h1 {
+      text-align: center; padding: 40px 20px 10px;
+      font-family: 'Lora', serif; font-weight: 400;
+      font-size: 2rem; letter-spacing: -0.02em;
+    }
+    .subtitle {
+      text-align: center; font-size: 0.7rem; opacity: 0.5;
+      letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 14px;
+    }
+    .section-label {
+      text-align: center; font-size: 0.6rem; opacity: 0.35;
+      letter-spacing: 0.14em; text-transform: uppercase;
+      margin: 28px 0 18px; border-top: 1px solid currentColor;
+      padding-top: 18px; max-width: 900px; margin-left: auto; margin-right: auto;
+    }
+
+    .grid {
+      display: grid; grid-template-columns: repeat(5, 1fr);
+      gap: 48px 32px; max-width: 900px; margin: 0 auto; padding: 0 32px 20px;
+    }
+    @media (max-width: 700px) { .grid { grid-template-columns: repeat(2, 1fr); } }
+
+    .option {
+      display: flex; flex-direction: column; align-items: center; gap: 12px;
+    }
+    .option-num {
+      font-size: 0.6rem; font-weight: 700; letter-spacing: 0.12em;
+      text-transform: uppercase; opacity: 0.4;
+    }
+    .option-desc {
+      font-size: 0.55rem; text-align: center; opacity: 0.5;
+      line-height: 1.4; max-width: 140px;
+    }
+
+    /* ───── Shared monogram circle ───── */
+    .mono {
+      width: 80px; height: 80px;
+      position: relative;
+      border-radius: 50%;
+      overflow: hidden;
+      flex-shrink: 0;
+    }
+    .mono .d, .mono .five {
+      position: absolute;
+      font-family: 'Lora', serif;
+      font-weight: 700;
+      line-height: 1;
+    }
+
+    /* ═══════════════════════════════════════════════════
+       Base: Lora 700, 4px ring, ~3.6rem
+       D and 5 individually offset to create intertwined look
+       10 variations of overlap amount + position
+    ═══════════════════════════════════════════════════ */
+
+    /* ═══════════════════════════════════════════════════
+       D is LOCKED at: 3.4rem, top: 2px, left: 6px
+       Only the 5 moves right — from 28px to 42px
+    ═══════════════════════════════════════════════════ */
+
+    .m1 { border: 4px solid currentColor; }
+    .m1 .d  { font-size: 3.4rem; top: 2px; left: 6px; }
+    .m1 .five { font-size: 3.4rem; top: 16px; left: 28px; }
+
+    .m2 { border: 4px solid currentColor; }
+    .m2 .d  { font-size: 3.4rem; top: 2px; left: 6px; }
+    .m2 .five { font-size: 3.4rem; top: 16px; left: 30px; }
+
+    .m3 { border: 4px solid currentColor; }
+    .m3 .d  { font-size: 3.4rem; top: 2px; left: 6px; }
+    .m3 .five { font-size: 3.4rem; top: 16px; left: 32px; }
+
+    .m4 { border: 4px solid currentColor; }
+    .m4 .d  { font-size: 3.4rem; top: 2px; left: 6px; }
+    .m4 .five { font-size: 3.4rem; top: 16px; left: 34px; }
+
+    .m5 { border: 4px solid currentColor; }
+    .m5 .d  { font-size: 3.4rem; top: 2px; left: 6px; }
+    .m5 .five { font-size: 3.4rem; top: 16px; left: 36px; }
+
+    .m6 { border: 4px solid currentColor; }
+    .m6 .d  { font-size: 3.4rem; top: 2px; left: 6px; }
+    .m6 .five { font-size: 3.4rem; top: 16px; left: 38px; }
+
+    .m7 { border: 4px solid currentColor; }
+    .m7 .d  { font-size: 3.4rem; top: 2px; left: 6px; }
+    .m7 .five { font-size: 3.4rem; top: 16px; left: 40px; }
+
+    .m8 { border: 4px solid currentColor; }
+    .m8 .d  { font-size: 3.4rem; top: 2px; left: 6px; }
+    .m8 .five { font-size: 3.4rem; top: 16px; left: 42px; }
+
+    .m9 { border: 4px solid currentColor; }
+    .m9 .d  { font-size: 3.4rem; top: 2px; left: 6px; }
+    .m9 .five { font-size: 3.4rem; top: 16px; left: 44px; }
+
+    .m10 { border: 4px solid currentColor; }
+    .m10 .d  { font-size: 3.4rem; top: 2px; left: 6px; }
+    .m10 .five { font-size: 3.4rem; top: 16px; left: 46px; }
+
+  </style>
+</head>
+<body class="light">
+  <button class="toggle" onclick="document.body.classList.toggle('light');document.body.classList.toggle('dark');">Toggle Theme</button>
+
+  <h1>D5 Monogram Options</h1>
+  <div class="subtitle">Click "Toggle Theme" to preview dark mode &middot; Lora 700 &middot; D and 5 individually offset</div>
+
+  <div class="section-label">D locked &mdash; 5 sliding right (28px &rarr; 46px)</div>
+  <div class="grid">
+    <div class="option">
+      <div class="option-num">Option 1</div>
+      <div class="mono m1"><span class="d">D</span><span class="five">5</span></div>
+      <div class="option-desc">5 at left: 28px</div>
+    </div>
+    <div class="option">
+      <div class="option-num">Option 2</div>
+      <div class="mono m2"><span class="d">D</span><span class="five">5</span></div>
+      <div class="option-desc">5 at left: 30px</div>
+    </div>
+    <div class="option">
+      <div class="option-num">Option 3</div>
+      <div class="mono m3"><span class="d">D</span><span class="five">5</span></div>
+      <div class="option-desc">5 at left: 32px</div>
+    </div>
+    <div class="option">
+      <div class="option-num">Option 4</div>
+      <div class="mono m4"><span class="d">D</span><span class="five">5</span></div>
+      <div class="option-desc">5 at left: 34px</div>
+    </div>
+    <div class="option">
+      <div class="option-num">Option 5</div>
+      <div class="mono m5"><span class="d">D</span><span class="five">5</span></div>
+      <div class="option-desc">5 at left: 36px</div>
+    </div>
+    <div class="option">
+      <div class="option-num">Option 6</div>
+      <div class="mono m6"><span class="d">D</span><span class="five">5</span></div>
+      <div class="option-desc">5 at left: 38px</div>
+    </div>
+    <div class="option">
+      <div class="option-num">Option 7</div>
+      <div class="mono m7"><span class="d">D</span><span class="five">5</span></div>
+      <div class="option-desc">5 at left: 40px</div>
+    </div>
+    <div class="option">
+      <div class="option-num">Option 8</div>
+      <div class="mono m8"><span class="d">D</span><span class="five">5</span></div>
+      <div class="option-desc">5 at left: 42px</div>
+    </div>
+    <div class="option">
+      <div class="option-num">Option 9</div>
+      <div class="mono m9"><span class="d">D</span><span class="five">5</span></div>
+      <div class="option-desc">5 at left: 44px</div>
+    </div>
+    <div class="option">
+      <div class="option-num">Option 10</div>
+      <div class="mono m10"><span class="d">D</span><span class="five">5</span></div>
+      <div class="option-desc">5 at left: 46px</div>
+    </div>
+  </div>
+
+</body>
+</html>
