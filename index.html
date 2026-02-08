@@ -1077,16 +1077,19 @@
       right: -7px;
       width: 16px;
       height: 16px;
-      border-radius: 0;
-      font-size: 0.55rem;
+      border-radius: 50%;
+      font-family: 'Lora', serif;
+      font-size: 0.5rem;
       font-weight: 700;
       display: flex;
       align-items: center;
       justify-content: center;
-      color: #fff;
+      color: var(--text);
+      background: var(--bg);
+      border: 1.5px solid var(--text);
     }
-    .badge-who.peer-who { background: var(--peer); }
-    .badge-who.greg-who { background: var(--greg); }
+    .badge-who.peer-who { background: var(--bg); }
+    .badge-who.greg-who { background: var(--bg); }
     .poster-badge .kc-face {
       width: 32px;
       height: 32px;
@@ -1744,7 +1747,7 @@
       .poster-badge.left { left: 4px; }
       .poster-badge.right { right: 4px; }
       .poster-badge .kc-face { width: 28px; height: 28px; }
-      .poster-badge .badge-who { width: 14px; height: 14px; font-size: 0.5rem; }
+      .poster-badge .badge-who { width: 14px; height: 14px; font-size: 0.45rem; }
 
       .rating-value.editable { padding: 8px 12px; margin: -8px -12px; }
       .react-trigger { padding: 8px 0; }
