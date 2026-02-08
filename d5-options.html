@@ -72,55 +72,50 @@
     }
 
     /* ═══════════════════════════════════════════════════
-       Base: Lora 700, 4px ring, ~3.6rem
-       D and 5 individually offset to create intertwined look
-       10 variations of overlap amount + position
-    ═══════════════════════════════════════════════════ */
-
-    /* ═══════════════════════════════════════════════════
-       D is LOCKED at: 3.4rem, top: 2px, left: 6px
-       Only the 5 moves right — from 28px to 42px
+       Goal: D arc + 5 bar merge together
+       Base: Opt 10 (3.8rem, D top:0 left:1, 5 top:13 left:40)
+       Now: bigger (3.85→4.1rem), both shifted left, 5 closer to D
     ═══════════════════════════════════════════════════ */
 
     .m1 { border: 4px solid currentColor; }
-    .m1 .d  { font-size: 3.4rem; top: 2px; left: 6px; }
-    .m1 .five { font-size: 3.4rem; top: 16px; left: 28px; }
+    .m1 .d  { font-size: 3.85rem; top: 0px; left: -1px; }
+    .m1 .five { font-size: 3.85rem; top: 13px; left: 38px; }
 
     .m2 { border: 4px solid currentColor; }
-    .m2 .d  { font-size: 3.4rem; top: 2px; left: 6px; }
-    .m2 .five { font-size: 3.4rem; top: 16px; left: 30px; }
+    .m2 .d  { font-size: 3.9rem; top: 0px; left: -1px; }
+    .m2 .five { font-size: 3.9rem; top: 12px; left: 38px; }
 
     .m3 { border: 4px solid currentColor; }
-    .m3 .d  { font-size: 3.4rem; top: 2px; left: 6px; }
-    .m3 .five { font-size: 3.4rem; top: 16px; left: 32px; }
+    .m3 .d  { font-size: 3.9rem; top: -1px; left: -2px; }
+    .m3 .five { font-size: 3.9rem; top: 12px; left: 36px; }
 
     .m4 { border: 4px solid currentColor; }
-    .m4 .d  { font-size: 3.4rem; top: 2px; left: 6px; }
-    .m4 .five { font-size: 3.4rem; top: 16px; left: 34px; }
+    .m4 .d  { font-size: 3.95rem; top: -1px; left: -2px; }
+    .m4 .five { font-size: 3.95rem; top: 11px; left: 37px; }
 
     .m5 { border: 4px solid currentColor; }
-    .m5 .d  { font-size: 3.4rem; top: 2px; left: 6px; }
-    .m5 .five { font-size: 3.4rem; top: 16px; left: 36px; }
+    .m5 .d  { font-size: 3.95rem; top: 0px; left: -1px; }
+    .m5 .five { font-size: 3.95rem; top: 12px; left: 36px; }
 
     .m6 { border: 4px solid currentColor; }
-    .m6 .d  { font-size: 3.4rem; top: 2px; left: 6px; }
-    .m6 .five { font-size: 3.4rem; top: 16px; left: 38px; }
+    .m6 .d  { font-size: 4.0rem; top: -1px; left: -2px; }
+    .m6 .five { font-size: 4.0rem; top: 11px; left: 36px; }
 
     .m7 { border: 4px solid currentColor; }
-    .m7 .d  { font-size: 3.4rem; top: 2px; left: 6px; }
-    .m7 .five { font-size: 3.4rem; top: 16px; left: 40px; }
+    .m7 .d  { font-size: 4.0rem; top: 0px; left: -1px; }
+    .m7 .five { font-size: 4.0rem; top: 11px; left: 37px; }
 
     .m8 { border: 4px solid currentColor; }
-    .m8 .d  { font-size: 3.4rem; top: 2px; left: 6px; }
-    .m8 .five { font-size: 3.4rem; top: 16px; left: 42px; }
+    .m8 .d  { font-size: 4.0rem; top: -1px; left: -3px; }
+    .m8 .five { font-size: 4.0rem; top: 11px; left: 35px; }
 
     .m9 { border: 4px solid currentColor; }
-    .m9 .d  { font-size: 3.4rem; top: 2px; left: 6px; }
-    .m9 .five { font-size: 3.4rem; top: 16px; left: 44px; }
+    .m9 .d  { font-size: 4.05rem; top: -1px; left: -2px; }
+    .m9 .five { font-size: 4.05rem; top: 10px; left: 36px; }
 
     .m10 { border: 4px solid currentColor; }
-    .m10 .d  { font-size: 3.4rem; top: 2px; left: 6px; }
-    .m10 .five { font-size: 3.4rem; top: 16px; left: 46px; }
+    .m10 .d  { font-size: 4.1rem; top: -2px; left: -3px; }
+    .m10 .five { font-size: 4.1rem; top: 10px; left: 35px; }
 
   </style>
 </head>
@@ -130,57 +125,57 @@
   <h1>D5 Monogram Options</h1>
   <div class="subtitle">Click "Toggle Theme" to preview dark mode &middot; Lora 700 &middot; D and 5 individually offset</div>
 
-  <div class="section-label">D locked &mdash; 5 sliding right (28px &rarr; 46px)</div>
+  <div class="section-label">D arc + 5 bar merging &mdash; bigger (3.85 &rarr; 4.1rem), both pulled left &amp; closer</div>
   <div class="grid">
     <div class="option">
       <div class="option-num">Option 1</div>
       <div class="mono m1"><span class="d">D</span><span class="five">5</span></div>
-      <div class="option-desc">5 at left: 28px</div>
+      <div class="option-desc">3.85rem &middot; 5 at 38</div>
     </div>
     <div class="option">
       <div class="option-num">Option 2</div>
       <div class="mono m2"><span class="d">D</span><span class="five">5</span></div>
-      <div class="option-desc">5 at left: 30px</div>
+      <div class="option-desc">3.9rem &middot; 5 at 38</div>
     </div>
     <div class="option">
       <div class="option-num">Option 3</div>
       <div class="mono m3"><span class="d">D</span><span class="five">5</span></div>
-      <div class="option-desc">5 at left: 32px</div>
+      <div class="option-desc">3.9rem &middot; 5 at 36 &middot; tighter</div>
     </div>
     <div class="option">
       <div class="option-num">Option 4</div>
       <div class="mono m4"><span class="d">D</span><span class="five">5</span></div>
-      <div class="option-desc">5 at left: 34px</div>
+      <div class="option-desc">3.95rem &middot; 5 at 37</div>
     </div>
     <div class="option">
       <div class="option-num">Option 5</div>
       <div class="mono m5"><span class="d">D</span><span class="five">5</span></div>
-      <div class="option-desc">5 at left: 36px</div>
+      <div class="option-desc">3.95rem &middot; 5 at 36</div>
     </div>
     <div class="option">
       <div class="option-num">Option 6</div>
       <div class="mono m6"><span class="d">D</span><span class="five">5</span></div>
-      <div class="option-desc">5 at left: 38px</div>
+      <div class="option-desc">4.0rem &middot; 5 at 36 &middot; tight</div>
     </div>
     <div class="option">
       <div class="option-num">Option 7</div>
       <div class="mono m7"><span class="d">D</span><span class="five">5</span></div>
-      <div class="option-desc">5 at left: 40px</div>
+      <div class="option-desc">4.0rem &middot; 5 at 37</div>
     </div>
     <div class="option">
       <div class="option-num">Option 8</div>
       <div class="mono m8"><span class="d">D</span><span class="five">5</span></div>
-      <div class="option-desc">5 at left: 42px</div>
+      <div class="option-desc">4.0rem &middot; 5 at 35 &middot; tightest</div>
     </div>
     <div class="option">
       <div class="option-num">Option 9</div>
       <div class="mono m9"><span class="d">D</span><span class="five">5</span></div>
-      <div class="option-desc">5 at left: 44px</div>
+      <div class="option-desc">4.05rem &middot; 5 at 36</div>
     </div>
     <div class="option">
       <div class="option-num">Option 10</div>
       <div class="mono m10"><span class="d">D</span><span class="five">5</span></div>
-      <div class="option-desc">5 at left: 46px</div>
+      <div class="option-desc">4.1rem &middot; 5 at 35 &middot; max merge</div>
     </div>
   </div>
 
