@@ -138,7 +138,8 @@
       font-size: 0.65rem; font-weight: 600; color: var(--text-muted);
       text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 10px;
     }
-    .search-row { display: flex; gap: 8px; position: relative; }
+    .add-row { display: flex; justify-content: space-between; align-items: center; gap: 16px; }
+    .search-row { display: flex; gap: 8px; position: relative; max-width: 360px; flex: 0 1 360px; }
     .search-input {
       flex: 1; padding: 10px 0; font-size: 0.9rem; font-family: inherit;
       border: none; border-bottom: 2px solid var(--text); border-radius: 0;
@@ -220,13 +221,14 @@
     .filter-chip:hover { color: var(--text); }
     .filter-chip.active { color: var(--text); font-weight: 700; text-decoration: underline; text-underline-offset: 4px; text-decoration-thickness: 2px; }
 
-    /* Pick for Us button */
+    /* The Choice button */
     .pick-btn {
-      font-size: 0.7rem; font-weight: 600; padding: 6px 16px; border-radius: 0;
+      font-size: 0.7rem; font-weight: 600; padding: 8px 20px; border-radius: 0;
       border: 1px solid var(--text); background: none; color: var(--text);
       cursor: pointer; transition: var(--transition); user-select: none;
       display: inline-flex; align-items: center; gap: 6px;
-      margin-left: auto; letter-spacing: 0.06em; text-transform: uppercase;
+      letter-spacing: 0.1em; text-transform: uppercase; white-space: nowrap;
+      flex-shrink: 0;
     }
     .pick-btn:hover { background: var(--text); color: var(--bg); }
 
@@ -516,9 +518,12 @@
   <!-- Add film search — always visible, anyone can add -->
   <div class="add-section" id="add-section">
     <div class="add-label">Add to the Queue</div>
-    <div class="search-row">
-      <input type="text" class="search-input" id="film-search" placeholder="Search for a film..." autocomplete="off" />
-      <div class="search-results" id="search-results"></div>
+    <div class="add-row">
+      <div class="search-row">
+        <input type="text" class="search-input" id="film-search" placeholder="Search for a film..." autocomplete="off" />
+        <div class="search-results" id="search-results"></div>
+      </div>
+      <button class="pick-btn" id="pick-btn" title="Pick a random film from the queue">The Choice</button>
     </div>
   </div>
 
@@ -528,7 +533,6 @@
     <div class="filter-chip" data-filter="high">High Priority</div>
     <div class="filter-chip" data-filter="greg">For Greg</div>
     <div class="filter-chip" data-filter="peer">For Peer</div>
-    <button class="pick-btn" id="pick-btn" title="Select a random film from the queue">Select for Review</button>
   </div>
 
   <!-- Queue grid -->
@@ -1198,8 +1202,8 @@
         <div class="pick-title">${escHtml(item.title)}</div>
         ${subtitle ? `<div class="pick-subtitle">${subtitle}</div>` : ''}
         <div class="pick-actions">
-          <button class="pick-again" id="pick-again-btn">Select Another</button>
-          <button class="pick-close" id="pick-close-btn">Confirm Selection</button>
+          <button class="pick-again" id="pick-again-btn">Another Choice</button>
+          <button class="pick-close" id="pick-close-btn">Accept</button>
         </div>
       </div>
     `;
