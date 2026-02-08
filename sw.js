@@ -60,7 +60,7 @@ async function networkFirst(request) {
   } catch {
     const cached = await caches.match(request);
     return cached || new Response(
-      '<html><body style="background:#0a0a0a;color:#fff;font-family:Inter,sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;margin:0"><div style="text-align:center"><h1>DUFIVE</h1><p>You\'re offline. Check your connection.</p></div></body></html>',
+      '<html><body style="background:#0a0a0a;color:#fff;font-family:Instrument Sans,Helvetica Neue,sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;margin:0"><div style="text-align:center"><h1>DUFIVE</h1><p>You\'re offline. Check your connection.</p></div></body></html>',
       { headers: { 'Content-Type': 'text/html' } }
     );
   }
