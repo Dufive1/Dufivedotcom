@@ -75,14 +75,19 @@
       display: flex; align-items: center; gap: 12px;
     }
     .brand-monogram {
-      width: 52px; height: 52px; flex-shrink: 0;
+      width: 72px; height: 72px; flex-shrink: 0;
+      border: 2.5px solid var(--text);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Playfair Display', serif;
+      font-size: 1.8rem;
+      font-weight: 600;
+      color: var(--text);
+      letter-spacing: -0.04em;
+      line-height: 1;
     }
-    .brand-monogram svg { width: 100%; height: 100%; }
-    .brand-monogram svg circle,
-    .brand-monogram svg path { stroke: var(--text); }
-    .brand-monogram svg .d5-fill { fill: var(--text); }
-    .brand-monogram svg .d5-knock { stroke: var(--bg); }
-    .brand-monogram svg .d5-outline { stroke: var(--text); }
     .nav-controls { display: flex; gap: 16px; align-items: center; }
     .hamburger {
       display: none; background: none; border: 1px solid var(--border);
@@ -115,13 +120,14 @@
 
     /* ───── Stats Strip ───── */
     .stats-strip {
-      display: flex; justify-content: center; gap: 0; margin-bottom: 40px;
-      padding: 16px 0; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border);
+      display: flex; align-items: baseline; flex-wrap: wrap; gap: 0; margin-bottom: 40px;
+      padding: 0;
     }
-    .stat { text-align: center; padding: 0 24px; border-right: 1px solid var(--border); }
+    .stat { display: inline-flex; align-items: baseline; gap: 6px; padding: 0 16px; border-right: 1px solid var(--border); white-space: nowrap; }
+    .stat:first-child { padding-left: 0; }
     .stat:last-child { border-right: none; }
-    .stat-value { font-family: var(--mono); font-size: 1.25rem; font-weight: 600; color: var(--text); line-height: 1; }
-    .stat-label { font-size: 0.6rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.1em; margin-top: 4px; }
+    .stat-value { font-family: var(--mono); font-size: 0.85rem; font-weight: 600; color: var(--text); line-height: 1; }
+    .stat-label { font-size: 0.65rem; font-weight: 500; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.08em; }
 
     /* ───── Monthly Chart ───── */
     .monthly-chart-section {
@@ -337,7 +343,7 @@
         padding: 16px 0; margin-bottom: 32px; position: relative;
       }
       .brand { font-size: 0.5rem; }
-      .brand-monogram { width: 42px; height: 42px; }
+      .brand-monogram { width: 52px; height: 52px; font-size: 1.35rem; }
       .hamburger { display: block; }
       .nav-controls {
         display: none; position: absolute; top: 100%; left: 0; right: 0;
@@ -353,10 +359,12 @@
         padding: 10px 14px; gap: 8px; font-size: 0.8rem; border: none;
       }
 
-      .stats-strip { flex-wrap: wrap; gap: 0; justify-content: center; }
-      .stats-strip .stat { min-width: 60px; text-align: center; padding: 0 12px; }
-      .stat-value { font-size: 0.9rem; }
+      .stats-strip { flex-wrap: wrap; gap: 0; }
+      .stats-strip .stat { padding: 4px 10px; }
+      .stats-strip .stat:first-child { padding-left: 0; }
+      .stat-value { font-size: 0.75rem; }
       .stats-strip .stat:last-child .stat-value { font-size: 0.7rem; }
+      .stat-label { font-size: 0.55rem; }
 
       .debate-card { padding: 14px 0; gap: 12px; }
       .debate-poster { width: 52px; height: 78px; }
@@ -369,7 +377,7 @@
 <body>
   <div class="container">
     <nav>
-      <a href="/" class="brand"><span class="brand-monogram"><svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="50" cy="50" r="46" stroke-width="3" fill="none"/><path class="d5-fill" d="M28 26h18c14 0 24 8 24 24s-10 24-24 24H28V26z" stroke="none"/><path class="d5-knock" d="M50 30h16v12H50v12c10 0 18 5 18 14s-8 14-18 14H38" stroke-width="9" fill="none" stroke-linecap="square"/><path class="d5-outline" d="M50 30h16v12H50v12c10 0 18 5 18 14s-8 14-18 14H38" stroke-width="3.5" fill="none" stroke-linecap="square"/></svg></span>dufive</a>
+      <a href="/" class="brand"><span class="brand-monogram">D5</span>dufive</a>
       <button class="hamburger" id="hamburger" aria-label="Menu">&#9776;</button>
       <div class="nav-controls" id="nav-controls">
         <a href="/" class="nav-link">The Ledger</a>
