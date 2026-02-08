@@ -2410,6 +2410,7 @@
 
         function renderRow(badges, containerId, label, cssClass) {
           const container = document.getElementById(containerId);
+          if (!container) return;
           container.innerHTML = `<span class="badges-row-label ${cssClass}">${label}</span>`;
           if (badges.length === 0) {
             container.innerHTML += '<span class="no-badges">No badges yet</span>';
@@ -2426,7 +2427,8 @@
 
         renderRow(gregBadges, 'badges-greg', 'Greg', 'greg');
         renderRow(peerBadges, 'badges-peer', 'Peer', 'peer');
-        document.getElementById('badges-section').style.display = 'flex';
+        const badgesEl = document.getElementById('badges-section');
+        if (badgesEl) badgesEl.style.display = 'flex';
       } catch (e) {
         console.log('Badges fetch error:', e);
       }
