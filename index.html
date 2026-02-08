@@ -2083,6 +2083,7 @@
     <div class="filter-chips" id="filter-chips">
       <div class="filter-chip active" data-filter="all">All</div>
       <div class="filter-chip" data-filter="greg-rated">Greg Rated</div>
+      <div class="filter-chip" data-filter="peer-rated">Peer Rated</div>
       <div class="filter-chip" data-filter="both-rated">Both Rated</div>
       <div class="filter-chip" data-filter="peer-unrated">Peer Unrated</div>
       <div class="filter-chip" data-filter="greg-unrated">Greg Unrated</div>
@@ -2858,6 +2859,11 @@
         items = items.filter(e => {
           const gR = Number(e.gregRating);
           return Number.isFinite(gR) && gR > 0;
+        });
+      } else if (activeFilter === 'peer-rated') {
+        items = items.filter(e => {
+          const pR = Number(cachedPeerMap[getMovieKey(e)]);
+          return Number.isFinite(pR) && pR > 0;
         });
       } else if (activeFilter === 'both-rated') {
         items = items.filter(e => {
