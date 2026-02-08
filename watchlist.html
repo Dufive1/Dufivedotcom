@@ -9,13 +9,13 @@
   <meta property="og:type" content="website" />
   <meta property="og:url" content="https://dufive.com/watchlist.html" />
   <meta property="og:title" content="DUFIVE | Suggestions" />
-  <meta property="og:description" content="Suggest a film for Greg and Peer to watch and review next." />
+  <meta property="og:description" content="Nominate a film for Greg and Peer to watch and review next." />
   <meta property="og:image" content="https://dufive.com/og-image.png" />
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:title" content="DUFIVE | Suggestions" />
-  <meta name="twitter:description" content="Suggest a film for the next review." />
+  <meta name="twitter:description" content="Nominate a film for the next review." />
   <meta name="twitter:image" content="https://dufive.com/og-image.png" />
-  <meta name="description" content="Suggest movies for Greg and Peer to watch and review on DUFIVE." />
+  <meta name="description" content="Nominate films for Greg and Peer to watch and review on DUFIVE." />
   <meta name="theme-color" content="#0a0a0a" />
   <link rel="manifest" href="/manifest.json" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -80,19 +80,16 @@
     }
     .brand-monogram {
       width: 72px; height: 72px; flex-shrink: 0;
-      border: 2.5px solid var(--text);
-      border-radius: 50%;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-family: 'Playfair Display', serif;
-      font-size: 2.6rem;
-      font-weight: 700;
-      color: var(--text);
-      letter-spacing: -0.06em;
-      line-height: 0.85;
-      overflow: hidden;
-      padding-top: 2px;
+    }
+    .brand-monogram img {
+      width: 100%; height: 100%;
+      object-fit: contain;
+    }
+    [data-theme="dark"] .brand-monogram img {
+      filter: invert(0.88) contrast(1.1);
     }
     .nav-controls { display: flex; gap: 16px; align-items: center; }
     .hamburger {
@@ -244,16 +241,15 @@
       animation: pickReveal 0.6s cubic-bezier(.4,0,.2,1);
     }
     @keyframes pickReveal {
-      0% { opacity: 0; transform: scale(0.7) rotateY(90deg); }
-      50% { transform: scale(1.05) rotateY(0deg); }
-      100% { opacity: 1; transform: scale(1) rotateY(0deg); }
+      0% { opacity: 0; transform: translateY(12px); }
+      100% { opacity: 1; transform: translateY(0); }
     }
     .pick-poster { width: 180px; height: 270px; border-radius: 0; object-fit: cover; margin: 0 auto 16px; border: 1px solid var(--text); }
     .pick-poster-fallback {
       width: 180px; height: 270px; border-radius: 0; margin: 0 auto 16px;
-      background: linear-gradient(135deg, #1a1a2e, #16213e);
+      background: var(--bg-secondary); border: 1px solid var(--border);
       display: flex; align-items: center; justify-content: center;
-      font-size: 3rem; color: rgba(255,255,255,0.2);
+      font-size: 1.2rem; color: var(--text-muted); opacity: 0.5;
     }
     .pick-title { font-family: 'Playfair Display', serif; font-size: 1.3rem; font-weight: 400; color: var(--text); margin-bottom: 4px; }
     .pick-subtitle { font-size: 0.7rem; color: var(--text-secondary); margin-bottom: 16px; letter-spacing: 0.06em; }
@@ -307,17 +303,11 @@
       width: 100%; height: 100%; display: flex; flex-direction: column;
       align-items: center; justify-content: flex-end;
       padding: 14px 10px; text-align: center; position: relative; overflow: hidden;
-      background: linear-gradient(160deg, #1a1a2e 0%, #16213e 40%, #0f3460 100%);
-    }
-    .queue-poster-fallback::before {
-      content: ''; position: absolute; inset: 0;
-      background: radial-gradient(ellipse at 30% 20%, rgba(234,88,12,0.15) 0%, transparent 60%),
-                  radial-gradient(ellipse at 70% 80%, rgba(37,99,235,0.1) 0%, transparent 50%);
+      background: var(--bg-secondary); border: 1px solid var(--border);
     }
     .queue-poster-fallback span {
       font-family: 'Playfair Display', serif; font-size: 0.8rem; font-weight: 700;
-      color: rgba(255,255,255,0.85); line-height: 1.2; position: relative; z-index: 1;
-      text-shadow: 0 2px 8px rgba(0,0,0,0.5);
+      color: var(--text-muted); line-height: 1.2; position: relative; z-index: 1;
     }
 
     /* Remove button on poster hover */
@@ -412,9 +402,33 @@
     .toast.show { transform: translateX(-50%) translateY(0); }
 
     /* ───── Footer ───── */
-    .footer {
-      text-align: center; padding: 32px 0; margin-top: 40px;
-      border-top: 1px solid var(--border-light); font-size: 0.7rem; color: var(--text-muted);
+    .site-footer {
+      margin-top: 60px;
+      padding: 24px 0;
+      border-top: 1px solid var(--border-light);
+      text-align: center;
+    }
+    .footer-support {
+      display: inline-block;
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      text-decoration: none;
+      padding: 8px 20px;
+      border: 1px solid var(--border);
+      border-radius: 0;
+      transition: var(--transition);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+    .footer-support:hover {
+      color: var(--text);
+      border-color: var(--text);
+    }
+    .footer-copy {
+      font-size: 0.65rem;
+      color: var(--text-muted);
+      margin-top: 12px;
+      opacity: 0.6;
     }
 
     /* scroll-triggered animation handled by IntersectionObserver */
@@ -450,7 +464,7 @@
         padding: 16px 0; margin-bottom: 32px; position: relative;
       }
       .brand { font-size: 0.5rem; }
-      .brand-monogram { width: 56px; height: 56px; font-size: 2rem; }
+      .brand-monogram { width: 56px; height: 56px; }
       .hamburger { display: block; }
       .nav-controls {
         display: none; position: absolute; top: 100%; left: 0; right: 0;
@@ -478,10 +492,10 @@
 
 <div class="container">
   <nav>
-    <a href="/" class="brand"><span class="brand-monogram">D5</span>dufive</a>
+    <a href="/" class="brand"><span class="brand-monogram"><img src="assets/d5-monogram.svg" alt="D5"></span>dufive</a>
     <button class="hamburger" id="hamburger" aria-label="Menu">&#9776;</button>
     <div class="nav-controls" id="nav-controls">
-      <a href="/" class="nav-link">Ledger</a>
+      <a href="/" class="nav-link">The Ledger</a>
       <a href="disagreements.html" class="nav-link">Debates</a>
       <a href="watchlist.html" class="nav-link active">Suggestions</a>
       <button id="theme-toggle" class="theme-toggle" title="Toggle dark mode">
@@ -492,13 +506,13 @@
 
   <header>
     <h1 class="page-title">Suggestions.</h1>
-    <p class="tagline">Suggest a film. Anyone can add one.</p>
+    <p class="tagline">Nominate a Film.</p>
     <div class="queue-count" id="queue-count"></div>
   </header>
 
   <!-- Add film search — always visible, anyone can suggest -->
   <div class="add-section" id="add-section">
-    <div class="add-label">Suggest a film</div>
+    <div class="add-label">Nominate a Film</div>
     <div class="search-row">
       <input type="text" class="search-input" id="film-search" placeholder="Search for a film..." autocomplete="off" />
       <div class="search-results" id="search-results"></div>
@@ -511,7 +525,7 @@
     <div class="filter-chip" data-filter="high">High Priority</div>
     <div class="filter-chip" data-filter="greg">For Greg</div>
     <div class="filter-chip" data-filter="peer">For Peer</div>
-    <button class="pick-btn" id="pick-btn" title="Pick a random film from the queue">&#127922; Pick for Us</button>
+    <button class="pick-btn" id="pick-btn" title="Select a random film from the queue">Select for Review</button>
   </div>
 
   <!-- Queue grid -->
@@ -526,9 +540,9 @@
     </div>
     <div class="queue-grid" id="queue-grid"></div>
     <div class="empty-state" id="empty-state" style="display:none">
-      <div class="empty-icon">&#127910;</div>
-      <div class="empty-title">No suggestions yet</div>
-      <div class="empty-text">Search for a film above and suggest it. Anyone can add one.</div>
+      <div class="empty-icon">—</div>
+      <div class="empty-title">No nominations.</div>
+      <div class="empty-text">Search for a film above to nominate it.</div>
     </div>
   </div>
 
@@ -538,9 +552,10 @@
     <div class="watched-list" id="watched-list"></div>
   </div>
 
-  <div class="footer">
-    DUFIVE &mdash; Consistently Inconsistent
-  </div>
+  <footer class="site-footer">
+    <a href="https://venmo.com/Greg-Dufore" target="_blank" rel="noopener" class="footer-support">Support the Ledger</a>
+    <div class="footer-copy">DUFIVE &mdash; Consistently Inconsistent</div>
+  </footer>
 </div>
 
 <div class="toast" id="toast"></div>
@@ -663,7 +678,7 @@
 
     // Count
     countEl.textContent = queueItems.length === 0
-      ? 'No suggestions yet'
+      ? 'No nominations'
       : filtered.length + ' of ' + queueItems.length + ' film' + (queueItems.length !== 1 ? 's' : '');
 
     // Update active chip
@@ -937,7 +952,7 @@
       // Visitors: single "+ Suggest" button (no assignment)
       const btn = document.createElement('button');
       btn.className = 'search-result-add';
-      btn.textContent = '+ Suggest';
+      btn.textContent = '+ Nominate';
       btn.onclick = (e) => { e.stopPropagation(); addToQueue(film, null); };
       actions.appendChild(btn);
     }
@@ -1169,8 +1184,8 @@
     overlay.id = 'pick-overlay';
 
     const posterHtml = item.poster_url
-      ? `<img class="pick-poster" src="${item.poster_url}" alt="${escHtml(item.title)}" onerror="this.outerHTML='<div class=\\'pick-poster-fallback\\'>&#127916;</div>'">`
-      : `<div class="pick-poster-fallback">&#127916;</div>`;
+      ? `<img class="pick-poster" src="${item.poster_url}" alt="${escHtml(item.title)}" onerror="this.outerHTML='<div class=\\'pick-poster-fallback\\'>D5</div>'">`
+      : `<div class="pick-poster-fallback">D5</div>`;
 
     const subtitle = item.suggested_by ? `Suggested by ${item.suggested_by}` : '';
 
@@ -1180,8 +1195,8 @@
         <div class="pick-title">${escHtml(item.title)}</div>
         ${subtitle ? `<div class="pick-subtitle">${subtitle}</div>` : ''}
         <div class="pick-actions">
-          <button class="pick-again" id="pick-again-btn">&#127922; Spin Again</button>
-          <button class="pick-close" id="pick-close-btn">This One!</button>
+          <button class="pick-again" id="pick-again-btn">Select Another</button>
+          <button class="pick-close" id="pick-close-btn">Confirm Selection</button>
         </div>
       </div>
     `;

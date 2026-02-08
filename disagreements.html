@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>DUFIVE | Biggest Disagreements</title>
+  <title>DUFIVE | Biggest Debates</title>
 
   <!-- Open Graph / Social -->
   <meta property="og:type" content="website" />
@@ -76,19 +76,16 @@
     }
     .brand-monogram {
       width: 72px; height: 72px; flex-shrink: 0;
-      border: 2.5px solid var(--text);
-      border-radius: 50%;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-family: 'Playfair Display', serif;
-      font-size: 2.6rem;
-      font-weight: 700;
-      color: var(--text);
-      letter-spacing: -0.06em;
-      line-height: 0.85;
-      overflow: hidden;
-      padding-top: 2px;
+    }
+    .brand-monogram img {
+      width: 100%; height: 100%;
+      object-fit: contain;
+    }
+    [data-theme="dark"] .brand-monogram img {
+      filter: invert(0.88) contrast(1.1);
     }
     .nav-controls { display: flex; gap: 16px; align-items: center; }
     .hamburger {
@@ -210,8 +207,8 @@
     }
     .debate-poster-placeholder {
       width: 100%; height: 100%; display: flex; align-items: center; justify-content: center;
-      font-size: 1.4rem; opacity: 0.5;
-      background: linear-gradient(160deg, #1a1a2e 0%, #16213e 40%, #0f3460 100%);
+      font-size: 1rem; opacity: 0.5; color: var(--text-muted);
+      background: var(--bg-secondary); border: 1px solid var(--border);
       position: relative;
     }
 
@@ -345,7 +342,7 @@
         padding: 16px 0; margin-bottom: 32px; position: relative;
       }
       .brand { font-size: 0.5rem; }
-      .brand-monogram { width: 56px; height: 56px; font-size: 2rem; }
+      .brand-monogram { width: 56px; height: 56px; }
       .hamburger { display: block; }
       .nav-controls {
         display: none; position: absolute; top: 100%; left: 0; right: 0;
@@ -379,7 +376,7 @@
 <body>
   <div class="container">
     <nav>
-      <a href="/" class="brand"><span class="brand-monogram">D5</span>dufive</a>
+      <a href="/" class="brand"><span class="brand-monogram"><img src="assets/d5-monogram.svg" alt="D5"></span>dufive</a>
       <button class="hamburger" id="hamburger" aria-label="Menu">&#9776;</button>
       <div class="nav-controls" id="nav-controls">
         <a href="/" class="nav-link">The Ledger</a>
@@ -707,9 +704,9 @@
       if (items.length === 0) {
         el.innerHTML = `
           <div class="empty-state">
-            <div class="empty-icon">\u{1F91D}</div>
+            <div class="empty-icon">—</div>
             <div class="empty-text">No disagreements found</div>
-            <div class="empty-sub">Greg and Peer agree on everything! (for this filter)</div>
+            <div class="empty-sub">Greg and Peer agree on everything for this filter.</div>
           </div>`;
         return;
       }
@@ -721,8 +718,8 @@
         const pctFill = Math.round((d.diff / maxDiff) * 100);
 
         const posterHtml = d.posterUrl
-          ? `<img src="${d.posterUrl}" alt="${decodeHtml(d.title)}" loading="lazy" onerror="this.style.display='none';this.parentElement.insertAdjacentHTML('beforeend','<div class=\\'debate-poster-placeholder\\'>&#127916;</div>')">`
-          : `<div class="debate-poster-placeholder">\u{1F3AC}</div>`;
+          ? `<img src="${d.posterUrl}" alt="${decodeHtml(d.title)}" loading="lazy" onerror="this.style.display='none';this.parentElement.insertAdjacentHTML('beforeend','<div class=\\'debate-poster-placeholder\\'>D5</div>')">`
+          : `<div class="debate-poster-placeholder">D5</div>`;
 
         const notesId = `notes-${d.movieKey}`;
         const hasMore = d.notes.length > 3;
@@ -738,7 +735,7 @@
                </div>
                <div class="debate-note-toggle" onclick="const el=document.getElementById('${notesId}');const show=el.style.display==='none';el.style.display=show?'block':'none';this.textContent=show?'Show less':'+ ${d.notes.length - 3} more...'">+ ${d.notes.length - 3} more...</div>` : ''}
              </div>`
-          : `<div class="debate-no-notes">No reviews yet — be the first to weigh in!</div>`;
+          : `<div class="debate-no-notes">No ratings recorded.</div>`;
 
         return `
           <div class="debate-card">

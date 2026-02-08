@@ -150,12 +150,12 @@
       transform: translateX(-50%) translateY(-60px);
       background: var(--bg);
       border: 1px solid var(--border);
-      border-radius: 0 0 12px 12px;
+      border-radius: 0;
       padding: 10px 20px;
       font-size: 0.8125rem;
       font-weight: 600;
       color: var(--text-secondary);
-      box-shadow: var(--shadow-lg);
+      box-shadow: none;
       z-index: 9000;
       transition: transform 0.2s ease;
       display: flex;
@@ -226,19 +226,16 @@
     }
     .brand-monogram {
       width: 72px; height: 72px; flex-shrink: 0;
-      border: 2.5px solid var(--text);
-      border-radius: 50%;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-family: 'Playfair Display', serif;
-      font-size: 2.6rem;
-      font-weight: 700;
-      color: var(--text);
-      letter-spacing: -0.06em;
-      line-height: 0.85;
-      overflow: hidden;
-      padding-top: 2px;
+    }
+    .brand-monogram img {
+      width: 100%; height: 100%;
+      object-fit: contain;
+    }
+    [data-theme="dark"] .brand-monogram img {
+      filter: invert(0.88) contrast(1.1);
     }
 
     .nav-controls { display: flex; gap: 16px; align-items: center; }
@@ -351,7 +348,7 @@
       background: var(--bg);
       border: 1px solid var(--border);
       border-radius: 0;
-      box-shadow: var(--shadow-lg);
+      box-shadow: none;
       z-index: 1000;
       display: none;
       animation: dropIn 0.2s ease;
@@ -429,7 +426,7 @@
     .login-trigger:hover { color: var(--accent); background: var(--border-light); }
     .login-trigger.greg-active { color: var(--greg); background: var(--greg-bg); }
     .login-trigger.peer-active { color: var(--peer); background: var(--peer-bg); }
-    .login-trigger.admin-active { color: #a855f7; background: rgba(168, 85, 247, 0.08); }
+    .login-trigger.admin-active { color: var(--text-secondary); background: var(--border-light); }
 
     .logout-btn {
       cursor: pointer;
@@ -519,6 +516,49 @@
       color: var(--text-muted);
       letter-spacing: 0.08em;
       text-transform: uppercase;
+    }
+
+    /* ───── Pull Quote — Most Debated ───── */
+    .pull-quote {
+      margin-bottom: 40px;
+      padding: 24px 0;
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      text-align: center;
+      display: none;
+      cursor: pointer;
+    }
+    .pull-quote.visible { display: block; }
+    .pull-quote-label {
+      font-family: var(--mono);
+      font-size: 0.6rem;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 10px;
+    }
+    .pull-quote-title {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(1.5rem, 4vw, 2.5rem);
+      font-weight: 400;
+      font-style: italic;
+      line-height: 1.15;
+      color: var(--text);
+      letter-spacing: -0.02em;
+    }
+    .pull-quote-gap {
+      font-family: var(--mono);
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      margin-top: 10px;
+      letter-spacing: 0.04em;
+    }
+    .pull-quote:hover .pull-quote-title {
+      text-decoration: underline;
+      text-underline-offset: 6px;
+      text-decoration-thickness: 1px;
     }
 
     /* ───── Toolbar ───── */
@@ -689,7 +729,7 @@
       transition: none;
     }
 
-    /* Poster Fallback — cinematic gradient card */
+    /* Poster Fallback — editorial flat card */
     .poster-fallback {
       width: 100%;
       height: 100%;
@@ -699,33 +739,27 @@
       justify-content: flex-end;
       padding: 20px 16px;
       text-align: center;
-      background: linear-gradient(160deg, #1a1a2e 0%, #16213e 40%, #0f3460 100%);
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
       position: relative;
       overflow: hidden;
-    }
-    .poster-fallback::before {
-      content: '';
-      position: absolute;
-      inset: 0;
-      background: radial-gradient(ellipse at 30% 20%, rgba(234,88,12,0.15) 0%, transparent 60%),
-                  radial-gradient(ellipse at 70% 80%, rgba(37,99,235,0.1) 0%, transparent 50%);
     }
     .poster-fallback-text {
       font-family: 'Playfair Display', serif;
       font-size: 1.15rem;
       font-weight: 700;
-      color: rgba(255,255,255,0.85);
+      color: var(--text-muted);
       line-height: 1.3;
       position: relative;
       z-index: 1;
-      text-shadow: 0 2px 8px rgba(0,0,0,0.5);
     }
     .poster-fallback-icon {
-      font-size: 2rem;
+      font-size: 1.2rem;
       margin-bottom: 10px;
-      opacity: 0.5;
+      opacity: 0.4;
       position: relative;
       z-index: 1;
+      color: var(--text-muted);
     }
 
     .entry-content { padding: 12px 0 0; }
@@ -802,7 +836,7 @@
       margin: -6px -10px;
       border-radius: 0;
     }
-    .rating-value.editable:hover { background: rgba(37, 99, 235, 0.06); }
+    .rating-value.editable:hover { background: var(--border-light); }
 
     .rating-value.blind-rating {
       color: var(--text-muted); font-style: italic; font-size: 0.85rem;
@@ -1015,7 +1049,8 @@
     .star-picker-modal {
       background: var(--bg);
       border-radius: 0;
-      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+      border: 1px solid var(--border);
+      box-shadow: none;
       max-width: 380px;
       width: 90%;
       padding: 28px;
@@ -1059,8 +1094,8 @@
       align-items: center;
       justify-content: center;
     }
-    .star-btn:hover { background: var(--border-light); transform: scale(1.15); }
-    .star-btn.active { color: #f59e0b; }
+    .star-btn:hover { background: var(--border-light); }
+    .star-btn.active { color: var(--text); }
 
     .star-picker-display {
       font-size: 1.25rem;
@@ -1086,8 +1121,8 @@
 
     .star-picker-cancel { background: var(--border-light); color: var(--text-secondary); }
     .star-picker-cancel:hover { background: var(--border); color: var(--text); }
-    .star-picker-confirm { background: var(--accent); color: white; box-shadow: var(--shadow); }
-    .star-picker-confirm:hover { background: var(--accent-hover); box-shadow: var(--shadow-lg); }
+    .star-picker-confirm { background: var(--accent); color: white; box-shadow: none; }
+    .star-picker-confirm:hover { background: var(--accent-hover); box-shadow: none; }
     .star-picker-confirm:disabled { opacity: 0.4; cursor: not-allowed; }
 
     .star-picker-remove {
@@ -1104,7 +1139,7 @@
       font-family: inherit;
       transition: var(--transition);
     }
-    .star-picker-remove:hover { color: #dc2626; background: rgba(220, 38, 38, 0.06); }
+    .star-picker-remove:hover { color: var(--text); background: var(--border-light); }
 
     /* ───── Discussion ───── */
     .discussion-trigger {
@@ -1156,10 +1191,10 @@
       border-radius: 0;
       margin-bottom: 12px;
       border: 1px solid var(--border);
-      box-shadow: var(--shadow);
+      box-shadow: none;
       transition: var(--transition);
     }
-    .note:hover { box-shadow: var(--shadow-lg); }
+    .note:hover { border-color: var(--text-muted); }
     .note:last-of-type { margin-bottom: 0; }
 
     .note-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
@@ -1355,7 +1390,7 @@
     .reviewer-option.selected { border-color: var(--accent); background: var(--peer-bg); color: var(--accent); }
     .reviewer-option.greg.selected { border-color: var(--greg); background: var(--greg-bg); color: var(--greg); }
     .reviewer-option.admin { font-size: 0.75rem; }
-    .reviewer-option.admin.selected { border-color: #a855f7; background: rgba(168, 85, 247, 0.08); color: #a855f7; }
+    .reviewer-option.admin.selected { border-color: var(--text-muted); background: var(--border-light); color: var(--text); }
 
     .password-field { margin-bottom: 24px; }
     .password-label { font-size: 0.8125rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 8px; display: block; }
@@ -1487,7 +1522,7 @@
     #error-log {
       position: fixed; bottom: 16px; left: 16px; font-size: 0.75rem; color: #dc2626;
       background: var(--bg); padding: 12px 16px; z-index: 1000; max-width: 400px;
-      border-radius: 0; box-shadow: var(--shadow-lg); border: 1px solid #fee2e2; display: none;
+      border-radius: 0; box-shadow: none; border: 1px solid var(--border); display: none;
     }
 
     /* ───── Responsive: Tablet ───── */
@@ -1559,7 +1594,7 @@
       }
 
       .brand { font-size: 0.5rem; }
-      .brand-monogram { width: 56px; height: 56px; font-size: 2rem; }
+      .brand-monogram { width: 56px; height: 56px; }
 
       header { margin-bottom: 32px; }
       .page-title { font-size: 2.5rem; }
@@ -1700,9 +1735,9 @@
       display: inline-block; padding: 3px 10px; border-radius: 0;
       font-size: 0.7rem; font-weight: 700; margin-top: 12px; text-align: center;
     }
-    .fm-gap-badge.agree { background: rgba(34,197,94,0.15); color: #22c55e; }
-    .fm-gap-badge.disagree { background: rgba(239,68,68,0.15); color: #ef4444; }
-    .fm-gap-badge.neutral { background: rgba(150,150,150,0.12); color: var(--text-secondary); }
+    .fm-gap-badge.agree { background: var(--border-light); color: var(--text-secondary); }
+    .fm-gap-badge.disagree { background: var(--border-light); color: var(--text); }
+    .fm-gap-badge.neutral { background: var(--border-light); color: var(--text-secondary); }
 
     .fm-reactions {
       display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 20px;
@@ -1761,15 +1796,74 @@
     .fm-action-btn:hover { background: var(--border-light); border-color: var(--text-secondary); }
     .fm-action-btn.primary { background: var(--peer); color: #fff; border-color: var(--peer); }
     .fm-action-btn.primary:hover { opacity: 0.9; }
+
+    /* ═══ Print Stylesheet — Catalog Page ═══ */
+    @media print {
+      * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+
+      body { background: #fff !important; color: #1a1a1a !important; font-size: 10pt; }
+
+      /* Hide interactive elements */
+      nav, .hamburger, .nav-controls, .toolbar, .filter-chips, .scroll-top-btn,
+      .toast-container, .pull-indicator, .sync-btn, .notif-wrapper, .auth-controls,
+      .badges-section, .discussion-section, .react-trigger, .poster-badge,
+      .film-modal-overlay, .star-picker-overlay, .reveal-overlay, .reviewer-picker-overlay,
+      .shortcuts-overlay, .reaction-picker-modal, #error-log, .new-badge,
+      .search-wrapper, .sort-select, .search-clear { display: none !important; }
+
+      .container { max-width: 100%; padding: 0; }
+
+      /* Header — editorial masthead */
+      header { margin-bottom: 24pt; text-align: center; }
+      .page-title { font-size: 28pt; margin-bottom: 6pt; }
+      .tagline { font-size: 9pt; }
+
+      /* Stats strip — single line */
+      .stats-bar { justify-content: center; margin-bottom: 16pt; opacity: 1 !important; transform: none !important; }
+      .stat-card { border-right-color: #ccc; }
+      .stat-value { font-size: 8pt; }
+      .stat-label { font-size: 6pt; }
+
+      /* Pull quote */
+      .pull-quote { margin-bottom: 16pt; page-break-after: avoid; }
+      .pull-quote-title { font-size: 18pt; }
+
+      /* Grid — compact catalog layout */
+      .grid {
+        grid-template-columns: repeat(4, 1fr) !important;
+        gap: 12pt !important;
+      }
+
+      .entry { page-break-inside: avoid; border: none !important; }
+      .poster-frame { border: 0.5pt solid #ccc !important; }
+      .poster-frame img { max-height: 160pt; }
+
+      .entry-content { padding: 4pt 0 0; }
+      .entry-title { font-size: 8pt; margin-bottom: 2pt; }
+      .entry-meta { font-size: 6pt; }
+      .rating-value { font-size: 7pt; }
+
+      /* Footer — colophon */
+      .site-footer { margin-top: 24pt; border-top: 0.5pt solid #ccc; }
+      .footer-support { display: none !important; }
+      .footer-copy { font-size: 7pt; opacity: 1; }
+
+      /* Page setup */
+      @page {
+        margin: 0.75in;
+        size: letter;
+      }
+    }
   </style>
 </head>
 
 <body>
   <div class="container">
     <nav>
-      <a href="/" class="brand"><span class="brand-monogram">D5</span>dufive</a>
+      <a href="/" class="brand"><span class="brand-monogram"><img src="assets/d5-monogram.svg" alt="D5"></span>dufive</a>
       <button class="hamburger" id="hamburger" aria-label="Menu">&#9776;</button>
       <div class="nav-controls" id="nav-controls">
+        <a href="/" class="nav-link active">The Ledger</a>
         <a href="disagreements.html" class="nav-link">Debates</a>
         <a href="watchlist.html" class="nav-link">Suggestions</a>
         <button id="theme-toggle" class="theme-toggle" title="Toggle dark mode" aria-label="Toggle dark mode">
@@ -1780,7 +1874,7 @@
         </button>
         <div class="notif-wrapper" id="notif-wrapper">
           <div class="notif-bell" id="notif-bell" title="Notifications">
-            &#128276;
+            &#8226;
             <span class="notif-badge" id="notif-badge">0</span>
           </div>
           <div class="notif-dropdown" id="notif-dropdown">
@@ -1823,6 +1917,13 @@
       </div>
     </div>
 
+    <!-- Pull Quote — Most Debated -->
+    <div class="pull-quote" id="pull-quote">
+      <div class="pull-quote-label">Most Debated</div>
+      <div class="pull-quote-title" id="pull-quote-title">&mdash;</div>
+      <div class="pull-quote-gap" id="pull-quote-gap"></div>
+    </div>
+
     <!-- Achievement Badges -->
     <div class="badges-section" id="badges-section" style="display:none;">
       <div class="badges-row" id="badges-greg"></div>
@@ -1831,7 +1932,7 @@
 
     <div class="toolbar">
       <div class="search-wrapper">
-        <span class="search-icon">&#128270;</span>
+        <span class="search-icon">&#8981;</span>
         <input type="text" class="search-input" id="search-input" placeholder="Search films..." autocomplete="off" />
         <button class="search-clear" id="search-clear" aria-label="Clear search">&times;</button>
       </div>
@@ -2393,6 +2494,20 @@
       }
 
       document.getElementById('stats-bar').classList.add('visible');
+
+      // Populate pull quote
+      if (controversialKey && maxGap > 0) {
+        document.getElementById('pull-quote-title').textContent = controversialTitle;
+        document.getElementById('pull-quote-gap').textContent = maxGap + '✦ gap between Greg and Peer';
+        const pullQuote = document.getElementById('pull-quote');
+        pullQuote.classList.add('visible');
+        pullQuote.onclick = () => {
+          elSearch.value = controversialTitle;
+          elSearch.dispatchEvent(new Event('input'));
+          elSearch.focus();
+          window.scrollTo({ top: elGrid.offsetTop - 80, behavior: 'smooth' });
+        };
+      }
     }
 
     /* ═══════════════════════════════════════════
@@ -2653,7 +2768,7 @@
       if (gregItems.length === 0) {
         elGrid.innerHTML = `
           <div class="no-results">
-            <div class="no-results-icon">\u{1F3AC}</div>
+            <div class="no-results-icon">—</div>
             <div class="no-results-text">No films found</div>
             <div class="no-results-hint">Try adjusting your search or filters.</div>
           </div>`;
@@ -2727,14 +2842,14 @@
             this.style.display = 'none';
             const fallback = document.createElement('div');
             fallback.className = 'poster-fallback';
-            fallback.innerHTML = `<div><div class="poster-fallback-icon">\u{1F3AC}</div><div class="poster-fallback-text">${decodeHtml(title)}</div></div>`;
+            fallback.innerHTML = `<div><div class="poster-fallback-icon">D5</div><div class="poster-fallback-text">${decodeHtml(title)}</div></div>`;
             posterFrame.appendChild(fallback);
           };
           posterFrame.appendChild(img);
         } else {
           const fallback = document.createElement('div');
           fallback.className = 'poster-fallback';
-          fallback.innerHTML = `<div><div class="poster-fallback-icon">\u{1F3AC}</div><div class="poster-fallback-text">${decodeHtml(title)}</div></div>`;
+          fallback.innerHTML = `<div><div class="poster-fallback-icon">D5</div><div class="poster-fallback-text">${decodeHtml(title)}</div></div>`;
           posterFrame.appendChild(fallback);
         }
 
@@ -3242,11 +3357,11 @@
       // Gap badge
       if (gregR > 0 && peerR > 0) {
         const gapY = ratingsY + 110;
-        let gapColor = '#94a3b8';
+        let gapColor = '#8c8580';
         let gapText = `${gap}✦ gap`;
-        if (gap === 0) { gapColor = '#22c55e'; gapText = 'Perfect Agreement!'; }
-        else if (gap <= 1) { gapColor = '#22c55e'; }
-        else if (gap >= 3) { gapColor = '#ef4444'; gapText = `${gap}✦ gap — Big Debate!`; }
+        if (gap === 0) { gapColor = '#6b6660'; gapText = 'Perfect Agreement'; }
+        else if (gap <= 1) { gapColor = '#6b6660'; }
+        else if (gap >= 3) { gapColor = '#1a1a1a'; gapText = `${gap}✦ gap — Big Debate`; }
 
         ctx.font = 'bold 24px "Instrument Sans", sans-serif';
         ctx.fillStyle = gapColor;
@@ -3300,7 +3415,7 @@
         overlay.innerHTML = `
           <div class="star-picker-modal">
             <div class="star-picker-title">${decodeHtml(movieTitle)}</div>
-            <div class="star-picker-subtitle">Tap a star to set your rating</div>
+            <div class="star-picker-subtitle">Select your rating</div>
             <div class="star-picker-stars" id="star-buttons"></div>
             <div class="star-picker-display" id="star-display">${buildStarDisplay(selectedValue)}</div>
             <div class="star-picker-actions">
@@ -3503,10 +3618,10 @@
     function showRatingReveal(movieTitle, peerRating, gregRating, movieKey) {
       const gap = Math.abs(gregRating - peerRating);
       let gapColor, gapText;
-      if (gap === 0) { gapColor = '#22c55e'; gapText = 'Perfect Agreement!'; }
-      else if (gap <= 1) { gapColor = '#22c55e'; gapText = `Only ${gap}✦ apart — You agree!`; }
-      else if (gap >= 3) { gapColor = '#ef4444'; gapText = `${gap}✦ gap — Big Debate!`; }
-      else { gapColor = '#eab308'; gapText = `${gap}✦ gap`; }
+      if (gap === 0) { gapColor = 'var(--text-secondary)'; gapText = 'Perfect Agreement'; }
+      else if (gap <= 1) { gapColor = 'var(--text-secondary)'; gapText = `Only ${gap}✦ apart`; }
+      else if (gap >= 3) { gapColor = 'var(--text)'; gapText = `${gap}✦ gap — Big Debate`; }
+      else { gapColor = 'var(--text-muted)'; gapText = `${gap}✦ gap`; }
 
       const overlay = document.createElement('div');
       overlay.className = 'reveal-overlay';
