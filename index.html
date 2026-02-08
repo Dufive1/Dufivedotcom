@@ -2211,6 +2211,7 @@
         const cast = (d.credits?.cast || []).slice(0, 4).map(c => c.name);
         const tagline = d.tagline || '';
 
+        const posterPath = d.poster_path || searchData.results[0].poster_path || '';
         const result = {
           title: d.title || title,
           year: d.release_date ? d.release_date.substring(0, 4) : (year || ''),
@@ -2220,7 +2221,8 @@
           cast: cast,
           tagline: tagline,
           overview: d.overview || '',
-          tmdb_id: movieId
+          tmdb_id: movieId,
+          posterUrl: posterPath ? 'https://image.tmdb.org/t/p/w500' + posterPath : ''
         };
         tmdbCache[cacheKey] = result;
         return result;
@@ -2228,6 +2230,30 @@
         console.warn('TMDB fetch failed:', e);
         return null;
       }
+    }
+
+    async function fetchTMDBPoster(rawTitle, year) {
+      const txt = document.createElement('textarea');
+      txt.innerHTML = rawTitle;
+      let title = txt.value;
+      const ym = title.match(/\s*\((\d{4})\)\s*$/);
+      if (ym) { if (!year) year = ym[1]; title = title.replace(/\s*\(\d{4}\)\s*$/, '').trim(); }
+      const ck = 'poster-' + title + '-' + (year || '');
+      if (tmdbCache[ck]) return tmdbCache[ck];
+      try {
+        let url = TMDB_BASE + '/search/movie?api_key=' + TMDB_KEY + '&query=' + encodeURIComponent(title);
+        if (year) url += '&year=' + year;
+        let r = await fetch(url); if (!r.ok) return null;
+        let d = await r.json();
+        if ((!d.results || !d.results.length) && year) {
+          r = await fetch(TMDB_BASE + '/search/movie?api_key=' + TMDB_KEY + '&query=' + encodeURIComponent(title));
+          if (!r.ok) return null; d = await r.json();
+        }
+        if (!d.results || !d.results.length || !d.results[0].poster_path) return null;
+        const posterUrl = 'https://image.tmdb.org/t/p/w500' + d.results[0].poster_path;
+        tmdbCache[ck] = posterUrl;
+        return posterUrl;
+      } catch (e) { return null; }
     }
 
     const supabaseClient = window.supabase.createClient(SB_URL, SB_KEY);
@@ -3033,18 +3059,39 @@
           img.loading = 'lazy';
           img.src = entry.posterUrl;
           img.onerror = function() {
+            // Stored URL broken — try TMDB as fallback
             this.style.display = 'none';
-            const fallback = document.createElement('div');
-            fallback.className = 'poster-fallback';
-            fallback.innerHTML = `<div><div class="poster-fallback-icon">D5</div><div class="poster-fallback-text">${decodeHtml(title)}</div></div>`;
-            posterFrame.appendChild(fallback);
+            fetchTMDBPoster(title, entry.year || movieKey.match(/-(\d{4})$/)?.[1] || '').then(tmdbUrl => {
+              if (tmdbUrl) {
+                const tmdbImg = document.createElement('img');
+                tmdbImg.alt = decodeHtml(title);
+                tmdbImg.src = tmdbUrl;
+                tmdbImg.style.cssText = 'width:100%;height:100%;object-fit:cover;';
+                posterFrame.appendChild(tmdbImg);
+              } else {
+                const fallback = document.createElement('div');
+                fallback.className = 'poster-fallback';
+                fallback.innerHTML = `<div><div class="poster-fallback-icon">D5</div><div class="poster-fallback-text">${decodeHtml(title)}</div></div>`;
+                posterFrame.appendChild(fallback);
+              }
+            });
           };
           posterFrame.appendChild(img);
         } else {
-          const fallback = document.createElement('div');
-          fallback.className = 'poster-fallback';
-          fallback.innerHTML = `<div><div class="poster-fallback-icon">D5</div><div class="poster-fallback-text">${decodeHtml(title)}</div></div>`;
-          posterFrame.appendChild(fallback);
+          // No stored poster — try TMDB
+          const placeholder = document.createElement('div');
+          placeholder.className = 'poster-fallback';
+          placeholder.innerHTML = `<div><div class="poster-fallback-icon">D5</div><div class="poster-fallback-text">${decodeHtml(title)}</div></div>`;
+          posterFrame.appendChild(placeholder);
+          fetchTMDBPoster(title, entry.year || movieKey.match(/-(\d{4})$/)?.[1] || '').then(tmdbUrl => {
+            if (tmdbUrl) {
+              const img = document.createElement('img');
+              img.alt = decodeHtml(title);
+              img.src = tmdbUrl;
+              img.style.cssText = 'width:100%;height:100%;object-fit:cover;';
+              placeholder.replaceWith(img);
+            }
+          });
         }
 
         // Info overlay (populated on first click via TMDB)
