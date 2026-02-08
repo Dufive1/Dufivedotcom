@@ -5,6 +5,22 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>DUFIVE | Suggestions</title>
 
+  <!-- Open Graph / Social -->
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://dufive.com/watchlist.html" />
+  <meta property="og:title" content="DUFIVE | Suggestions" />
+  <meta property="og:description" content="Suggest a film for Greg and Peer to watch and review next." />
+  <meta property="og:image" content="https://dufive.com/og-image.png" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="DUFIVE | Suggestions" />
+  <meta name="twitter:description" content="Suggest a film for the next review." />
+  <meta name="twitter:image" content="https://dufive.com/og-image.png" />
+  <meta name="description" content="Suggest movies for Greg and Peer to watch and review on DUFIVE." />
+  <meta name="theme-color" content="#0a0a0a" />
+  <link rel="manifest" href="/manifest.json" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:ital,wght@0,600;0,700;1,600&display=swap" rel="stylesheet">
 
@@ -25,6 +41,7 @@
       --success: #16a34a;
       --priority-high: #ef4444;
       --priority-high-glow: rgba(239, 68, 68, 0.15);
+      --skeleton-from: #e5e5e5; --skeleton-to: #f5f5f5;
     }
     [data-theme="dark"] {
       --bg: #0a0a0a; --bg-secondary: #171717; --card-bg: #1c1c1e;
@@ -38,6 +55,7 @@
       --success: #22c55e;
       --priority-high: #f87171;
       --priority-high-glow: rgba(248, 113, 113, 0.2);
+      --skeleton-from: #2d2d2d; --skeleton-to: #3a3a3a;
     }
 
     * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -179,6 +197,52 @@
     .filter-chip:hover { border-color: var(--accent); color: var(--accent); }
     .filter-chip.active { background: var(--accent); color: #fff; border-color: var(--accent); }
 
+    /* Pick for Us button */
+    .pick-btn {
+      font-size: 0.75rem; font-weight: 700; padding: 6px 16px; border-radius: 20px;
+      border: 1px solid var(--accent); background: var(--accent); color: #fff;
+      cursor: pointer; transition: var(--transition); user-select: none;
+      display: inline-flex; align-items: center; gap: 6px;
+      margin-left: auto;
+    }
+    .pick-btn:hover { opacity: 0.85; transform: scale(1.03); }
+
+    /* Pick overlay */
+    .pick-overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.85);
+      backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+      z-index: 10000; display: flex; align-items: center; justify-content: center;
+      flex-direction: column; gap: 20px;
+    }
+    .pick-card {
+      background: var(--card-bg); border-radius: 16px; padding: 28px;
+      text-align: center; max-width: 340px; width: 90%;
+      box-shadow: 0 32px 64px rgba(0,0,0,0.4);
+      animation: pickReveal 0.6s cubic-bezier(.4,0,.2,1);
+    }
+    @keyframes pickReveal {
+      0% { opacity: 0; transform: scale(0.7) rotateY(90deg); }
+      50% { transform: scale(1.05) rotateY(0deg); }
+      100% { opacity: 1; transform: scale(1) rotateY(0deg); }
+    }
+    .pick-poster { width: 180px; height: 270px; border-radius: 10px; object-fit: cover; margin: 0 auto 16px; box-shadow: 0 8px 24px rgba(0,0,0,0.3); }
+    .pick-poster-fallback {
+      width: 180px; height: 270px; border-radius: 10px; margin: 0 auto 16px;
+      background: linear-gradient(135deg, #1a1a2e, #16213e);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 3rem; color: rgba(255,255,255,0.2);
+    }
+    .pick-title { font-size: 1.3rem; font-weight: 700; color: var(--text); margin-bottom: 4px; }
+    .pick-subtitle { font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 16px; }
+    .pick-actions { display: flex; gap: 10px; justify-content: center; }
+    .pick-actions button {
+      padding: 8px 20px; border-radius: 10px; font-size: 0.8rem; font-weight: 600; cursor: pointer; border: none; transition: var(--transition);
+    }
+    .pick-again { background: var(--bg); color: var(--text); border: 1px solid var(--border) !important; }
+    .pick-again:hover { background: var(--border-light); }
+    .pick-close { background: var(--accent); color: #fff; }
+    .pick-close:hover { opacity: 0.9; }
+
     /* ───── Queue Grid ───── */
     .queue-grid {
       display: grid;
@@ -191,10 +255,12 @@
 
     .queue-card {
       background: var(--card-bg); border: 1px solid var(--border); border-radius: 10px;
-      overflow: hidden; box-shadow: var(--shadow); transition: var(--transition);
-      animation: fadeUp 0.3s ease forwards; opacity: 0;
+      overflow: hidden; box-shadow: var(--shadow);
+      opacity: 0; transform: translateY(16px);
+      transition: opacity 0.5s cubic-bezier(.4,0,.2,1), transform 0.5s cubic-bezier(.4,0,.2,1), box-shadow 0.2s ease;
       position: relative;
     }
+    .queue-card.visible { opacity: 1; transform: translateY(0); }
     .queue-card:hover { box-shadow: var(--shadow-lg); transform: translateY(-2px); }
 
     /* Priority: colored left border + glow */
@@ -216,17 +282,24 @@
       position: relative;
     }
     .queue-poster img {
-      width: 100%; height: 100%; object-fit: cover; transition: transform 0.3s ease;
+      width: 100%; height: 100%; object-fit: cover; object-position: center 20%; transition: transform 0.3s ease;
     }
     .queue-card:hover .queue-poster img { transform: scale(1.04); }
     .queue-poster-fallback {
-      width: 100%; height: 100%; display: flex; align-items: center; justify-content: center;
-      padding: 12px; text-align: center;
-      background: linear-gradient(135deg, var(--border-light) 0%, var(--border) 100%);
+      width: 100%; height: 100%; display: flex; flex-direction: column;
+      align-items: center; justify-content: flex-end;
+      padding: 14px 10px; text-align: center; position: relative; overflow: hidden;
+      background: linear-gradient(160deg, #1a1a2e 0%, #16213e 40%, #0f3460 100%);
+    }
+    .queue-poster-fallback::before {
+      content: ''; position: absolute; inset: 0;
+      background: radial-gradient(ellipse at 30% 20%, rgba(234,88,12,0.15) 0%, transparent 60%),
+                  radial-gradient(ellipse at 70% 80%, rgba(37,99,235,0.1) 0%, transparent 50%);
     }
     .queue-poster-fallback span {
-      font-family: 'Playfair Display', serif; font-size: 0.85rem; font-weight: 700;
-      color: var(--text-muted); line-height: 1.2;
+      font-family: 'Playfair Display', serif; font-size: 0.8rem; font-weight: 700;
+      color: rgba(255,255,255,0.85); line-height: 1.2; position: relative; z-index: 1;
+      text-shadow: 0 2px 8px rgba(0,0,0,0.5);
     }
 
     /* Remove button on poster hover */
@@ -325,15 +398,29 @@
       border-top: 1px solid var(--border-light); font-size: 0.7rem; color: var(--text-muted);
     }
 
-    @keyframes fadeUp {
-      from { opacity: 0; transform: translateY(12px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
+    /* scroll-triggered animation handled by IntersectionObserver */
 
     /* ───── Loading ───── */
     .loading {
       text-align: center; padding: 40px; color: var(--text-muted); font-size: 0.9rem;
     }
+    /* Skeleton loading */
+    .skeleton-queue {
+      background: var(--card-bg); border: 1px solid var(--border); border-radius: 10px; overflow: hidden;
+    }
+    .skeleton-queue-poster {
+      aspect-ratio: 2/3;
+      background: linear-gradient(90deg, var(--skeleton-from, #2d2d2d) 25%, var(--skeleton-to, #3a3a3a) 50%, var(--skeleton-from, #2d2d2d) 75%);
+      background-size: 200% 100%; animation: shimmer 1.5s infinite;
+    }
+    .skeleton-queue-info { padding: 10px; display: flex; flex-direction: column; gap: 6px; }
+    .skeleton-queue-line {
+      height: 12px; border-radius: 4px;
+      background: linear-gradient(90deg, var(--skeleton-from, #2d2d2d) 25%, var(--skeleton-to, #3a3a3a) 50%, var(--skeleton-from, #2d2d2d) 75%);
+      background-size: 200% 100%; animation: shimmer 1.5s infinite;
+    }
+    .skeleton-queue-line.short { width: 50%; }
+    @keyframes shimmer { to { background-position: -200% 0; } }
 
     /* ───── Responsive: Mobile ───── */
     @media (max-width: 600px) {
@@ -403,11 +490,19 @@
     <div class="filter-chip" data-filter="high">High Priority</div>
     <div class="filter-chip" data-filter="greg">For Greg</div>
     <div class="filter-chip" data-filter="peer">For Peer</div>
+    <button class="pick-btn" id="pick-btn" title="Pick a random film from the queue">&#127922; Pick for Us</button>
   </div>
 
   <!-- Queue grid -->
   <div id="queue-area">
-    <div class="loading" id="loading">Loading suggestions...</div>
+    <div class="queue-grid" id="loading">
+      <div class="skeleton-queue"><div class="skeleton-queue-poster"></div><div class="skeleton-queue-info"><div class="skeleton-queue-line"></div><div class="skeleton-queue-line short"></div></div></div>
+      <div class="skeleton-queue"><div class="skeleton-queue-poster"></div><div class="skeleton-queue-info"><div class="skeleton-queue-line"></div><div class="skeleton-queue-line short"></div></div></div>
+      <div class="skeleton-queue"><div class="skeleton-queue-poster"></div><div class="skeleton-queue-info"><div class="skeleton-queue-line"></div><div class="skeleton-queue-line short"></div></div></div>
+      <div class="skeleton-queue"><div class="skeleton-queue-poster"></div><div class="skeleton-queue-info"><div class="skeleton-queue-line"></div><div class="skeleton-queue-line short"></div></div></div>
+      <div class="skeleton-queue"><div class="skeleton-queue-poster"></div><div class="skeleton-queue-info"><div class="skeleton-queue-line"></div><div class="skeleton-queue-line short"></div></div></div>
+      <div class="skeleton-queue"><div class="skeleton-queue-poster"></div><div class="skeleton-queue-info"><div class="skeleton-queue-line"></div><div class="skeleton-queue-line short"></div></div></div>
+    </div>
     <div class="queue-grid" id="queue-grid"></div>
     <div class="empty-state" id="empty-state" style="display:none">
       <div class="empty-icon">&#127910;</div>
@@ -857,7 +952,7 @@
     // Always show "Search Letterboxd" button for external search
     const extBtn = document.createElement('button');
     extBtn.className = 'search-external-btn';
-    extBtn.textContent = '\uD83C\uDF10 Search all of Letterboxd for \u201C' + escHtml(searchInput.value.trim()) + '\u201D';
+    extBtn.textContent = '\uD83C\uDF10 Search all movies for \u201C' + escHtml(searchInput.value.trim()) + '\u201D';
     extBtn.onclick = () => searchExternal(searchInput.value.trim());
     searchResults.appendChild(extBtn);
 
@@ -869,7 +964,7 @@
     const localKeys = new Set(allGregFilms.map(f => f.movie_key));
 
     const extBtns = searchResults.querySelectorAll('.search-external-btn');
-    extBtns.forEach(b => { b.textContent = 'Searching Letterboxd...'; b.disabled = true; });
+    extBtns.forEach(b => { b.textContent = 'Searching...'; b.disabled = true; });
 
     try {
       const res = await fetch(SEARCH_URL, {
@@ -885,7 +980,7 @@
       if (results.length > 0) {
         const header = document.createElement('div');
         header.className = 'search-divider';
-        header.textContent = 'From Letterboxd';
+        header.textContent = 'Search Results';
         searchResults.appendChild(header);
 
         results.forEach(r => {
@@ -894,14 +989,14 @@
             title: r.title,
             year: r.year || '',
             poster_url: r.posterUrl,
-            source: r.year ? r.year : 'Letterboxd',
+            source: r.year ? r.year : 'TMDB',
           };
           searchResults.appendChild(buildResultRow(film, queueKeys));
         });
       } else {
         const noRes = document.createElement('div');
         noRes.className = 'search-no-results';
-        noRes.textContent = 'No additional results on Letterboxd';
+        noRes.textContent = 'No additional results found';
         searchResults.appendChild(noRes);
       }
     } catch (e) {
@@ -1020,6 +1115,75 @@
     });
   });
 
+  // ───── Pick for Us ─────
+  document.getElementById('pick-btn').addEventListener('click', () => {
+    if (queueItems.length === 0) { alert('No films in the queue!'); return; }
+    pickRandom();
+  });
+
+  function pickRandom() {
+    // Weight by priority: high = 3, medium = 2, low = 1
+    const weights = queueItems.map(item => {
+      if (item.priority === 'high') return 3;
+      if (item.priority === 'low') return 1;
+      return 2;
+    });
+    const totalWeight = weights.reduce((a, b) => a + b, 0);
+    let rand = Math.random() * totalWeight;
+    let picked = queueItems[0];
+    for (let i = 0; i < queueItems.length; i++) {
+      rand -= weights[i];
+      if (rand <= 0) { picked = queueItems[i]; break; }
+    }
+    showPickOverlay(picked);
+  }
+
+  function showPickOverlay(item) {
+    // Remove existing overlay if any
+    const existing = document.getElementById('pick-overlay');
+    if (existing) existing.remove();
+
+    const overlay = document.createElement('div');
+    overlay.className = 'pick-overlay';
+    overlay.id = 'pick-overlay';
+
+    const posterHtml = item.poster_url
+      ? `<img class="pick-poster" src="${item.poster_url}" alt="${escHtml(item.title)}" onerror="this.outerHTML='<div class=\\'pick-poster-fallback\\'>&#127916;</div>'">`
+      : `<div class="pick-poster-fallback">&#127916;</div>`;
+
+    const subtitle = item.suggested_by ? `Suggested by ${item.suggested_by}` : '';
+
+    overlay.innerHTML = `
+      <div class="pick-card">
+        ${posterHtml}
+        <div class="pick-title">${escHtml(item.title)}</div>
+        ${subtitle ? `<div class="pick-subtitle">${subtitle}</div>` : ''}
+        <div class="pick-actions">
+          <button class="pick-again" id="pick-again-btn">&#127922; Spin Again</button>
+          <button class="pick-close" id="pick-close-btn">This One!</button>
+        </div>
+      </div>
+    `;
+
+    document.body.appendChild(overlay);
+    document.body.style.overflow = 'hidden';
+
+    document.getElementById('pick-again-btn').onclick = () => {
+      overlay.remove();
+      pickRandom();
+    };
+    document.getElementById('pick-close-btn').onclick = () => {
+      overlay.remove();
+      document.body.style.overflow = '';
+    };
+    overlay.addEventListener('click', (e) => {
+      if (e.target === overlay) {
+        overlay.remove();
+        document.body.style.overflow = '';
+      }
+    });
+  }
+
   // ───── Init ─────
   async function init() {
     loadSession();
@@ -1035,6 +1199,28 @@
   }
 
   init();
+
+  // ─── Scroll-triggered card entrance animations ───
+  const queueObserver = new IntersectionObserver((entries) => {
+    entries.forEach((entry, i) => {
+      if (entry.isIntersecting) {
+        setTimeout(() => entry.target.classList.add('visible'), i * 60);
+        queueObserver.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.08, rootMargin: '0px 0px -40px 0px' });
+
+  const queueGrid = document.getElementById('queue-grid');
+  if (queueGrid) {
+    new MutationObserver(() => {
+      queueGrid.querySelectorAll('.queue-card:not(.visible)').forEach(c => queueObserver.observe(c));
+    }).observe(queueGrid, { childList: true, subtree: true });
+  }
+
+  // ─── Register Service Worker ───
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/sw.js').catch(() => {});
+  }
 </script>
 
 </body>

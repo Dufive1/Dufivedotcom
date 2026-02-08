@@ -5,6 +5,23 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>DUFIVE | The Ledger</title>
 
+  <!-- Open Graph / Social -->
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://dufive.com/" />
+  <meta property="og:title" content="DUFIVE | The Ledger" />
+  <meta property="og:description" content="Movies rated in stars, not words. A collaborative film review ledger." />
+  <meta property="og:image" content="https://dufive.com/og-image.png" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="DUFIVE | The Ledger" />
+  <meta name="twitter:description" content="Movies rated in stars, not words." />
+  <meta name="twitter:image" content="https://dufive.com/og-image.png" />
+  <meta name="description" content="Movies rated in stars, not words. A collaborative film review ledger by Greg and Peer." />
+  <meta name="theme-color" content="#0a0a0a" />
+  <link rel="manifest" href="/manifest.json" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="DUFIVE" />
+
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:ital,wght@0,600;0,700;1,600&display=swap" rel="stylesheet">
 
@@ -37,7 +54,6 @@
       --overlay-bg: rgba(0, 0, 0, 0.6);
       --badge-bg: #ef4444;
       --success: #16a34a;
-      --bar-track: #e5e5e5;
     }
 
     [data-theme="dark"] {
@@ -62,7 +78,6 @@
       --overlay-bg: rgba(0, 0, 0, 0.8);
       --badge-bg: #ef4444;
       --success: #22c55e;
-      --bar-track: #2d2d2d;
     }
 
     /* ───── Reset & Base ───── */
@@ -597,22 +612,21 @@
       border-radius: var(--radius);
       overflow: hidden;
       box-shadow: var(--shadow);
-      transition: box-shadow 0.2s ease, transform 0.2s ease;
+      transition: opacity 0.5s cubic-bezier(.4,0,.2,1), transform 0.5s cubic-bezier(.4,0,.2,1), box-shadow 0.2s ease;
       border: 1px solid var(--border);
       opacity: 0;
-      transform: translateY(16px);
-      animation: cardEnter 0.4s ease forwards;
+      transform: translateY(24px);
       position: relative;
     }
-    .entry:hover { box-shadow: var(--shadow-lg); transform: translateY(-2px); }
-
-    @keyframes cardEnter {
-      to { opacity: 1; transform: translateY(0); }
+    .entry.visible {
+      opacity: 1;
+      transform: translateY(0);
     }
+    .entry:hover { box-shadow: var(--shadow-lg); transform: translateY(-2px); }
     .entry.no-animate {
       opacity: 1;
       transform: none;
-      animation: none;
+      transition: none;
     }
 
     .new-badge {
@@ -641,33 +655,49 @@
       width: 100%;
       height: 100%;
       object-fit: cover;
+      object-position: center 20%;
       display: block;
       transition: transform 0.4s ease;
     }
     .entry:hover .poster-frame img { transform: scale(1.03); }
 
-    /* Poster Fallback */
+    /* Poster Fallback — cinematic gradient card */
     .poster-fallback {
       width: 100%;
       height: 100%;
       display: flex;
+      flex-direction: column;
       align-items: center;
-      justify-content: center;
-      padding: 24px;
+      justify-content: flex-end;
+      padding: 20px 16px;
       text-align: center;
-      background: linear-gradient(135deg, var(--border-light) 0%, var(--border) 100%);
+      background: linear-gradient(160deg, #1a1a2e 0%, #16213e 40%, #0f3460 100%);
+      position: relative;
+      overflow: hidden;
+    }
+    .poster-fallback::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse at 30% 20%, rgba(234,88,12,0.15) 0%, transparent 60%),
+                  radial-gradient(ellipse at 70% 80%, rgba(37,99,235,0.1) 0%, transparent 50%);
     }
     .poster-fallback-text {
       font-family: 'Playfair Display', serif;
-      font-size: 1.25rem;
+      font-size: 1.15rem;
       font-weight: 700;
-      color: var(--text-muted);
+      color: rgba(255,255,255,0.85);
       line-height: 1.3;
+      position: relative;
+      z-index: 1;
+      text-shadow: 0 2px 8px rgba(0,0,0,0.5);
     }
     .poster-fallback-icon {
-      font-size: 2.5rem;
-      margin-bottom: 12px;
-      opacity: 0.4;
+      font-size: 2rem;
+      margin-bottom: 10px;
+      opacity: 0.5;
+      position: relative;
+      z-index: 1;
     }
 
     .entry-content { padding: 20px; }
@@ -751,6 +781,101 @@
       letter-spacing: 0.05em; cursor: default; user-select: none;
     }
 
+    /* Rating Reveal Animation */
+    .reveal-overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.88);
+      backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+      z-index: 10001; display: flex; align-items: center; justify-content: center;
+      flex-direction: column; gap: 16px;
+    }
+    .reveal-card {
+      text-align: center; max-width: 380px; width: 90%; padding: 36px 28px;
+      background: var(--card-bg); border-radius: 18px;
+      box-shadow: 0 32px 64px rgba(0,0,0,0.5);
+    }
+    .reveal-title { font-size: 1rem; color: var(--text-secondary); margin-bottom: 8px; font-weight: 600; letter-spacing: 0.04em; }
+    .reveal-movie { font-family: 'Playfair Display', serif; font-size: 1.5rem; font-weight: 700; color: var(--text); margin-bottom: 24px; }
+    .reveal-ratings { display: flex; gap: 24px; justify-content: center; align-items: center; margin-bottom: 20px; }
+    .reveal-col { text-align: center; }
+    .reveal-name { font-size: 0.7rem; font-weight: 700; text-transform: uppercase; color: var(--text-secondary); letter-spacing: 0.06em; margin-bottom: 6px; }
+    .reveal-stars { font-size: 1.6rem; }
+    .reveal-hidden {
+      font-size: 1.6rem; color: var(--text-muted);
+      animation: revealFlip 0.8s ease 0.5s forwards;
+    }
+    @keyframes revealFlip {
+      0% { transform: rotateX(0deg); opacity: 1; }
+      40% { transform: rotateX(90deg); opacity: 0; }
+      60% { transform: rotateX(90deg); opacity: 0; }
+      100% { transform: rotateX(0deg); opacity: 1; }
+    }
+    .reveal-vs { font-weight: 800; font-size: 0.9rem; color: var(--text-secondary); }
+    .reveal-gap { margin-top: 16px; font-weight: 700; font-size: 0.9rem; animation: fadeIn 0.8s ease 1.3s both; }
+    .reveal-close-btn {
+      margin-top: 16px; padding: 10px 28px; border-radius: 12px;
+      background: var(--accent); color: #fff; border: none;
+      font-weight: 700; cursor: pointer; font-size: 0.85rem;
+      animation: fadeIn 0.4s ease 1.6s both;
+    }
+
+    /* Achievement Badges */
+    .badges-section {
+      display: flex; flex-direction: column; gap: 10px;
+      margin-bottom: 24px; padding: 0 4px;
+    }
+    .badges-row {
+      display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+    }
+    .badges-row-label {
+      font-size: 0.7rem; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.06em; min-width: 40px;
+    }
+    .badges-row-label.greg { color: var(--greg); }
+    .badges-row-label.peer { color: var(--peer); }
+    .badge-chip {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 4px 10px; border-radius: 99px;
+      background: var(--bg); border: 1px solid var(--border);
+      font-size: 0.7rem; color: var(--text);
+      cursor: default; transition: var(--transition);
+    }
+    .badge-chip:hover {
+      border-color: var(--accent); box-shadow: 0 0 0 2px rgba(59,130,246,0.1);
+    }
+    .badge-chip .badge-icon { font-size: 0.85rem; }
+    .badge-chip .badge-name { font-weight: 600; }
+    .no-badges { font-size: 0.7rem; color: var(--text-muted); font-style: italic; }
+
+    /* Keyboard Shortcuts Help */
+    .shortcuts-overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.75);
+      backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+      z-index: 10002; display: none; align-items: center; justify-content: center;
+      animation: fadeIn 0.15s ease;
+    }
+    .shortcuts-overlay.open { display: flex; }
+    .shortcuts-panel {
+      background: var(--card-bg); border-radius: 16px; padding: 28px 32px;
+      max-width: 380px; width: 90%; box-shadow: 0 24px 48px rgba(0,0,0,0.4);
+    }
+    .shortcuts-title {
+      font-size: 1.1rem; font-weight: 700; margin-bottom: 16px; color: var(--text);
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .shortcuts-close { background: none; border: none; color: var(--text-secondary); font-size: 1.2rem; cursor: pointer; }
+    .shortcut-row {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 8px 0; border-bottom: 1px solid var(--border);
+    }
+    .shortcut-row:last-child { border-bottom: none; }
+    .shortcut-desc { font-size: 0.85rem; color: var(--text); }
+    .shortcut-key {
+      background: var(--bg); border: 1px solid var(--border); border-radius: 6px;
+      padding: 3px 10px; font-size: 0.75rem; font-weight: 700;
+      font-family: 'Inter', monospace; color: var(--text-secondary);
+      min-width: 28px; text-align: center;
+    }
+
     .unrated-prompt {
       font-size: 0.8125rem;
       color: var(--text-muted);
@@ -771,53 +896,7 @@
     .unrated-prompt.clickable:hover { opacity: 1; background: rgba(37, 99, 235, 0.06); }
 
     /* ───── Rating Comparison Bar ───── */
-    .comparison-bar {
-      margin-top: 12px;
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-    }
-
-    .bar-row {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .bar-label {
-      font-size: 0.5625rem;
-      font-weight: 700;
-      color: var(--text-muted);
-      letter-spacing: 0.06em;
-      text-transform: uppercase;
-      width: 30px;
-      flex-shrink: 0;
-    }
-
-    .bar-track {
-      flex: 1;
-      height: 6px;
-      background: var(--bar-track);
-      border-radius: 3px;
-      overflow: hidden;
-    }
-
-    .bar-fill {
-      height: 100%;
-      border-radius: 3px;
-      transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-    .bar-fill.greg-bar { background: var(--greg); }
-    .bar-fill.peer-bar { background: var(--peer); }
-
-    .bar-value {
-      font-size: 0.6875rem;
-      font-weight: 700;
-      color: var(--text-muted);
-      width: 24px;
-      text-align: right;
-      flex-shrink: 0;
-    }
+    /* comparison bars removed – stars already show the rating */
 
     /* ───── Poster Corner Reaction Stamps ───── */
     .poster-badge {
@@ -1524,7 +1603,141 @@
 
       .toast-container { bottom: 16px; right: 16px; left: 16px; }
       .toast { max-width: 100%; }
+
+      .film-modal { padding: 20px; }
+      .film-modal-poster { max-height: 50vh; }
+      .fm-notes-list { max-height: 40vh; }
     }
+
+    /* ═══ Film Detail Modal ═══ */
+    .film-modal-overlay {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.82);
+      backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+      z-index: 10000;
+      display: none; align-items: center; justify-content: center;
+      animation: fadeIn 0.2s ease;
+      padding: 16px;
+      overflow-y: auto;
+    }
+    .film-modal-overlay.open { display: flex; }
+
+    .film-modal {
+      background: var(--card-bg);
+      border-radius: 16px;
+      max-width: 640px; width: 100%;
+      box-shadow: 0 32px 64px rgba(0,0,0,0.4);
+      overflow: hidden;
+      animation: slideUp 0.35s cubic-bezier(0.4,0,0.2,1);
+      max-height: 90vh; overflow-y: auto;
+    }
+
+    .film-modal-close {
+      position: sticky; top: 0; z-index: 2;
+      display: flex; justify-content: flex-end; padding: 12px 16px 0;
+    }
+    .film-modal-close button {
+      background: rgba(0,0,0,0.5); border: none; color: #fff;
+      width: 36px; height: 36px; border-radius: 50%;
+      font-size: 1.2rem; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: background 0.2s;
+    }
+    .film-modal-close button:hover { background: rgba(0,0,0,0.7); }
+
+    .film-modal-hero { position: relative; text-align: center; padding: 0 24px 16px; }
+    .film-modal-poster {
+      max-height: 60vh; max-width: 100%; border-radius: 10px;
+      box-shadow: 0 12px 40px rgba(0,0,0,0.35);
+      object-fit: contain;
+    }
+
+    .film-modal-body { padding: 0 28px 28px; }
+    .fm-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.75rem; font-weight: 700;
+      letter-spacing: -0.02em; margin-bottom: 4px; color: var(--text);
+    }
+    .fm-year { font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 20px; }
+
+    .fm-ratings {
+      display: flex; gap: 32px; margin-bottom: 20px;
+      padding: 16px; background: var(--bg); border-radius: 12px;
+    }
+    .fm-rating-col { flex: 1; text-align: center; }
+    .fm-rating-name {
+      font-size: 0.75rem; font-weight: 600;
+      text-transform: uppercase; letter-spacing: 0.06em;
+      color: var(--text-secondary); margin-bottom: 6px;
+    }
+    .fm-rating-stars { font-size: 1.4rem; letter-spacing: 1px; }
+    .fm-rating-num { font-size: 0.75rem; color: var(--text-secondary); margin-top: 2px; }
+    .fm-vs {
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 800; font-size: 0.8rem; color: var(--text-secondary);
+    }
+    .fm-gap-badge {
+      display: inline-block; padding: 3px 10px; border-radius: 99px;
+      font-size: 0.7rem; font-weight: 700; margin-top: 12px; text-align: center;
+    }
+    .fm-gap-badge.agree { background: rgba(34,197,94,0.15); color: #22c55e; }
+    .fm-gap-badge.disagree { background: rgba(239,68,68,0.15); color: #ef4444; }
+    .fm-gap-badge.neutral { background: rgba(150,150,150,0.12); color: var(--text-secondary); }
+
+    .fm-reactions {
+      display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 20px;
+    }
+    .fm-reaction-chip {
+      display: flex; align-items: center; gap: 6px;
+      padding: 6px 12px; border-radius: 99px;
+      background: var(--bg); border: 1px solid var(--border);
+      font-size: 0.8rem; color: var(--text);
+    }
+    .fm-reaction-chip .kc-face { width: 16px; height: 16px; }
+
+    .fm-section-title {
+      font-size: 0.8rem; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.06em;
+      color: var(--text-secondary); margin-bottom: 10px;
+    }
+    .fm-notes-list {
+      max-height: 50vh; overflow-y: auto;
+      display: flex; flex-direction: column; gap: 10px;
+      margin-bottom: 16px;
+    }
+    .fm-note {
+      padding: 10px 14px; border-radius: 10px;
+      background: var(--bg); border: 1px solid var(--border);
+    }
+    .fm-note-header {
+      display: flex; align-items: center; gap: 8px; margin-bottom: 4px;
+    }
+    .fm-note-avatar {
+      width: 22px; height: 22px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.65rem; font-weight: 800; color: #fff;
+    }
+    .fm-note-avatar.greg { background: var(--greg); }
+    .fm-note-avatar.peer { background: var(--peer); }
+    .fm-note-author { font-weight: 700; font-size: 0.75rem; text-transform: uppercase; color: var(--text); }
+    .fm-note-time { font-size: 0.7rem; color: var(--text-secondary); margin-left: auto; }
+    .fm-note-text { font-size: 0.85rem; color: var(--text); line-height: 1.5; }
+
+    .fm-actions {
+      display: flex; gap: 10px; flex-wrap: wrap; margin-top: 16px;
+    }
+    .fm-action-btn {
+      flex: 1; min-width: 120px;
+      padding: 10px 16px; border-radius: 10px;
+      border: 1px solid var(--border); background: var(--bg);
+      color: var(--text); cursor: pointer; font-size: 0.8rem;
+      font-weight: 600; text-align: center;
+      transition: background 0.2s, border-color 0.2s;
+      text-decoration: none; display: inline-block;
+    }
+    .fm-action-btn:hover { background: var(--border-light); border-color: var(--text-secondary); }
+    .fm-action-btn.primary { background: var(--peer); color: #fff; border-color: var(--peer); }
+    .fm-action-btn.primary:hover { opacity: 0.9; }
   </style>
 </head>
 
@@ -1585,6 +1798,12 @@
         <div class="stat-value" id="stat-controversial">&mdash;</div>
         <div class="stat-label">Most Debated</div>
       </div>
+    </div>
+
+    <!-- Achievement Badges -->
+    <div class="badges-section" id="badges-section" style="display:none;">
+      <div class="badges-row" id="badges-greg"></div>
+      <div class="badges-row" id="badges-peer"></div>
     </div>
 
     <div class="toolbar">
@@ -1659,6 +1878,24 @@
 
   <!-- Star Picker Modal -->
   <div id="star-picker" class="star-picker-overlay" style="display:none;"></div>
+
+  <!-- Film Detail Modal -->
+  <div class="film-modal-overlay" id="film-modal"></div>
+
+  <!-- Keyboard Shortcuts Help -->
+  <div class="shortcuts-overlay" id="shortcuts-overlay">
+    <div class="shortcuts-panel">
+      <div class="shortcuts-title">
+        Keyboard Shortcuts
+        <button class="shortcuts-close" onclick="document.getElementById('shortcuts-overlay').classList.remove('open')">&times;</button>
+      </div>
+      <div class="shortcut-row"><span class="shortcut-desc">Focus search</span><span class="shortcut-key">/</span></div>
+      <div class="shortcut-row"><span class="shortcut-desc">Toggle dark/light mode</span><span class="shortcut-key">T</span></div>
+      <div class="shortcut-row"><span class="shortcut-desc">Scroll to top</span><span class="shortcut-key">G G</span></div>
+      <div class="shortcut-row"><span class="shortcut-desc">Show this help</span><span class="shortcut-key">?</span></div>
+      <div class="shortcut-row"><span class="shortcut-desc">Close any overlay</span><span class="shortcut-key">Esc</span></div>
+    </div>
+  </div>
 
   <script>
     /* ═══════════════════════════════════════════
@@ -2002,6 +2239,45 @@
         elNotifDropdown.classList.remove('open');
       }
     });
+
+    /* ═══════════════════════════════════════════
+       ACHIEVEMENT BADGES
+    ═══════════════════════════════════════════ */
+    async function fetchBadges() {
+      try {
+        const { data, error } = await supabaseClient
+          .from('achievements')
+          .select('reviewer, badge_key, badge_name, badge_icon, badge_desc, earned_at')
+          .order('earned_at', { ascending: true });
+
+        if (error || !data || data.length === 0) return;
+
+        const gregBadges = data.filter(b => b.reviewer === 'greg');
+        const peerBadges = data.filter(b => b.reviewer === 'peer');
+
+        function renderRow(badges, containerId, label, cssClass) {
+          const container = document.getElementById(containerId);
+          container.innerHTML = `<span class="badges-row-label ${cssClass}">${label}</span>`;
+          if (badges.length === 0) {
+            container.innerHTML += '<span class="no-badges">No badges yet</span>';
+          } else {
+            badges.forEach(b => {
+              const chip = document.createElement('span');
+              chip.className = 'badge-chip';
+              chip.title = b.badge_desc || b.badge_name;
+              chip.innerHTML = `<span class="badge-icon">${b.badge_icon}</span><span class="badge-name">${b.badge_name}</span>`;
+              container.appendChild(chip);
+            });
+          }
+        }
+
+        renderRow(gregBadges, 'badges-greg', 'Greg', 'greg');
+        renderRow(peerBadges, 'badges-peer', 'Peer', 'peer');
+        document.getElementById('badges-section').style.display = 'flex';
+      } catch (e) {
+        console.log('Badges fetch error:', e);
+      }
+    }
 
     /* ═══════════════════════════════════════════
        NEW SINCE LAST VISIT
@@ -2374,7 +2650,6 @@
 
         const card = document.createElement('div');
         card.className = isInitialRender ? 'entry' : 'entry no-animate';
-        if (isInitialRender) card.style.animationDelay = `${Math.min(index * 0.04, 0.4)}s`;
 
         // New badge
         if (hasNewNotes) {
@@ -2522,23 +2797,7 @@
         peerRow.appendChild(peerRatingSpan);
         ratingsContainer.appendChild(peerRow);
 
-        // Comparison bar (only when both rated)
-        if (gregR > 0 && peerR > 0) {
-          const compBar = document.createElement('div');
-          compBar.className = 'comparison-bar';
-          compBar.innerHTML = `
-            <div class="bar-row">
-              <span class="bar-label">G</span>
-              <div class="bar-track"><div class="bar-fill greg-bar" style="width: ${(gregR / 5) * 100}%"></div></div>
-              <span class="bar-value">${gregR}</span>
-            </div>
-            <div class="bar-row">
-              <span class="bar-label">P</span>
-              <div class="bar-track"><div class="bar-fill peer-bar" style="width: ${(peerR / 5) * 100}%"></div></div>
-              <span class="bar-value">${peerR}</span>
-            </div>`;
-          ratingsContainer.appendChild(compBar);
-        }
+        /* comparison bars removed – stars already convey the rating */
 
         content.appendChild(h2);
         content.appendChild(ratingsContainer);
@@ -2682,6 +2941,13 @@
           card.appendChild(content);
         }
 
+        // Click card poster to open detail modal
+        posterFrame.style.cursor = 'pointer';
+        posterFrame.addEventListener('click', (e) => {
+          if (e.target.closest('.poster-badge')) return; // don't intercept reaction badge clicks
+          openFilmModal(entry);
+        });
+
         elGrid.appendChild(card);
       });
 
@@ -2718,6 +2984,276 @@
         count.appendChild(countText);
         elGrid.appendChild(count);
       }
+    }
+
+    /* ═══════════════════════════════════════════
+       FILM DETAIL MODAL
+    ═══════════════════════════════════════════ */
+    function openFilmModal(entry) {
+      const overlay = document.getElementById('film-modal');
+      const movieKey = getMovieKey(entry);
+      const title = decodeHtml(entry.title);
+      const gregR = Number(entry.gregRating) || 0;
+      const peerR = Number(peerMap[movieKey]) || 0;
+      const gap = Math.abs(gregR - peerR);
+      const notes = notesMap[movieKey] || [];
+      const peerReaction = reactions[movieKey]?.peer;
+      const gregReaction = reactions[movieKey]?.greg;
+      const year = entry.year || movieKey.match(/-(\d{4})$/)?.[1] || '';
+      const lbUrl = `https://letterboxd.com/film/${movieKey}/`;
+
+      // Build poster HTML
+      let posterHtml = '';
+      if (entry.posterUrl) {
+        posterHtml = `<img class="film-modal-poster" src="${entry.posterUrl}" alt="${title}" onerror="this.style.display='none'">`;
+      }
+
+      // Rating gap badge
+      let gapClass = 'neutral';
+      let gapText = 'Not yet compared';
+      if (gregR > 0 && peerR > 0) {
+        if (gap <= 1) { gapClass = 'agree'; gapText = `Agree — ${gap === 0 ? 'Exact match!' : gap + '★ gap'}`; }
+        else if (gap >= 3) { gapClass = 'disagree'; gapText = `Disagree — ${gap}★ gap`; }
+        else { gapClass = 'neutral'; gapText = `${gap}★ gap`; }
+      }
+
+      // Reaction chips
+      let reactionsHtml = '';
+      if (peerReaction || gregReaction) {
+        reactionsHtml = '<div class="fm-reactions">';
+        if (peerReaction) {
+          const display = peerReaction === 'costner'
+            ? `<img class="kc-face" src="${KC_IMG}" alt="Costner">`
+            : REACTIONS[peerReaction];
+          reactionsHtml += `<div class="fm-reaction-chip"><strong>Peer:</strong> ${display}</div>`;
+        }
+        if (gregReaction) {
+          const display = gregReaction === 'costner'
+            ? `<img class="kc-face" src="${KC_IMG}" alt="Costner">`
+            : REACTIONS[gregReaction];
+          reactionsHtml += `<div class="fm-reaction-chip"><strong>Greg:</strong> ${display}</div>`;
+        }
+        reactionsHtml += '</div>';
+      }
+
+      // Notes
+      let notesHtml = '';
+      if (notes.length > 0) {
+        notesHtml = `<div class="fm-section-title">Discussion (${notes.length})</div><div class="fm-notes-list">`;
+        notes.forEach(n => {
+          notesHtml += `<div class="fm-note">
+            <div class="fm-note-header">
+              <div class="fm-note-avatar ${n.author}">${n.author === 'greg' ? 'G' : 'P'}</div>
+              <div class="fm-note-author">${n.author}</div>
+              <div class="fm-note-time">${timeAgo(n.created_at)}</div>
+            </div>
+            <div class="fm-note-text">${n.argument.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</div>
+          </div>`;
+        });
+        notesHtml += '</div>';
+      } else {
+        notesHtml = '<div style="color:var(--text-secondary);font-size:0.85rem;margin-bottom:12px;">No discussion yet — add the first note from the card.</div>';
+      }
+
+      // Blind mode
+      const peerHasRated = peerR > 0;
+      const blindMode = currentUser === 'peer' && !peerHasRated;
+      const gregDisplay = blindMode ? '???' : (gregR > 0 ? starsFromNumeric(gregR) : '—');
+      const gregNum = blindMode ? '' : (gregR > 0 ? `(${gregR}/10)` : 'Not rated');
+
+      overlay.innerHTML = `
+        <div class="film-modal">
+          <div class="film-modal-close"><button onclick="closeFilmModal()" aria-label="Close">&times;</button></div>
+          <div class="film-modal-hero">${posterHtml}</div>
+          <div class="film-modal-body">
+            <div class="fm-title">${title}</div>
+            ${year ? `<div class="fm-year">${year}</div>` : ''}
+            <div class="fm-ratings">
+              <div class="fm-rating-col">
+                <div class="fm-rating-name">Greg</div>
+                <div class="fm-rating-stars">${gregDisplay}</div>
+                <div class="fm-rating-num">${gregNum}</div>
+              </div>
+              <div class="fm-vs">VS</div>
+              <div class="fm-rating-col">
+                <div class="fm-rating-name">Peer</div>
+                <div class="fm-rating-stars">${peerR > 0 ? starsFromNumeric(peerR) : '—'}</div>
+                <div class="fm-rating-num">${peerR > 0 ? `(${peerR}/10)` : 'Not rated'}</div>
+              </div>
+            </div>
+            ${gregR > 0 && peerR > 0 ? `<div style="text-align:center;margin-bottom:16px;"><span class="fm-gap-badge ${gapClass}">${gapText}</span></div>` : ''}
+            ${reactionsHtml}
+            ${notesHtml}
+            <div class="fm-actions">
+              <a class="fm-action-btn" href="${lbUrl}" target="_blank" rel="noopener">View on Letterboxd</a>
+              <button class="fm-action-btn primary" id="fm-share-btn">Share This Debate</button>
+            </div>
+          </div>
+        </div>
+      `;
+
+      overlay.classList.add('open');
+      document.body.style.overflow = 'hidden';
+
+      // Share button
+      document.getElementById('fm-share-btn').onclick = () => {
+        generateShareCard(entry);
+      };
+
+      // Close on backdrop click
+      overlay.onclick = (e) => { if (e.target === overlay) closeFilmModal(); };
+    }
+
+    function closeFilmModal() {
+      const overlay = document.getElementById('film-modal');
+      overlay.classList.remove('open');
+      document.body.style.overflow = '';
+    }
+
+    /* ═══════════════════════════════════════════
+       SHAREABLE DEBATE CARD (Canvas)
+    ═══════════════════════════════════════════ */
+    async function generateShareCard(entry) {
+      const movieKey = getMovieKey(entry);
+      const title = decodeHtml(entry.title);
+      const gregR = Number(entry.gregRating) || 0;
+      const peerR = Number(peerMap[movieKey]) || 0;
+      const gap = Math.abs(gregR - peerR);
+
+      const W = 1080, H = 1080;
+      const canvas = document.createElement('canvas');
+      canvas.width = W; canvas.height = H;
+      const ctx = canvas.getContext('2d');
+
+      // Dark background gradient
+      const grad = ctx.createLinearGradient(0, 0, W, H);
+      grad.addColorStop(0, '#0a0a0a');
+      grad.addColorStop(1, '#1a1a2e');
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, W, H);
+
+      // Subtle accent border
+      ctx.strokeStyle = 'rgba(255,255,255,0.06)';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(40, 40, W - 80, H - 80);
+
+      // Load poster if available
+      let posterImg = null;
+      if (entry.posterUrl) {
+        try {
+          posterImg = await new Promise((resolve, reject) => {
+            const img = new Image();
+            img.crossOrigin = 'anonymous';
+            img.onload = () => resolve(img);
+            img.onerror = () => resolve(null);
+            img.src = entry.posterUrl;
+          });
+        } catch(e) { posterImg = null; }
+      }
+
+      // Draw poster
+      if (posterImg) {
+        const pw = 240, ph = 360;
+        const px = (W - pw) / 2, py = 100;
+        ctx.save();
+        ctx.beginPath();
+        ctx.roundRect(px, py, pw, ph, 12);
+        ctx.clip();
+        ctx.drawImage(posterImg, px, py, pw, ph);
+        ctx.restore();
+        // poster shadow
+        ctx.shadowColor = 'rgba(0,0,0,0.5)';
+        ctx.shadowBlur = 30;
+        ctx.shadowOffsetY = 10;
+        ctx.beginPath();
+        ctx.roundRect(px, py, pw, ph, 12);
+        ctx.strokeStyle = 'rgba(255,255,255,0.08)';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+        ctx.shadowColor = 'transparent';
+      }
+
+      const textY = posterImg ? 500 : 200;
+
+      // Movie title
+      ctx.fillStyle = '#ffffff';
+      ctx.textAlign = 'center';
+      ctx.font = 'bold 42px "Inter", sans-serif';
+      // Wrap long titles
+      const words = title.split(' ');
+      let lines = []; let line = '';
+      for (const w of words) {
+        const test = line ? line + ' ' + w : w;
+        if (ctx.measureText(test).width > W - 160) { lines.push(line); line = w; }
+        else line = test;
+      }
+      if (line) lines.push(line);
+      lines.forEach((l, i) => {
+        ctx.fillText(l, W / 2, textY + i * 52);
+      });
+
+      const ratingsY = textY + lines.length * 52 + 60;
+
+      // Greg rating
+      ctx.font = '600 22px "Inter", sans-serif';
+      ctx.fillStyle = '#94a3b8';
+      ctx.fillText('GREG', W / 2 - 180, ratingsY);
+      ctx.font = '36px "Inter", sans-serif';
+      ctx.fillStyle = '#fbbf24';
+      ctx.fillText(gregR > 0 ? starsFromNumeric(gregR) : '—', W / 2 - 180, ratingsY + 48);
+
+      // VS
+      ctx.font = 'bold 28px "Inter", sans-serif';
+      ctx.fillStyle = '#475569';
+      ctx.fillText('VS', W / 2, ratingsY + 30);
+
+      // Peer rating
+      ctx.font = '600 22px "Inter", sans-serif';
+      ctx.fillStyle = '#94a3b8';
+      ctx.fillText('PEER', W / 2 + 180, ratingsY);
+      ctx.font = '36px "Inter", sans-serif';
+      ctx.fillStyle = '#fbbf24';
+      ctx.fillText(peerR > 0 ? starsFromNumeric(peerR) : '—', W / 2 + 180, ratingsY + 48);
+
+      // Gap badge
+      if (gregR > 0 && peerR > 0) {
+        const gapY = ratingsY + 110;
+        let gapColor = '#94a3b8';
+        let gapText = `${gap}★ gap`;
+        if (gap === 0) { gapColor = '#22c55e'; gapText = 'Perfect Agreement!'; }
+        else if (gap <= 1) { gapColor = '#22c55e'; }
+        else if (gap >= 3) { gapColor = '#ef4444'; gapText = `${gap}★ gap — Big Debate!`; }
+
+        ctx.font = 'bold 24px "Inter", sans-serif';
+        ctx.fillStyle = gapColor;
+        ctx.fillText(gapText, W / 2, gapY);
+      }
+
+      // DUFIVE branding
+      ctx.font = 'bold 20px "Inter", sans-serif';
+      ctx.fillStyle = 'rgba(255,255,255,0.25)';
+      ctx.fillText('dufive.com', W / 2, H - 60);
+
+      // Download or share
+      canvas.toBlob(async (blob) => {
+        if (navigator.share && navigator.canShare) {
+          try {
+            const file = new File([blob], `dufive-${movieKey}.png`, { type: 'image/png' });
+            if (navigator.canShare({ files: [file] })) {
+              await navigator.share({ files: [file], title: `${title} — DUFIVE Debate`, text: `Greg: ${gregR}/10 vs Peer: ${peerR}/10` });
+              return;
+            }
+          } catch(e) { /* fall through to download */ }
+        }
+        // Fallback: download
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url; a.download = `dufive-${movieKey}.png`;
+        document.body.appendChild(a); a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        showToast('Debate card downloaded!');
+      }, 'image/png');
     }
 
     /* ═══════════════════════════════════════════
@@ -2916,14 +3452,81 @@
 
     async function submitRating(movieKey, movieTitle, rating, actingAs) {
       if (!currentUser) return;
+      const who = actingAs || currentUser;
+      // Check if this is a blind-mode reveal (Peer rating for the first time)
+      const wasPeerBlind = who === 'peer' && rating > 0 && !(cachedPeerMap[movieKey] > 0);
+      // Find Greg's hidden rating before the re-render
+      let gregHiddenRating = 0;
+      if (wasPeerBlind) {
+        const gregEntry = cachedGregItems.find(e => getMovieKey(e) === movieKey);
+        if (gregEntry) gregHiddenRating = Number(gregEntry.gregRating) || 0;
+      }
       try {
         const payload = { rating, movieTitle };
         if (isAdmin() && actingAs) payload.actingAs = actingAs;
         await authenticatedRequest('rate', movieKey, payload);
-        const who = actingAs || currentUser;
-        showToast(rating > 0 ? `Rated ${decodeHtml(movieTitle)} ${starsFromNumeric(rating)} as ${who.toUpperCase()}` : 'Rating removed', 'success', 2500);
+
+        if (wasPeerBlind && gregHiddenRating > 0) {
+          // Show dramatic reveal
+          showRatingReveal(movieTitle, rating, gregHiddenRating, movieKey);
+        } else {
+          showToast(rating > 0 ? `Rated ${decodeHtml(movieTitle)} ${starsFromNumeric(rating)} as ${who.toUpperCase()}` : 'Rating removed', 'success', 2500);
+        }
         await loadArchive(true);
       } catch (e) { showToast('Error: ' + e.message, 'error'); }
+    }
+
+    function showRatingReveal(movieTitle, peerRating, gregRating, movieKey) {
+      const gap = Math.abs(gregRating - peerRating);
+      let gapColor, gapText;
+      if (gap === 0) { gapColor = '#22c55e'; gapText = 'Perfect Agreement!'; }
+      else if (gap <= 1) { gapColor = '#22c55e'; gapText = `Only ${gap}★ apart — You agree!`; }
+      else if (gap >= 3) { gapColor = '#ef4444'; gapText = `${gap}★ gap — Big Debate!`; }
+      else { gapColor = '#eab308'; gapText = `${gap}★ gap`; }
+
+      const overlay = document.createElement('div');
+      overlay.className = 'reveal-overlay';
+      overlay.innerHTML = `
+        <div class="reveal-card">
+          <div class="reveal-title">Rating Reveal</div>
+          <div class="reveal-movie">${decodeHtml(movieTitle)}</div>
+          <div class="reveal-ratings">
+            <div class="reveal-col">
+              <div class="reveal-name">You rated</div>
+              <div class="reveal-stars">${starsFromNumeric(peerRating)}</div>
+            </div>
+            <div class="reveal-vs">VS</div>
+            <div class="reveal-col">
+              <div class="reveal-name">Greg rated</div>
+              <div class="reveal-hidden" id="reveal-greg-stars">???</div>
+            </div>
+          </div>
+          <div class="reveal-gap" id="reveal-gap" style="color:${gapColor}"></div>
+          <button class="reveal-close-btn" id="reveal-close-btn">Nice!</button>
+        </div>
+      `;
+
+      document.body.appendChild(overlay);
+      document.body.style.overflow = 'hidden';
+
+      // Animate the reveal after delay
+      setTimeout(() => {
+        const el = document.getElementById('reveal-greg-stars');
+        if (el) el.textContent = starsFromNumeric(gregRating);
+      }, 900);
+
+      setTimeout(() => {
+        const el = document.getElementById('reveal-gap');
+        if (el) el.textContent = gapText;
+      }, 1300);
+
+      document.getElementById('reveal-close-btn').onclick = () => {
+        overlay.remove();
+        document.body.style.overflow = '';
+      };
+      overlay.addEventListener('click', (e) => {
+        if (e.target === overlay) { overlay.remove(); document.body.style.overflow = ''; }
+      });
     }
 
     /* ═══════════════════════════════════════════
@@ -3095,16 +3698,43 @@
         if (e.target.id === 'login-modal') closeLoginModal();
       });
 
+      let lastKeyTime = 0, lastKey = '';
       document.addEventListener('keydown', (e) => {
+        const tag = document.activeElement.tagName;
+        const inInput = tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT';
+
         if (e.key === 'Escape') {
+          const sc = document.getElementById('shortcuts-overlay');
+          if (sc.classList.contains('open')) { sc.classList.remove('open'); return; }
+          if (document.getElementById('film-modal').classList.contains('open')) { closeFilmModal(); return; }
           if (document.getElementById('login-modal').classList.contains('visible')) closeLoginModal();
           const sp = document.getElementById('star-picker');
           if (sp.style.display === 'flex') sp.style.display = 'none';
+          return;
         }
-        if (e.key === '/' && !e.ctrlKey && !e.metaKey && document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') {
+        if (inInput) return;
+        if (e.key === '/' && !e.ctrlKey && !e.metaKey) {
+          e.preventDefault(); elSearch.focus(); return;
+        }
+        if (e.key === '?' && !e.ctrlKey && !e.metaKey) {
           e.preventDefault();
-          elSearch.focus();
+          document.getElementById('shortcuts-overlay').classList.toggle('open');
+          return;
         }
+        if (e.key === 't' && !e.ctrlKey && !e.metaKey) {
+          document.querySelector('.theme-toggle')?.click();
+          return;
+        }
+        // GG to scroll to top
+        if (e.key === 'g') {
+          const now = Date.now();
+          if (lastKey === 'g' && now - lastKeyTime < 500) {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            lastKey = ''; return;
+          }
+          lastKey = 'g'; lastKeyTime = now; return;
+        }
+        lastKey = '';
       });
     });
 
@@ -3113,6 +3743,7 @@
 
     setAuthUI();
     fetchNotifications();
+    fetchBadges();
     loadArchive();
 
     // ─── Realtime: live updates when the other person rates/reacts/notes ───
@@ -3130,6 +3761,32 @@
         fetchNotifications();
       })
       .subscribe();
+
+    // ─── Scroll-triggered card entrance animations ───
+    const cardObserver = new IntersectionObserver((entries) => {
+      entries.forEach((entry, i) => {
+        if (entry.isIntersecting) {
+          // stagger each card in the batch by 60ms
+          setTimeout(() => entry.target.classList.add('visible'), i * 60);
+          cardObserver.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.08, rootMargin: '0px 0px -40px 0px' });
+
+    // Re-observe cards after each render
+    const origAppendChild = elGrid.appendChild.bind(elGrid);
+    elGrid.appendChild = function(child) {
+      origAppendChild(child);
+      if (child.classList && child.classList.contains('entry')) {
+        cardObserver.observe(child);
+      }
+      return child;
+    };
+
+    // ─── Register Service Worker for PWA ───
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/sw.js').catch(() => {});
+    }
   </script>
 </body>
 </html>

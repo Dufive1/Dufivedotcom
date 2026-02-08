@@ -5,6 +5,22 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>DUFIVE | Biggest Disagreements</title>
 
+  <!-- Open Graph / Social -->
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://dufive.com/disagreements.html" />
+  <meta property="og:title" content="DUFIVE | Biggest Debates" />
+  <meta property="og:description" content="Where Greg and Peer disagree the most. See the biggest rating gaps." />
+  <meta property="og:image" content="https://dufive.com/og-image.png" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="DUFIVE | Biggest Debates" />
+  <meta name="twitter:description" content="Where Greg and Peer disagree the most." />
+  <meta name="twitter:image" content="https://dufive.com/og-image.png" />
+  <meta name="description" content="The biggest movie rating disagreements between Greg and Peer on DUFIVE." />
+  <meta name="theme-color" content="#0a0a0a" />
+  <link rel="manifest" href="/manifest.json" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:ital,wght@0,600;0,700;1,600&display=swap" rel="stylesheet">
 
@@ -22,6 +38,7 @@
       --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.06), 0 4px 6px -2px rgba(0,0,0,0.03);
       --radius: 8px; --transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
       --bar-track: #e5e5e5;
+      --skeleton-from: #e5e5e5; --skeleton-to: #f5f5f5;
       --heat-1: #fbbf24; --heat-2: #f59e0b; --heat-3: #ef4444; --heat-4: #dc2626; --heat-5: #991b1b;
     }
     [data-theme="dark"] {
@@ -33,6 +50,7 @@
       --peer: #60a5fa; --peer-bg: rgba(96, 165, 250, 0.1);
       --shadow: 0 1px 3px rgba(0,0,0,0.3); --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.4);
       --bar-track: #2d2d2d;
+      --skeleton-from: #2d2d2d; --skeleton-to: #3a3a3a;
       --heat-1: #fde68a; --heat-2: #fbbf24; --heat-3: #f87171; --heat-4: #ef4444; --heat-5: #dc2626;
     }
 
@@ -92,6 +110,41 @@
     .stat-value { font-size: 1.6rem; font-weight: 800; color: var(--text); line-height: 1; }
     .stat-label { font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.06em; margin-top: 4px; }
 
+    /* ───── Monthly Chart ───── */
+    .monthly-chart-section {
+      background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px;
+      padding: 20px 24px; margin-bottom: 28px; box-shadow: var(--shadow);
+    }
+    .monthly-chart-title {
+      font-size: 0.8rem; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.06em; color: var(--text-secondary); margin-bottom: 16px;
+    }
+    .monthly-chart {
+      display: flex; align-items: flex-end; gap: 6px; height: 120px; position: relative;
+    }
+    .month-col {
+      flex: 1; display: flex; flex-direction: column; align-items: center; gap: 2px;
+      position: relative;
+    }
+    .month-bars { display: flex; gap: 2px; align-items: flex-end; flex: 1; width: 100%; justify-content: center; }
+    .month-bar {
+      width: 10px; border-radius: 3px 3px 0 0; min-height: 2px;
+      transition: height 0.4s cubic-bezier(.4,0,.2,1);
+    }
+    .month-bar.greg-bar { background: var(--greg); }
+    .month-bar.peer-bar { background: var(--peer); }
+    .month-label {
+      font-size: 0.6rem; color: var(--text-muted); margin-top: 4px;
+      text-transform: uppercase; letter-spacing: 0.04em;
+    }
+    .monthly-legend {
+      display: flex; gap: 16px; justify-content: center; margin-top: 12px;
+    }
+    .legend-item { display: flex; align-items: center; gap: 5px; font-size: 0.7rem; color: var(--text-secondary); }
+    .legend-dot { width: 8px; height: 8px; border-radius: 50%; }
+    .greg-dot { background: var(--greg); }
+    .peer-dot { background: var(--peer); }
+
     /* ───── Filters ───── */
     .filters {
       display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; margin-bottom: 28px;
@@ -109,15 +162,14 @@
 
     .debate-card {
       background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px;
-      padding: 20px; box-shadow: var(--shadow); transition: var(--transition);
+      padding: 20px; box-shadow: var(--shadow);
       display: flex; gap: 16px; align-items: flex-start;
-      animation: fadeUp 0.3s ease forwards; opacity: 0;
+      opacity: 0; transform: translateY(16px);
+      transition: opacity 0.5s cubic-bezier(.4,0,.2,1), transform 0.5s cubic-bezier(.4,0,.2,1), box-shadow 0.2s ease;
     }
+    .debate-card.visible { opacity: 1; transform: translateY(0); }
     .debate-card:hover { box-shadow: var(--shadow-lg); }
-    @keyframes fadeUp {
-      from { opacity: 0; transform: translateY(8px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
+    /* scroll-triggered animation handled by IntersectionObserver */
 
     .debate-rank {
       font-size: 1.4rem; font-weight: 800; color: var(--text-muted); min-width: 32px;
@@ -130,11 +182,13 @@
       flex-shrink: 0; background: var(--bg-secondary);
     }
     .debate-poster img {
-      width: 100%; height: 100%; object-fit: cover;
+      width: 100%; height: 100%; object-fit: cover; object-position: center 20%;
     }
     .debate-poster-placeholder {
       width: 100%; height: 100%; display: flex; align-items: center; justify-content: center;
-      font-size: 1.6rem; opacity: 0.3;
+      font-size: 1.4rem; opacity: 0.5;
+      background: linear-gradient(160deg, #1a1a2e 0%, #16213e 40%, #0f3460 100%);
+      position: relative;
     }
 
     .debate-body { flex: 1; min-width: 0; }
@@ -197,6 +251,30 @@
     .loading {
       text-align: center; padding: 60px 20px; color: var(--text-muted); font-size: 0.9rem;
     }
+    /* Skeleton loading cards */
+    .skeleton-debate {
+      background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px;
+      padding: 20px; display: flex; gap: 16px; align-items: flex-start; margin-bottom: 12px;
+    }
+    .skeleton-rank {
+      width: 28px; height: 28px; border-radius: 50%;
+      background: linear-gradient(90deg, var(--skeleton-from, #2d2d2d) 25%, var(--skeleton-to, #3a3a3a) 50%, var(--skeleton-from, #2d2d2d) 75%);
+      background-size: 200% 100%; animation: shimmer 1.5s infinite; flex-shrink: 0;
+    }
+    .skeleton-poster-box {
+      width: 70px; height: 105px; border-radius: 8px; flex-shrink: 0;
+      background: linear-gradient(90deg, var(--skeleton-from, #2d2d2d) 25%, var(--skeleton-to, #3a3a3a) 50%, var(--skeleton-from, #2d2d2d) 75%);
+      background-size: 200% 100%; animation: shimmer 1.5s infinite;
+    }
+    .skeleton-body { flex: 1; display: flex; flex-direction: column; gap: 8px; }
+    .skeleton-line {
+      height: 14px; border-radius: 4px;
+      background: linear-gradient(90deg, var(--skeleton-from, #2d2d2d) 25%, var(--skeleton-to, #3a3a3a) 50%, var(--skeleton-from, #2d2d2d) 75%);
+      background-size: 200% 100%; animation: shimmer 1.5s infinite;
+    }
+    .skeleton-line.short { width: 40%; }
+    .skeleton-line.medium { width: 70%; }
+    @keyframes shimmer { to { background-position: -200% 0; } }
     .empty-state {
       text-align: center; padding: 60px 20px;
     }
@@ -313,6 +391,16 @@
       </div>
     </div>
 
+    <!-- Monthly Activity Chart -->
+    <div class="monthly-chart-section" id="monthly-chart-section" style="display:none;">
+      <div class="monthly-chart-title">Monthly Activity</div>
+      <div class="monthly-chart" id="monthly-chart"></div>
+      <div class="monthly-legend">
+        <span class="legend-item"><span class="legend-dot greg-dot"></span> Greg</span>
+        <span class="legend-item"><span class="legend-dot peer-dot"></span> Peer</span>
+      </div>
+    </div>
+
     <div class="filters" id="filters" style="display:none;">
       <div class="filter-chip active" data-filter="all">All Gaps</div>
       <div class="filter-chip" data-filter="3">3+ Stars Apart</div>
@@ -322,8 +410,12 @@
       <div class="filter-chip" data-filter="peer-higher">Peer Rated Higher</div>
     </div>
 
-    <div class="debate-list" id="debate-list">
-      <div class="loading">Loading disagreements...</div>
+    <div class="debate-list" id="debate-list" data-loading="true">
+      <div class="skeleton-debate"><div class="skeleton-rank"></div><div class="skeleton-poster-box"></div><div class="skeleton-body"><div class="skeleton-line"></div><div class="skeleton-line medium"></div><div class="skeleton-line short"></div></div></div>
+      <div class="skeleton-debate"><div class="skeleton-rank"></div><div class="skeleton-poster-box"></div><div class="skeleton-body"><div class="skeleton-line"></div><div class="skeleton-line medium"></div><div class="skeleton-line short"></div></div></div>
+      <div class="skeleton-debate"><div class="skeleton-rank"></div><div class="skeleton-poster-box"></div><div class="skeleton-body"><div class="skeleton-line"></div><div class="skeleton-line medium"></div><div class="skeleton-line short"></div></div></div>
+      <div class="skeleton-debate"><div class="skeleton-rank"></div><div class="skeleton-poster-box"></div><div class="skeleton-body"><div class="skeleton-line"></div><div class="skeleton-line medium"></div><div class="skeleton-line short"></div></div></div>
+      <div class="skeleton-debate"><div class="skeleton-rank"></div><div class="skeleton-poster-box"></div><div class="skeleton-body"><div class="skeleton-line"></div><div class="skeleton-line medium"></div><div class="skeleton-line short"></div></div></div>
     </div>
 
     <footer class="site-footer">
@@ -378,7 +470,7 @@
       while (keepGoing) {
         const { data, error } = await supabaseClient
           .from('greg_films')
-          .select('movie_key, title, poster_url, greg_rating, letterboxd_url')
+          .select('movie_key, title, poster_url, greg_rating, letterboxd_url, watched_date')
           .range(from, from + BATCH - 1);
         if (error) throw new Error(error.message);
         const rows = data || [];
@@ -395,10 +487,10 @@
         const [gregFilms, peerRes, gregWebRes, notesRes] = await Promise.all([
           fetchAllGregFilms(),
           supabaseClient.from('ratings')
-            .select('movie_key, movie_title, rating')
+            .select('movie_key, movie_title, rating, created_at')
             .eq('reviewer', 'peer'),
           supabaseClient.from('ratings')
-            .select('movie_key, rating')
+            .select('movie_key, rating, created_at')
             .eq('reviewer', 'greg'),
           supabaseClient.from('film_arguments')
             .select('movie_key, author, argument, created_at')
@@ -476,6 +568,9 @@
         document.getElementById('stats-strip').style.display = 'flex';
         document.getElementById('filters').style.display = 'flex';
 
+        // Build monthly activity chart
+        buildMonthlyChart(gregFilms, peerRes.data || [], gregWebRes.data || []);
+
         updateFilterCounts();
         renderDebates();
 
@@ -483,6 +578,73 @@
         document.getElementById('debate-list').innerHTML =
           `<div class="empty-state"><div class="empty-text">Error: ${err.message}</div></div>`;
       }
+    }
+
+    function buildMonthlyChart(gregFilms, peerRatings, gregWebRatings) {
+      const MONTHS_TO_SHOW = 6;
+      const monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+      const now = new Date();
+
+      // Build month keys for last N months
+      const monthKeys = [];
+      for (let i = MONTHS_TO_SHOW - 1; i >= 0; i--) {
+        const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+        monthKeys.push({ key: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`, label: monthNames[d.getMonth()] });
+      }
+
+      // Count Greg films by watched_date month
+      const gregCounts = {};
+      gregFilms.forEach(f => {
+        if (f.watched_date) {
+          const key = f.watched_date.substring(0, 7);
+          gregCounts[key] = (gregCounts[key] || 0) + 1;
+        }
+      });
+      // Also count Greg web ratings by month
+      gregWebRatings.forEach(r => {
+        if (r.created_at) {
+          const key = r.created_at.substring(0, 7);
+          gregCounts[key] = (gregCounts[key] || 0) + 1;
+        }
+      });
+
+      // Count Peer ratings by month
+      const peerCounts = {};
+      peerRatings.forEach(r => {
+        if (r.created_at) {
+          const key = r.created_at.substring(0, 7);
+          peerCounts[key] = (peerCounts[key] || 0) + 1;
+        }
+      });
+
+      // Find max for scaling
+      let maxCount = 1;
+      monthKeys.forEach(m => {
+        maxCount = Math.max(maxCount, gregCounts[m.key] || 0, peerCounts[m.key] || 0);
+      });
+
+      const chartEl = document.getElementById('monthly-chart');
+      chartEl.innerHTML = '';
+
+      monthKeys.forEach(m => {
+        const gCount = gregCounts[m.key] || 0;
+        const pCount = peerCounts[m.key] || 0;
+        const gHeight = Math.max(2, (gCount / maxCount) * 100);
+        const pHeight = Math.max(2, (pCount / maxCount) * 100);
+
+        const col = document.createElement('div');
+        col.className = 'month-col';
+        col.innerHTML = `
+          <div class="month-bars">
+            <div class="month-bar greg-bar" style="height:${gHeight}px" title="Greg: ${gCount} films"></div>
+            <div class="month-bar peer-bar" style="height:${pHeight}px" title="Peer: ${pCount} ratings"></div>
+          </div>
+          <div class="month-label">${m.label}</div>
+        `;
+        chartEl.appendChild(col);
+      });
+
+      document.getElementById('monthly-chart-section').style.display = 'block';
     }
 
     function updateFilterCounts() {
@@ -530,7 +692,7 @@
         const pctFill = Math.round((d.diff / maxDiff) * 100);
 
         const posterHtml = d.posterUrl
-          ? `<img src="${d.posterUrl}" alt="${decodeHtml(d.title)}" loading="lazy" onerror="this.parentElement.innerHTML='<div class=\\'debate-poster-placeholder\\'>🎬</div>'">`
+          ? `<img src="${d.posterUrl}" alt="${decodeHtml(d.title)}" loading="lazy" onerror="this.style.display='none';this.parentElement.insertAdjacentHTML('beforeend','<div class=\\'debate-poster-placeholder\\'>&#127916;</div>')">`
           : `<div class="debate-poster-placeholder">\u{1F3AC}</div>`;
 
         const notesId = `notes-${d.movieKey}`;
@@ -550,7 +712,7 @@
           : `<div class="debate-no-notes">No reviews yet — be the first to weigh in!</div>`;
 
         return `
-          <div class="debate-card" style="animation-delay: ${Math.min(i * 0.04, 0.8)}s">
+          <div class="debate-card">
             <div class="debate-rank ${rank <= 3 ? 'top-3' : ''}">${rank}</div>
             <div class="debate-poster">${posterHtml}</div>
             <div class="debate-body">
@@ -608,6 +770,37 @@
       localStorage.setItem('dufive-theme', next);
       document.getElementById('theme-icon').textContent = next === 'dark' ? '\u2600' : '\u263E';
     });
+
+    // ─── Scroll-triggered card entrance animations ───
+    const debateObserver = new IntersectionObserver((entries) => {
+      entries.forEach((entry, i) => {
+        if (entry.isIntersecting) {
+          setTimeout(() => entry.target.classList.add('visible'), i * 60);
+          debateObserver.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.08, rootMargin: '0px 0px -40px 0px' });
+
+    // Observe debate cards after render via MutationObserver
+    const debateGrid = document.getElementById('debates');
+    if (debateGrid) {
+      new MutationObserver(() => {
+        debateGrid.querySelectorAll('.debate-card:not(.visible)').forEach(c => debateObserver.observe(c));
+      }).observe(debateGrid, { childList: true, subtree: true });
+    }
+
+    // ─── Realtime: auto-refresh when data changes ───
+    supabaseClient
+      .channel('debates-live')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'ratings' }, () => loadData())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'rating_reactions' }, () => loadData())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'film_arguments' }, () => loadData())
+      .subscribe();
+
+    // ─── Register Service Worker ───
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/sw.js').catch(() => {});
+    }
 
     // Go
     loadData();
