@@ -300,9 +300,85 @@
       aspect-ratio: 2/3; background: var(--border-light); overflow: hidden;
       position: relative; border: 1px solid var(--text);
     }
-    .queue-card:hover .queue-poster { border-width: 2px; }
+    .queue-card:hover .queue-poster img,
+    .queue-card:hover .queue-poster .queue-poster-fallback { opacity: 0.85; }
     .queue-poster img {
-      width: 100%; height: 100%; object-fit: cover; object-position: center 20%; transition: none;
+      width: 100%; height: 100%; object-fit: cover; object-position: center 20%;
+      transition: opacity 0.15s ease;
+    }
+
+    /* ═══ Film Detail Overlay (enlarged poster + info) ═══ */
+    .film-detail-overlay {
+      position: fixed; inset: 0;
+      background: var(--overlay-bg); backdrop-filter: blur(6px);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 10000; padding: 24px;
+      animation: fdFadeIn 0.25s ease;
+    }
+    @keyframes fdFadeIn { from { opacity: 0; } to { opacity: 1; } }
+    .film-detail-card {
+      background: var(--bg); border: 1px solid var(--border);
+      display: flex; gap: 24px; max-width: 600px; width: 100%;
+      padding: 24px;
+      animation: fdSlideUp 0.3s cubic-bezier(0.4,0,0.2,1);
+      max-height: 85vh; overflow-y: auto;
+    }
+    @keyframes fdSlideUp {
+      from { opacity: 0; transform: translateY(12px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .fd-poster {
+      width: 200px; min-width: 200px; flex-shrink: 0;
+    }
+    .fd-poster img {
+      width: 100%; aspect-ratio: 2/3; object-fit: cover; border: 1px solid var(--text);
+    }
+    .fd-poster-fallback {
+      width: 100%; aspect-ratio: 2/3;
+      background: var(--bg-secondary); border: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'Playfair Display', serif; font-size: 1rem; color: var(--text-muted);
+    }
+    .fd-info {
+      flex: 1; display: flex; flex-direction: column; gap: 8px; min-width: 0;
+    }
+    .fd-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.25rem; font-weight: 700;
+      letter-spacing: -0.02em; color: var(--text); line-height: 1.2;
+    }
+    .fd-meta {
+      font-family: var(--mono); font-size: 0.7rem;
+      color: var(--text-muted); text-transform: uppercase;
+      letter-spacing: 0.06em; line-height: 1.4;
+    }
+    .fd-cast {
+      font-family: var(--mono); font-size: 0.65rem;
+      color: var(--text-secondary); letter-spacing: 0.03em; line-height: 1.4;
+    }
+    .fd-tagline {
+      font-family: 'Lora', serif; font-size: 0.8rem;
+      font-style: italic; color: var(--text-secondary); line-height: 1.4;
+    }
+    .fd-genres { display: flex; flex-wrap: wrap; gap: 4px; }
+    .fd-genre {
+      font-family: var(--mono); font-size: 0.55rem;
+      text-transform: uppercase; letter-spacing: 0.08em;
+      padding: 2px 6px; border: 1px solid var(--border); color: var(--text-secondary);
+    }
+    .fd-synopsis {
+      font-family: 'Lora', serif; font-size: 0.8rem;
+      font-style: italic; color: var(--text); line-height: 1.6; margin-top: 4px;
+    }
+    .fd-loading {
+      font-family: var(--mono); font-size: 0.75rem;
+      color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.1em;
+      padding: 40px 0; text-align: center;
+    }
+    @media (max-width: 600px) {
+      .film-detail-card { flex-direction: column; gap: 16px; padding: 20px; }
+      .fd-poster { width: 140px; min-width: 140px; align-self: center; }
+      .fd-title { font-size: 1.1rem; }
     }
     .queue-poster-fallback {
       width: 100%; height: 100%; display: flex; flex-direction: column;
@@ -384,8 +460,18 @@
     }
     .queue-watched-btn:hover { background: var(--text); color: var(--bg); }
 
-    /* Days on queue label */
-    .queue-days {
+    /* Days on queue — poster corner stamp */
+    .queue-days-stamp {
+      position: absolute; top: 0; left: 0;
+      font-family: var(--mono); font-size: 0.5rem; font-weight: 700;
+      color: #fff; background: rgba(0,0,0,0.6);
+      padding: 3px 6px; letter-spacing: 0.03em;
+      line-height: 1; z-index: 3;
+      text-transform: lowercase;
+      pointer-events: none;
+    }
+    /* Suggested-by line below poster */
+    .queue-suggested {
       font-family: var(--mono); font-size: 0.5rem;
       color: var(--text-muted); letter-spacing: 0.04em;
       margin-top: 2px;
@@ -634,6 +720,10 @@
   const SEARCH_URL = 'https://brgxorrpfberfcyeugzq.supabase.co/functions/v1/search-films';
   const supabaseClient = window.supabase.createClient(SB_URL, SB_KEY);
 
+  const TMDB_KEY = 'bfb6e869cd271ba3ac952a29f9279f09';
+  const TMDB_BASE = 'https://api.themoviedb.org/3';
+  const tmdbCache = {};
+
   let currentUser = null;
   let authToken = null;
   let allGregFilms = [];
@@ -709,6 +799,62 @@
     const items = data || [];
     queueItems = items.filter(i => i.status === 'queued');
     watchedItems = items.filter(i => i.status === 'watched').slice(0, 10);
+  }
+
+  // ───── TMDB Details ─────
+  async function fetchTMDBDetails(rawTitle, year) {
+    const txt = document.createElement('textarea');
+    txt.innerHTML = rawTitle;
+    let title = txt.value;
+
+    const yearMatch = title.match(/\s*\((\d{4})\)\s*$/);
+    if (yearMatch) {
+      if (!year) year = yearMatch[1];
+      title = title.replace(/\s*\(\d{4}\)\s*$/, '').trim();
+    }
+
+    const cacheKey = title + '-' + (year || '');
+    if (tmdbCache[cacheKey]) return tmdbCache[cacheKey];
+    try {
+      let searchUrl = TMDB_BASE + '/search/movie?api_key=' + TMDB_KEY + '&query=' + encodeURIComponent(title);
+      if (year) searchUrl += '&year=' + year;
+      let searchRes = await fetch(searchUrl);
+      if (!searchRes.ok) return null;
+      let searchData = await searchRes.json();
+
+      if ((!searchData.results || searchData.results.length === 0) && year) {
+        const fallbackUrl = TMDB_BASE + '/search/movie?api_key=' + TMDB_KEY + '&query=' + encodeURIComponent(title);
+        searchRes = await fetch(fallbackUrl);
+        if (!searchRes.ok) return null;
+        searchData = await searchRes.json();
+      }
+
+      if (!searchData.results || searchData.results.length === 0) return null;
+      const movieId = searchData.results[0].id;
+
+      const detailUrl = TMDB_BASE + '/movie/' + movieId + '?api_key=' + TMDB_KEY + '&append_to_response=credits';
+      const detailRes = await fetch(detailUrl);
+      if (!detailRes.ok) return null;
+      const d = await detailRes.json();
+
+      const director = d.credits?.crew?.find(c => c.job === 'Director')?.name || '';
+      const genres = (d.genres || []).map(g => g.name).slice(0, 3);
+      const runtime = d.runtime ? d.runtime + ' min' : '';
+      const cast = (d.credits?.cast || []).slice(0, 4).map(c => c.name);
+      const tagline = d.tagline || '';
+
+      const result = {
+        title: d.title || title,
+        year: d.release_date ? d.release_date.substring(0, 4) : (year || ''),
+        director, runtime, genres, cast, tagline,
+        overview: d.overview || '',
+      };
+      tmdbCache[cacheKey] = result;
+      return result;
+    } catch (e) {
+      console.error('[TMDB] Error:', e);
+      return null;
+    }
   }
 
   // ───── Render ─────
@@ -793,6 +939,13 @@
           poster.appendChild(fb);
         }
 
+        // Days on queue stamp (top-left corner)
+        const daysOnQueue = Math.floor((Date.now() - new Date(item.added_at).getTime()) / 86400000);
+        const stamp = document.createElement('div');
+        stamp.className = 'queue-days-stamp';
+        stamp.textContent = daysOnQueue + 'd on queue';
+        poster.appendChild(stamp);
+
         // Remove button (logged-in users only)
         if (canAct()) {
           const rm = document.createElement('button');
@@ -837,12 +990,11 @@
           info.appendChild(note);
         }
 
-        // Days on the queue (all visitors)
-        const daysOnQueue = Math.floor((Date.now() - new Date(item.added_at).getTime()) / 86400000);
-        const daysEl = document.createElement('div');
-        daysEl.className = 'queue-days';
-        daysEl.textContent = daysOnQueue + 'd on the queue';
-        info.appendChild(daysEl);
+        // Suggested by
+        const suggested = document.createElement('div');
+        suggested.className = 'queue-suggested';
+        suggested.textContent = 'added by ' + (item.suggested_by || 'visitor');
+        info.appendChild(suggested);
 
         // Reviewer power tools: pill toggles + watched button
         if (canAct()) {
@@ -898,12 +1050,12 @@
 
         card.appendChild(info);
 
-        // Click to open on TMDB
-        card.style.cursor = 'pointer';
-        card.onclick = () => {
-          const searchUrl = 'https://www.themoviedb.org/search?query=' + encodeURIComponent(item.title);
-          window.open(searchUrl, '_blank');
-        };
+        // Click poster to open enlarged detail overlay
+        poster.style.cursor = 'pointer';
+        poster.addEventListener('click', (e) => {
+          if (e.target.closest('.queue-remove')) return;
+          openFilmDetail(item);
+        });
 
         grid.appendChild(card);
       });
@@ -1341,6 +1493,80 @@
       }
     });
   }
+
+  // ───── Film Detail Overlay ─────
+  function openFilmDetail(item) {
+    closeFilmDetail(); // close any existing
+
+    const overlay = document.createElement('div');
+    overlay.className = 'film-detail-overlay';
+    overlay.id = 'film-detail-overlay';
+
+    const card = document.createElement('div');
+    card.className = 'film-detail-card';
+
+    // Poster side
+    const posterCol = document.createElement('div');
+    posterCol.className = 'fd-poster';
+    if (item.poster_url) {
+      const img = document.createElement('img');
+      img.src = item.poster_url;
+      img.alt = item.title;
+      img.onerror = function() {
+        this.outerHTML = '<div class="fd-poster-fallback">D5</div>';
+      };
+      posterCol.appendChild(img);
+    } else {
+      const fb = document.createElement('div');
+      fb.className = 'fd-poster-fallback';
+      fb.textContent = 'D5';
+      posterCol.appendChild(fb);
+    }
+    card.appendChild(posterCol);
+
+    // Info side
+    const infoCol = document.createElement('div');
+    infoCol.className = 'fd-info';
+    infoCol.innerHTML = '<div class="fd-loading">Loading\u2026</div>';
+    card.appendChild(infoCol);
+
+    overlay.appendChild(card);
+    document.body.appendChild(overlay);
+    document.body.style.overflow = 'hidden';
+
+    // Dismiss on click outside card
+    overlay.addEventListener('click', (e) => {
+      if (e.target === overlay) closeFilmDetail();
+    });
+
+    // Fetch TMDB data
+    fetchTMDBDetails(item.title).then(data => {
+      if (data) {
+        const genreHtml = data.genres.map(g => '<span class="fd-genre">' + g + '</span>').join('');
+        const metaParts = [data.director, data.runtime, data.year].filter(Boolean);
+        const castLine = data.cast.length ? data.cast.join(', ') : '';
+        infoCol.innerHTML =
+          '<div class="fd-title">' + escHtml(data.title) + '</div>' +
+          '<div class="fd-meta">' + metaParts.join(' \u2022 ') + '</div>' +
+          (castLine ? '<div class="fd-cast">' + castLine + '</div>' : '') +
+          (genreHtml ? '<div class="fd-genres">' + genreHtml + '</div>' : '') +
+          (data.tagline ? '<div class="fd-tagline">\u201C' + escHtml(data.tagline) + '\u201D</div>' : '') +
+          (data.overview ? '<div class="fd-synopsis">' + escHtml(data.overview) + '</div>' : '');
+      } else {
+        infoCol.innerHTML = '<div class="fd-loading">No details found</div>';
+      }
+    });
+  }
+
+  function closeFilmDetail() {
+    const el = document.getElementById('film-detail-overlay');
+    if (el) { el.remove(); document.body.style.overflow = ''; }
+  }
+
+  // Escape key: close film detail overlay
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') closeFilmDetail();
+  });
 
   // ───── Init ─────
   async function init() {
