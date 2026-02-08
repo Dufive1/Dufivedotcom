@@ -644,6 +644,109 @@
     }
     .sort-select:focus { outline: none; border-bottom-color: var(--text); }
 
+    /* ───── Log Film Button ───── */
+    .log-film-btn {
+      font-family: var(--mono);
+      font-size: 0.7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      padding: 8px 14px;
+      border: 1px solid var(--text);
+      background: transparent;
+      color: var(--text);
+      cursor: pointer;
+      white-space: nowrap;
+      transition: var(--transition);
+    }
+    .log-film-btn:hover { background: var(--text); color: var(--bg); }
+
+    /* ───── Log Film Modal ───── */
+    .log-film-overlay {
+      position: fixed; inset: 0;
+      background: var(--overlay-bg);
+      backdrop-filter: blur(4px);
+      display: none; align-items: flex-start; justify-content: center;
+      z-index: 10000;
+      padding: 80px 16px 16px;
+      animation: fadeIn 0.2s ease;
+    }
+    .log-film-overlay.visible { display: flex; }
+    .log-film-panel {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      max-width: 480px; width: 100%;
+      padding: 28px;
+      animation: slideUp 0.3s cubic-bezier(0.4,0,0.2,1);
+      max-height: 80vh;
+      display: flex; flex-direction: column;
+    }
+    .log-film-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.25rem; font-weight: 400;
+      letter-spacing: -0.02em; color: var(--text);
+      margin-bottom: 16px;
+    }
+    .log-film-search {
+      width: 100%; padding: 10px 12px;
+      border: 2px solid var(--text); border-radius: 0;
+      font-family: inherit; font-size: 0.875rem;
+      background: transparent; color: var(--text);
+    }
+    .log-film-search:focus { outline: none; }
+    .log-film-search::placeholder { color: var(--text-muted); }
+    .log-film-results {
+      margin-top: 16px;
+      overflow-y: auto;
+      flex: 1;
+      display: flex; flex-direction: column; gap: 0;
+    }
+    .log-film-row {
+      display: flex; align-items: center; gap: 12px;
+      padding: 10px 8px;
+      border-bottom: 1px solid var(--border-light);
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .log-film-row:hover { background: var(--border-light); }
+    .log-film-row:last-child { border-bottom: none; }
+    .log-film-poster {
+      width: 36px; height: 54px;
+      object-fit: cover;
+      background: var(--border-light);
+      flex-shrink: 0;
+      border: 1px solid var(--border);
+    }
+    .log-film-poster-empty {
+      width: 36px; height: 54px;
+      background: var(--border-light);
+      flex-shrink: 0;
+      border: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.5rem; color: var(--text-muted);
+    }
+    .log-film-info { flex: 1; min-width: 0; }
+    .log-film-info-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 0.85rem; font-weight: 700;
+      color: var(--text);
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .log-film-info-year {
+      font-family: var(--mono);
+      font-size: 0.65rem;
+      color: var(--text-muted);
+      letter-spacing: 0.04em;
+    }
+    .log-film-hint {
+      font-family: var(--mono);
+      font-size: 0.65rem;
+      color: var(--text-muted);
+      text-align: center;
+      padding: 24px 0;
+      letter-spacing: 0.04em;
+    }
+
     .filter-chips { display: flex; gap: 4px; flex-wrap: wrap; align-items: center; }
 
     .filter-chip {
@@ -1452,6 +1555,14 @@
       to { opacity: 1; transform: translateY(0); }
     }
 
+    @keyframes entryHighlight {
+      0% { outline: 2px solid var(--text); outline-offset: 2px; }
+      100% { outline: 2px solid transparent; outline-offset: 2px; }
+    }
+    .entry.highlight-flash {
+      animation: entryHighlight 1.8s ease-out forwards;
+    }
+
     .modal-title { font-family: 'Playfair Display', serif; font-size: 1.5rem; font-weight: 400; margin-bottom: 8px; letter-spacing: -0.02em; color: var(--text); }
     .modal-subtitle { font-size: 0.9375rem; color: var(--text-secondary); margin-bottom: 28px; line-height: 1.5; }
     .reviewer-select { margin-bottom: 24px; }
@@ -1724,10 +1835,11 @@
       .stat-card:last-child .stat-value { font-size: 0.7rem; }
       .stat-label { font-size: 0.55rem; }
 
-      .toolbar { gap: 10px; margin-bottom: 20px; }
+      .toolbar { gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
       .search-input { font-size: 0.875rem; padding: 10px 12px; }
       .search-wrapper { flex: 1; }
-      .sort-select { font-size: 0.7rem; }
+      .log-film-btn { font-size: 0.6rem; padding: 6px 10px; order: 2; }
+      .sort-select { font-size: 0.7rem; order: 3; }
 
       .filter-chips { gap: 4px; }
       .filter-chip { font-size: 0.6rem; }
@@ -1780,7 +1892,7 @@
       .badges-section, .discussion-section, .react-trigger, .poster-badge,
       .poster-info, .star-picker-overlay, .reveal-overlay, .reviewer-picker-overlay,
       .shortcuts-overlay, .reaction-picker-modal, #error-log, .new-badge,
-      .search-wrapper, .sort-select, .search-clear { display: none !important; }
+      .search-wrapper, .sort-select, .search-clear, .log-film-btn, .log-film-overlay { display: none !important; }
 
       .container { max-width: 100%; padding: 0; }
 
@@ -1892,6 +2004,7 @@
         <input type="text" class="search-input" id="search-input" placeholder="Search films..." autocomplete="off" />
         <button class="search-clear" id="search-clear" aria-label="Clear search">&times;</button>
       </div>
+      <button class="log-film-btn" id="log-film-btn" style="display:none;">+ Log Film</button>
       <select class="sort-select" id="sort-select">
         <option value="date">Newest First</option>
         <option value="greg-high">Greg: High &rarr; Low</option>
@@ -1931,6 +2044,17 @@
 
   <!-- Scroll to Top -->
   <button class="scroll-top-btn" id="scroll-top" aria-label="Scroll to top">&uarr;</button>
+
+  <!-- Log Film Modal -->
+  <div id="log-film-modal" class="log-film-overlay">
+    <div class="log-film-panel">
+      <h2 class="log-film-title">Log a Film</h2>
+      <input type="text" class="log-film-search" id="log-film-search" placeholder="Search TMDB for a title..." autocomplete="off" />
+      <div class="log-film-results" id="log-film-results">
+        <div class="log-film-hint">Type a film title to search</div>
+      </div>
+    </div>
+  </div>
 
   <!-- Login Modal -->
   <div id="login-modal" class="modal-overlay">
@@ -2196,6 +2320,7 @@
         elLogoutBtn.classList.add('visible');
         elNotifWrapper.classList.add('visible');
         elSyncBtn.classList.add('visible');
+        elLogFilmBtn.style.display = '';
       } else {
         elAuthBtn.textContent = 'Reviewer Login';
         elAuthBtn.classList.remove('greg-active', 'peer-active', 'admin-active');
@@ -2203,6 +2328,7 @@
         elNotifWrapper.classList.remove('visible');
         elNotifDropdown.classList.remove('open');
         elSyncBtn.classList.remove('visible');
+        elLogFilmBtn.style.display = 'none';
       }
     }
 
@@ -2807,6 +2933,7 @@
 
         const card = document.createElement('div');
         card.className = isInitialRender ? 'entry' : 'entry no-animate';
+        card.dataset.movieKey = movieKey;
 
         // New badge
         if (hasNewNotes) {
@@ -3742,6 +3869,156 @@
     }
 
     /* ═══════════════════════════════════════════
+       LOG FILM FEATURE
+    ═══════════════════════════════════════════ */
+    const elLogFilmBtn = document.getElementById('log-film-btn');
+    const elLogFilmModal = document.getElementById('log-film-modal');
+    const elLogFilmSearch = document.getElementById('log-film-search');
+    const elLogFilmResults = document.getElementById('log-film-results');
+    let logFilmDebounce = null;
+
+    function openLogFilmModal() {
+      elLogFilmModal.classList.add('visible');
+      elLogFilmSearch.value = '';
+      elLogFilmResults.innerHTML = '<div class="log-film-hint">Type a film title to search</div>';
+      setTimeout(() => elLogFilmSearch.focus(), 100);
+    }
+
+    function closeLogFilmModal() {
+      elLogFilmModal.classList.remove('visible');
+      elLogFilmSearch.value = '';
+      elLogFilmResults.innerHTML = '<div class="log-film-hint">Type a film title to search</div>';
+    }
+
+    elLogFilmBtn.addEventListener('click', openLogFilmModal);
+
+    elLogFilmModal.addEventListener('click', (e) => {
+      if (e.target === elLogFilmModal) closeLogFilmModal();
+    });
+
+    function generateMovieKey(title) {
+      return title.toLowerCase()
+        .replace(/['']/g, '')
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '');
+    }
+
+    elLogFilmSearch.addEventListener('input', () => {
+      clearTimeout(logFilmDebounce);
+      const q = elLogFilmSearch.value.trim();
+      if (q.length < 2) {
+        elLogFilmResults.innerHTML = '<div class="log-film-hint">Type a film title to search</div>';
+        return;
+      }
+      elLogFilmResults.innerHTML = '<div class="log-film-hint">Searching...</div>';
+      logFilmDebounce = setTimeout(() => searchTMDBForLogFilm(q), 400);
+    });
+
+    async function searchTMDBForLogFilm(query) {
+      try {
+        const url = TMDB_BASE + '/search/movie?api_key=' + TMDB_KEY + '&query=' + encodeURIComponent(query);
+        const resp = await fetch(url);
+        const json = await resp.json();
+        const results = (json.results || []).slice(0, 10);
+
+        if (results.length === 0) {
+          elLogFilmResults.innerHTML = '<div class="log-film-hint">No results found</div>';
+          return;
+        }
+
+        elLogFilmResults.innerHTML = '';
+        results.forEach(movie => {
+          const row = document.createElement('div');
+          row.className = 'log-film-row';
+
+          const year = movie.release_date ? movie.release_date.substring(0, 4) : '';
+
+          if (movie.poster_path) {
+            row.innerHTML = `
+              <img class="log-film-poster" src="https://image.tmdb.org/t/p/w92${movie.poster_path}" alt="" loading="lazy" />
+              <div class="log-film-info">
+                <div class="log-film-info-title">${movie.title}</div>
+                <div class="log-film-info-year">${year}</div>
+              </div>`;
+          } else {
+            row.innerHTML = `
+              <div class="log-film-poster-empty">—</div>
+              <div class="log-film-info">
+                <div class="log-film-info-title">${movie.title}</div>
+                <div class="log-film-info-year">${year}</div>
+              </div>`;
+          }
+
+          row.addEventListener('click', () => handleLogFilmSelect(movie));
+          elLogFilmResults.appendChild(row);
+        });
+      } catch (err) {
+        console.error('[Log Film] TMDB search error:', err);
+        elLogFilmResults.innerHTML = '<div class="log-film-hint">Search failed — try again</div>';
+      }
+    }
+
+    async function handleLogFilmSelect(movie) {
+      const movieKey = generateMovieKey(movie.title);
+      const year = movie.release_date ? movie.release_date.substring(0, 4) : '';
+
+      // Check if film already exists in the ledger
+      const existing = cachedGregItems.find(e => getMovieKey(e) === movieKey);
+      if (existing) {
+        closeLogFilmModal();
+        showToast('Already in the ledger', 'info', 2500);
+
+        // Clear search + filters so the film is visible
+        elSearch.value = '';
+        elSearch.dispatchEvent(new Event('input'));
+        document.querySelector('.filter-chip[data-filter="all"]')?.click();
+
+        // Wait a tick for rerender then scroll to the card
+        requestAnimationFrame(() => {
+          const targetCard = document.querySelector(`.entry[data-movie-key="${movieKey}"]`);
+          if (targetCard) {
+            targetCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            targetCard.classList.add('highlight-flash');
+            targetCard.addEventListener('animationend', () => {
+              targetCard.classList.remove('highlight-flash');
+            }, { once: true });
+          }
+        });
+        return;
+      }
+
+      // New film — submit to backend
+      const posterUrl = movie.poster_path ? `https://image.tmdb.org/t/p/w342${movie.poster_path}` : null;
+      const watchedDate = new Date().toISOString().substring(0, 10);
+
+      try {
+        elLogFilmResults.innerHTML = '<div class="log-film-hint">Adding film...</div>';
+        const result = await authenticatedRequest('add_film', movieKey, {
+          title: movie.title,
+          posterUrl,
+          year,
+          watchedDate
+        });
+
+        if (result) {
+          closeLogFilmModal();
+          showToast('Film added', 'success', 2500);
+          await loadArchive(false);
+        }
+      } catch (err) {
+        if (err.message && err.message.includes('already')) {
+          // Backend 409 duplicate guard
+          closeLogFilmModal();
+          showToast('Already in the ledger', 'info', 2500);
+          await loadArchive(true);
+        } else {
+          showToast('Error: ' + err.message, 'error');
+          elLogFilmResults.innerHTML = '<div class="log-film-hint">Failed — try again</div>';
+        }
+      }
+    }
+
+    /* ═══════════════════════════════════════════
        INIT
     ═══════════════════════════════════════════ */
     document.addEventListener('DOMContentLoaded', () => {
@@ -3771,6 +4048,7 @@
         const inInput = tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT';
 
         if (e.key === 'Escape') {
+          if (elLogFilmModal.classList.contains('visible')) { closeLogFilmModal(); return; }
           const sc = document.getElementById('shortcuts-overlay');
           if (sc.classList.contains('open')) { sc.classList.remove('open'); return; }
           const revealedPosters = document.querySelectorAll('.poster-frame.revealed');
