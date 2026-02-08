@@ -217,6 +217,7 @@
     .brand {
       font-weight: 400;
       font-size: 0.55rem;
+      line-height: 1;
       text-decoration: none;
       color: var(--text-muted);
       letter-spacing: 0.35em;
@@ -588,8 +589,9 @@
 
     .search-input {
       width: 100%;
-      padding: 12px 14px 12px 14px;
-      border: 2px solid var(--text);
+      padding: 12px 0;
+      border: none;
+      border-bottom: 1px solid var(--border);
       border-radius: 0;
       font-family: inherit;
       font-size: 0.9375rem;
@@ -599,7 +601,7 @@
     }
     .search-input:focus {
       outline: none;
-      border-color: var(--text);
+      border-bottom-color: var(--text);
     }
     .search-input::placeholder { color: var(--text-muted); letter-spacing: 0.02em; }
 
