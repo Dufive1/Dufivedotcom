@@ -9,13 +9,13 @@
   <meta property="og:type" content="website" />
   <meta property="og:url" content="https://dufive.com/" />
   <meta property="og:title" content="DUFIVE | The Ledger" />
-  <meta property="og:description" content="Movies rated in stars, not words. A collaborative film review ledger." />
+  <meta property="og:description" content="Unanimously Divided. A collaborative film review ledger." />
   <meta property="og:image" content="https://dufive.com/og-image.png" />
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:title" content="DUFIVE | The Ledger" />
-  <meta name="twitter:description" content="Movies rated in stars, not words." />
+  <meta name="twitter:description" content="Unanimously Divided." />
   <meta name="twitter:image" content="https://dufive.com/og-image.png" />
-  <meta name="description" content="Movies rated in stars, not words. A collaborative film review ledger by Greg and Peer." />
+  <meta name="description" content="Unanimously Divided. A collaborative film review ledger by Greg and Peer." />
   <meta name="theme-color" content="#0a0a0a" />
   <link rel="manifest" href="/manifest.json" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -215,21 +215,22 @@
 
     .brand {
       font-weight: 400;
-      font-size: 0.8rem;
+      font-size: 0.55rem;
       text-decoration: none;
-      color: var(--text);
-      letter-spacing: 0.25em;
+      color: var(--text-muted);
+      letter-spacing: 0.35em;
       text-transform: uppercase;
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 12px;
     }
     .brand-monogram {
-      width: 32px; height: 32px; border-radius: 50%;
-      border: 1.5px solid var(--text);
+      width: 48px; height: 48px; border-radius: 50%;
+      border: 2px solid var(--text);
       display: flex; align-items: center; justify-content: center;
       font-family: 'Playfair Display', serif;
-      font-size: 0.7rem; font-weight: 600; letter-spacing: 0;
+      font-size: 1.1rem; font-weight: 600; letter-spacing: -0.02em;
+      color: var(--text);
     }
 
     .nav-controls { display: flex; gap: 16px; align-items: center; }
@@ -537,14 +538,19 @@
     }
 
     .search-icon {
-      display: none;
+      position: absolute;
+      right: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 0.875rem;
+      color: var(--text-muted);
+      pointer-events: none;
     }
 
     .search-input {
       width: 100%;
-      padding: 10px 30px 10px 0;
-      border: none;
-      border-bottom: 2px solid var(--text);
+      padding: 12px 38px 12px 14px;
+      border: 2px solid var(--text);
       border-radius: 0;
       font-family: inherit;
       font-size: 0.9375rem;
@@ -554,7 +560,7 @@
     }
     .search-input:focus {
       outline: none;
-      border-bottom-color: var(--greg);
+      border-color: var(--greg);
     }
     .search-input::placeholder { color: var(--text-muted); letter-spacing: 0.02em; }
 
@@ -784,9 +790,9 @@
       display: flex;
       align-items: center;
       gap: 6px;
-      font-size: 0.85rem;
+      font-size: 0.9rem;
       font-weight: 400;
-      letter-spacing: 0.08em;
+      letter-spacing: 0.12em;
     }
 
     .rating-value.editable {
@@ -843,31 +849,35 @@
 
     /* Achievement Badges */
     .badges-section {
-      display: flex; flex-direction: column; gap: 10px;
-      margin-bottom: 24px; padding: 0 4px;
+      display: flex; flex-direction: column; gap: 6px;
+      margin-bottom: 32px; padding: 12px 0;
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
     }
     .badges-row {
-      display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+      display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
     }
     .badges-row-label {
-      font-size: 0.7rem; font-weight: 700; text-transform: uppercase;
-      letter-spacing: 0.06em; min-width: 40px;
+      font-family: var(--mono); font-size: 0.6rem; font-weight: 600; text-transform: uppercase;
+      letter-spacing: 0.1em; min-width: 40px;
     }
     .badges-row-label.greg { color: var(--greg); }
     .badges-row-label.peer { color: var(--peer); }
     .badge-chip {
-      display: inline-flex; align-items: center; gap: 4px;
-      padding: 4px 10px; border-radius: 0;
-      background: var(--bg); border: 1px solid var(--border);
-      font-size: 0.7rem; color: var(--text);
+      display: inline-flex; align-items: center; gap: 3px;
+      padding: 2px 8px; border-radius: 0;
+      background: transparent; border: none;
+      font-size: 0.65rem; color: var(--text-secondary);
       cursor: default; transition: var(--transition);
+      border-left: 1px solid var(--border); padding-left: 8px;
     }
+    .badge-chip:first-of-type { border-left: none; padding-left: 0; }
     .badge-chip:hover {
-      border-color: var(--text);
+      color: var(--text);
     }
-    .badge-chip .badge-icon { font-size: 0.85rem; }
-    .badge-chip .badge-name { font-weight: 600; }
-    .no-badges { font-size: 0.7rem; color: var(--text-muted); font-style: italic; }
+    .badge-chip .badge-icon { font-size: 0.7rem; }
+    .badge-chip .badge-name { font-weight: 500; letter-spacing: 0.02em; }
+    .no-badges { font-size: 0.65rem; color: var(--text-muted); font-style: italic; }
 
     /* Keyboard Shortcuts Help */
     .shortcuts-overlay {
@@ -1547,8 +1557,8 @@
         padding: 10px 14px; font-size: 0.8rem; border-radius: 0; text-align: left;
       }
 
-      .brand { font-size: 0.7rem; }
-      .brand-monogram { width: 28px; height: 28px; font-size: 0.6rem; }
+      .brand { font-size: 0.5rem; }
+      .brand-monogram { width: 40px; height: 40px; font-size: 0.95rem; }
 
       header { margin-bottom: 32px; }
       .page-title { font-size: 2.5rem; }
@@ -1574,7 +1584,7 @@
       .stat-label { font-size: 0.5rem; }
 
       .toolbar { gap: 10px; margin-bottom: 20px; }
-      .search-input { font-size: 0.875rem; padding: 10px 28px 10px 0; }
+      .search-input { font-size: 0.875rem; padding: 10px 32px 10px 12px; }
       .sort-select { font-size: 0.7rem; }
 
       .filter-chips { gap: 4px; }
@@ -1784,7 +1794,7 @@
 
     <header>
       <h1 class="page-title">The Ledger.</h1>
-      <p class="tagline">Movies rated in stars, not words.</p>
+      <p class="tagline">Unanimously Divided</p>
     </header>
 
     <div class="stats-bar" id="stats-bar">
@@ -1843,7 +1853,7 @@
 
     <footer class="site-footer">
       <a href="https://venmo.com/Greg-Dufore" target="_blank" rel="noopener" class="footer-support">Support the Ledger</a>
-      <div class="footer-copy">DUFIVE</div>
+      <div class="footer-copy">DUFIVE &mdash; Consistently Inconsistent</div>
     </footer>
   </div>
 
@@ -2068,9 +2078,9 @@
       const num = Number(n);
       if (!Number.isFinite(num) || num <= 0) return null;
       const full = Math.floor(num);
-      const half = (num - full) >= 0.5 ? '\u25D0' : '';
+      const half = (num - full) >= 0.5 ? '\u00BD' : '';
       const empty = 5 - full - (half ? 1 : 0);
-      return '\u25CF'.repeat(full) + half + '\u25CB'.repeat(Math.max(0, empty));
+      return '\u2726'.repeat(full) + half + '\u2727'.repeat(Math.max(0, empty));
     }
 
     function timeAgo(dateString) {
@@ -2359,8 +2369,8 @@
       const agreePct = bothRated > 0 ? Math.round((agreeCount / bothRated) * 100) + '%' : '\u2014';
 
       document.getElementById('stat-total').textContent = total;
-      document.getElementById('stat-greg-avg').textContent = gregAvg !== '\u2014' ? gregAvg + ' \u25CF' : '\u2014';
-      document.getElementById('stat-peer-avg').textContent = peerAvg !== '\u2014' ? peerAvg + ' \u25CF' : '\u2014';
+      document.getElementById('stat-greg-avg').textContent = gregAvg !== '\u2014' ? gregAvg + ' \u2726' : '\u2014';
+      document.getElementById('stat-peer-avg').textContent = peerAvg !== '\u2014' ? peerAvg + ' \u2726' : '\u2014';
       document.getElementById('stat-agreement').textContent = agreePct;
 
       const controversialEl = document.getElementById('stat-controversial');
@@ -3023,9 +3033,9 @@
       let gapClass = 'neutral';
       let gapText = 'Not yet compared';
       if (gregR > 0 && peerR > 0) {
-        if (gap <= 1) { gapClass = 'agree'; gapText = `Agree — ${gap === 0 ? 'Exact match!' : gap + '● gap'}`; }
-        else if (gap >= 3) { gapClass = 'disagree'; gapText = `Disagree — ${gap}● gap`; }
-        else { gapClass = 'neutral'; gapText = `${gap}● gap`; }
+        if (gap <= 1) { gapClass = 'agree'; gapText = `Agree — ${gap === 0 ? 'Exact match!' : gap + '✦ gap'}`; }
+        else if (gap >= 3) { gapClass = 'disagree'; gapText = `Disagree — ${gap}✦ gap`; }
+        else { gapClass = 'neutral'; gapText = `${gap}✦ gap`; }
       }
 
       // Reaction chips
@@ -3230,10 +3240,10 @@
       if (gregR > 0 && peerR > 0) {
         const gapY = ratingsY + 110;
         let gapColor = '#94a3b8';
-        let gapText = `${gap}● gap`;
+        let gapText = `${gap}✦ gap`;
         if (gap === 0) { gapColor = '#22c55e'; gapText = 'Perfect Agreement!'; }
         else if (gap <= 1) { gapColor = '#22c55e'; }
-        else if (gap >= 3) { gapColor = '#ef4444'; gapText = `${gap}● gap — Big Debate!`; }
+        else if (gap >= 3) { gapColor = '#ef4444'; gapText = `${gap}✦ gap — Big Debate!`; }
 
         ctx.font = 'bold 24px "Instrument Sans", sans-serif';
         ctx.fillStyle = gapColor;
@@ -3301,7 +3311,7 @@
         for (let val = 0.5; val <= 5; val += 0.5) {
           const btn = document.createElement('button');
           btn.className = 'star-btn';
-          btn.textContent = val % 1 !== 0 ? '\u25D0' : '\u25CF';
+          btn.textContent = val % 1 !== 0 ? '\u00BD' : '\u2726';
           if (selectedValue && val <= selectedValue) btn.classList.add('active');
           btn.onclick = () => {
             selectedValue = val;
@@ -3491,9 +3501,9 @@
       const gap = Math.abs(gregRating - peerRating);
       let gapColor, gapText;
       if (gap === 0) { gapColor = '#22c55e'; gapText = 'Perfect Agreement!'; }
-      else if (gap <= 1) { gapColor = '#22c55e'; gapText = `Only ${gap}● apart — You agree!`; }
-      else if (gap >= 3) { gapColor = '#ef4444'; gapText = `${gap}● gap — Big Debate!`; }
-      else { gapColor = '#eab308'; gapText = `${gap}● gap`; }
+      else if (gap <= 1) { gapColor = '#22c55e'; gapText = `Only ${gap}✦ apart — You agree!`; }
+      else if (gap >= 3) { gapColor = '#ef4444'; gapText = `${gap}✦ gap — Big Debate!`; }
+      else { gapColor = '#eab308'; gapText = `${gap}✦ gap`; }
 
       const overlay = document.createElement('div');
       overlay.className = 'reveal-overlay';

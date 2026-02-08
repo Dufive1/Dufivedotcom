@@ -70,16 +70,17 @@
       border-bottom: 1px solid var(--border);
     }
     .brand {
-      font-weight: 400; font-size: 0.8rem; text-decoration: none; color: var(--text);
-      letter-spacing: 0.25em; text-transform: uppercase;
-      display: flex; align-items: center; gap: 10px;
+      font-weight: 400; font-size: 0.55rem; text-decoration: none; color: var(--text-muted);
+      letter-spacing: 0.35em; text-transform: uppercase;
+      display: flex; align-items: center; gap: 12px;
     }
     .brand-monogram {
-      width: 32px; height: 32px; border-radius: 50%;
-      border: 1.5px solid var(--text);
+      width: 48px; height: 48px; border-radius: 50%;
+      border: 2px solid var(--text);
       display: flex; align-items: center; justify-content: center;
       font-family: 'Playfair Display', serif;
-      font-size: 0.7rem; font-weight: 600; letter-spacing: 0;
+      font-size: 1.1rem; font-weight: 600; letter-spacing: -0.02em;
+      color: var(--text);
     }
     .nav-controls { display: flex; gap: 16px; align-items: center; }
     .hamburger {
@@ -334,8 +335,8 @@
         flex-direction: row; justify-content: space-between; align-items: center;
         padding: 16px 0; margin-bottom: 32px; position: relative;
       }
-      .brand { font-size: 0.7rem; }
-      .brand-monogram { width: 28px; height: 28px; font-size: 0.6rem; }
+      .brand { font-size: 0.5rem; }
+      .brand-monogram { width: 40px; height: 40px; font-size: 0.95rem; }
       .hamburger { display: block; }
       .nav-controls {
         display: none; position: absolute; top: 100%; left: 0; right: 0;
@@ -436,7 +437,7 @@
 
     <footer class="site-footer">
       <a href="https://venmo.com/Greg-Dufore" target="_blank" rel="noopener" class="footer-support">Support the Ledger</a>
-      <div class="footer-copy">DUFIVE</div>
+      <div class="footer-copy">DUFIVE &mdash; Consistently Inconsistent</div>
     </footer>
   </div>
 
@@ -451,9 +452,9 @@
       const num = Number(n);
       if (!Number.isFinite(num) || num <= 0) return '—';
       const full = Math.floor(num);
-      const half = (num - full) >= 0.5 ? '\u25D0' : '';
+      const half = (num - full) >= 0.5 ? '\u00BD' : '';
       const empty = 5 - full - (half ? 1 : 0);
-      return '\u25CF'.repeat(full) + half + '\u25CB'.repeat(Math.max(0, empty));
+      return '\u2726'.repeat(full) + half + '\u2727'.repeat(Math.max(0, empty));
     }
 
     function decodeHtml(html) {
@@ -579,8 +580,8 @@
 
         document.getElementById('stat-total').textContent = totalBothRated;
         document.getElementById('stat-disagree').textContent = debates.length;
-        document.getElementById('stat-avg-diff').textContent = avgDiff + '●';
-        document.getElementById('stat-biggest').textContent = biggest + '●';
+        document.getElementById('stat-avg-diff').textContent = avgDiff + '✦';
+        document.getElementById('stat-biggest').textContent = biggest + '✦';
         document.getElementById('stat-tougher').textContent = tougherText;
         document.getElementById('stats-strip').style.display = 'flex';
         document.getElementById('filters').style.display = 'flex';
@@ -750,7 +751,7 @@
                 <div class="heat-bar-track">
                   <div class="heat-bar-fill" style="width:${pctFill}%; background:${heatColor(d.diff)};"></div>
                 </div>
-                <div class="heat-label" style="color:${heatColor(d.diff)}">${d.diff}● gap</div>
+                <div class="heat-label" style="color:${heatColor(d.diff)}">${d.diff}✦ gap</div>
               </div>
               ${notesHtml}
             </div>
