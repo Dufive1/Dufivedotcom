@@ -470,24 +470,31 @@
       pointer-events: none;
     }
 
-    /* Position badge — top-right of poster */
-    .queue-position-badge {
-      position: absolute; top: 0; right: 0;
-      font-family: var(--mono); font-size: 0.6rem; font-weight: 700;
-      color: #fff; background: rgba(0,0,0,0.65);
-      padding: 3px 7px; letter-spacing: 0.02em;
-      line-height: 1; z-index: 3;
-      cursor: default;
+    /* Position label — below movie info, logged-in only */
+    .queue-position-row {
+      margin-top: 4px;
     }
-    .queue-position-badge.editable { cursor: pointer; }
-    .queue-position-badge.editable:hover { background: rgba(0,0,0,0.85); }
-    .queue-position-badge.next-up {
-      background: var(--text); color: var(--bg);
-      font-size: 0.5rem; letter-spacing: 0.06em; text-transform: uppercase;
+    .queue-position-label {
+      font-family: var(--mono); font-size: 0.55rem; font-weight: 700;
+      color: var(--text-muted); letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+    .queue-position-label.editable {
+      cursor: pointer; border-bottom: 1px dashed var(--border);
+      transition: var(--transition);
+    }
+    .queue-position-label.editable:hover {
+      color: var(--text); border-bottom-color: var(--text);
+    }
+    .queue-position-label.next-up {
+      color: var(--text); font-weight: 700;
+    }
+    .queue-position-label.pinned {
+      color: var(--text-muted);
     }
     /* Inline position edit input */
     .queue-position-input {
-      width: 36px; padding: 2px 4px; font-family: var(--mono); font-size: 0.6rem;
+      width: 36px; padding: 2px 4px; font-family: var(--mono); font-size: 0.55rem;
       font-weight: 700; text-align: center; border: 1px solid var(--text);
       border-radius: 0; background: var(--bg); color: var(--text); outline: none;
     }
@@ -518,14 +525,6 @@
     .queue-card:hover .queue-pin-btn { display: flex; }
     .queue-pin-btn:hover { background: var(--text); }
     .queue-pin-btn.is-first { display: none !important; }
-
-    /* Pinned position badge — locked look */
-    .queue-position-badge.pinned {
-      background: var(--text); color: var(--bg);
-      font-size: 0.5rem; letter-spacing: 0.06em; text-transform: uppercase;
-      cursor: default;
-    }
-    .queue-position-badge.pinned:hover { background: var(--text); }
 
     /* Pinned card — subtle visual distinction */
     .queue-card.is-pinned .queue-poster {
@@ -1027,73 +1026,12 @@
         stamp.textContent = daysOnQueue + 'd on queue';
         poster.appendChild(stamp);
 
-        // Position badge (top-right corner)
+        // Track position and pinned state for use in info area below
         const displayPos = idx + 1;
         const isPinned = item.pinned === true;
-        const posBadge = document.createElement('div');
+        if (isPinned) card.classList.add('is-pinned');
 
-        if (isPinned) {
-          // Pinned item: show lock icon, not editable (unless admin)
-          card.classList.add('is-pinned');
-          posBadge.className = 'queue-position-badge pinned';
-          posBadge.textContent = '\uD83D\uDD12 #' + displayPos; // 🔒 #1
-          if (isAdmin()) {
-            posBadge.title = 'Pinned by admin. Click to change position.';
-            posBadge.style.cursor = 'pointer';
-            posBadge.onclick = (e) => {
-              e.stopPropagation();
-              const input = document.createElement('input');
-              input.type = 'number'; input.min = '1'; input.max = '' + filtered.length;
-              input.value = displayPos; input.className = 'queue-position-input';
-              posBadge.replaceWith(input); input.focus(); input.select();
-              const commit = () => {
-                const newPos = parseInt(input.value, 10);
-                if (!isNaN(newPos) && newPos >= 1 && newPos !== displayPos) {
-                  updateItem(item.movie_key, { sortOrder: newPos });
-                } else { input.replaceWith(posBadge); }
-              };
-              input.addEventListener('blur', commit);
-              input.addEventListener('keydown', (ev) => {
-                if (ev.key === 'Enter') { ev.preventDefault(); input.blur(); }
-                if (ev.key === 'Escape') { input.value = displayPos; input.blur(); }
-              });
-            };
-          }
-        } else {
-          // Normal item
-          posBadge.className = 'queue-position-badge' + (canAct() ? ' editable' : '');
-          if (displayPos === 1) {
-            posBadge.classList.add('next-up');
-            posBadge.textContent = 'Next Up';
-          } else {
-            posBadge.textContent = '#' + displayPos;
-          }
-
-          if (canAct()) {
-            posBadge.title = 'Click to change position';
-            posBadge.onclick = (e) => {
-              e.stopPropagation();
-              const input = document.createElement('input');
-              input.type = 'number'; input.min = '1'; input.max = '' + filtered.length;
-              input.value = displayPos; input.className = 'queue-position-input';
-              posBadge.replaceWith(input); input.focus(); input.select();
-              const commit = () => {
-                const newPos = parseInt(input.value, 10);
-                if (!isNaN(newPos) && newPos >= 1 && newPos !== displayPos) {
-                  updateItem(item.movie_key, { sortOrder: newPos });
-                } else { input.replaceWith(posBadge); }
-              };
-              input.addEventListener('blur', commit);
-              input.addEventListener('keydown', (ev) => {
-                if (ev.key === 'Enter') { ev.preventDefault(); input.blur(); }
-                if (ev.key === 'Escape') { input.value = displayPos; input.blur(); }
-              });
-            };
-          }
-        }
-        poster.appendChild(posBadge);
-
-        // "Next Up" pin button (logged-in only, not on pinned or #1 items)
+        // "Next Up" pin button on poster (logged-in only, not on pinned or #1 items)
         if (canAct() && !isPinned) {
           const pin = document.createElement('button');
           pin.className = 'queue-pin-btn' + (displayPos === 1 ? ' is-first' : '');
@@ -1173,6 +1111,67 @@
         suggested.className = 'queue-suggested';
         suggested.textContent = 'added by ' + (item.suggested_by || 'visitor');
         info.appendChild(suggested);
+
+        // Position number (logged-in users only — for reordering the queue)
+        if (canAct()) {
+          const posRow = document.createElement('div');
+          posRow.className = 'queue-position-row';
+
+          if (isPinned) {
+            const label = document.createElement('span');
+            label.className = 'queue-position-label pinned';
+            label.textContent = '\uD83D\uDD12 #' + displayPos; // 🔒 #1
+            posRow.appendChild(label);
+            if (isAdmin()) {
+              label.classList.add('editable');
+              label.title = 'Pinned. Click to change position.';
+              label.onclick = (e) => {
+                e.stopPropagation();
+                const input = document.createElement('input');
+                input.type = 'number'; input.min = '1'; input.max = '' + filtered.length;
+                input.value = displayPos; input.className = 'queue-position-input';
+                label.replaceWith(input); input.focus(); input.select();
+                const commit = () => {
+                  const newPos = parseInt(input.value, 10);
+                  if (!isNaN(newPos) && newPos >= 1 && newPos !== displayPos) {
+                    updateItem(item.movie_key, { sortOrder: newPos });
+                  } else { input.replaceWith(label); }
+                };
+                input.addEventListener('blur', commit);
+                input.addEventListener('keydown', (ev) => {
+                  if (ev.key === 'Enter') { ev.preventDefault(); input.blur(); }
+                  if (ev.key === 'Escape') { input.value = displayPos; input.blur(); }
+                });
+              };
+            }
+          } else {
+            const label = document.createElement('span');
+            label.className = 'queue-position-label editable';
+            label.textContent = displayPos === 1 ? 'Next Up' : '#' + displayPos;
+            if (displayPos === 1) label.classList.add('next-up');
+            label.title = 'Click to change position';
+            label.onclick = (e) => {
+              e.stopPropagation();
+              const input = document.createElement('input');
+              input.type = 'number'; input.min = '1'; input.max = '' + filtered.length;
+              input.value = displayPos; input.className = 'queue-position-input';
+              label.replaceWith(input); input.focus(); input.select();
+              const commit = () => {
+                const newPos = parseInt(input.value, 10);
+                if (!isNaN(newPos) && newPos >= 1 && newPos !== displayPos) {
+                  updateItem(item.movie_key, { sortOrder: newPos });
+                } else { input.replaceWith(label); }
+              };
+              input.addEventListener('blur', commit);
+              input.addEventListener('keydown', (ev) => {
+                if (ev.key === 'Enter') { ev.preventDefault(); input.blur(); }
+                if (ev.key === 'Escape') { input.value = displayPos; input.blur(); }
+              });
+            };
+            posRow.appendChild(label);
+          }
+          info.appendChild(posRow);
+        }
 
         // Reviewer power tools: pill toggles + watched button
         // Pinned items: only admin gets controls; non-admin sees static tags instead
