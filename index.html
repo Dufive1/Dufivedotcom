@@ -780,6 +780,18 @@
     .panel-action-btn:hover { border-color: var(--text); color: var(--text); }
     .panel-action-btn.danger:hover { border-color: #dc2626; color: #dc2626; }
     .panel-action-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .panel-action-btn.active {
+      background: var(--text); color: var(--bg); border-color: var(--text);
+    }
+    .panel-action-btn.active:hover { opacity: 0.85; }
+
+    /* ───── Rewatch Banner ───── */
+    .rewatch-banner {
+      font-family: var(--mono); font-size: 0.55rem; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.08em;
+      color: var(--text-muted); border: 1px solid var(--border);
+      padding: 2px 6px; margin-top: 6px; display: inline-block;
+    }
 
     /* ───── Confirmation Modal (shared) ───── */
     .confirm-overlay {
@@ -2783,7 +2795,7 @@
       while (keepGoing) {
         const { data, error } = await supabaseClient
           .from('greg_films')
-          .select('id, movie_key, title, poster_url, greg_rating, letterboxd_url, updated_at, watched_date')
+          .select('id, movie_key, title, poster_url, greg_rating, letterboxd_url, updated_at, watched_date, greg_rewatch, peer_rewatch')
           .order('id', { ascending: true })
           .range(from, from + BATCH - 1);
         if (error) throw new Error('Greg Films Error: ' + error.message);
@@ -2801,7 +2813,9 @@
         link: f.letterboxd_url || '',
         pubDate: f.updated_at,
         sortId: f.id,
-        watchedDate: f.watched_date || null
+        watchedDate: f.watched_date || null,
+        gregRewatch: f.greg_rewatch || false,
+        peerRewatch: f.peer_rewatch || false
       }));
     }
 
@@ -3203,6 +3217,15 @@
 
         content.appendChild(h2);
 
+        // Rewatch banner — visible to everyone when flagged
+        if (entry.gregRewatch || entry.peerRewatch) {
+          const banner = document.createElement('span');
+          banner.className = 'rewatch-banner';
+          const who = [entry.gregRewatch ? 'G' : '', entry.peerRewatch ? 'P' : ''].filter(Boolean).join(' ');
+          banner.textContent = 'Rewatch \u00b7 ' + who;
+          content.appendChild(banner);
+        }
+
         if (currentUser) {
           // Logged-in: wrap ratings, reactions, and actions in a reviewer panel
           const panel = document.createElement('div');
@@ -3220,31 +3243,44 @@
           const actions = document.createElement('div');
           actions.className = 'panel-actions';
 
+          // Rewatch toggle — per-reviewer flag
+          const myRewatchKey = (isAdmin() || currentUser === 'greg') ? 'gregRewatch' : 'peerRewatch';
+          const isRewatching = entry[myRewatchKey];
           const rwBtn = document.createElement('button');
-          rwBtn.className = 'panel-action-btn';
-          rwBtn.textContent = '\u21BB Rewatch';
+          rwBtn.className = 'panel-action-btn' + (isRewatching ? ' active' : '');
+          rwBtn.textContent = isRewatching ? '\u21BB Rewatching' : '\u21BB Rewatch';
           rwBtn.onclick = async (e) => {
             e.stopPropagation();
             rwBtn.disabled = true;
-            rwBtn.textContent = 'Adding\u2026';
             try {
-              const assignTo = isAdmin() ? 'both' : currentUser;
-              const res = await authenticatedRequest('watchlist_add', movieKey, {
-                title: title,
-                posterUrl: entry.posterUrl || null,
-                assignedTo: assignTo,
-                priority: 'medium',
-                isRewatch: true
-              });
+              const actingAs = (isAdmin() || currentUser === 'greg') ? 'greg' : 'peer';
+              const res = await authenticatedRequest('toggle_rewatch', movieKey, { actingAs });
               if (!res) throw new Error('Request failed');
-              showToast('Added to The Queue for rewatch', 'success', 2000);
-              rwBtn.textContent = '\u2713 Queued';
-              setTimeout(() => { rwBtn.textContent = '\u21BB Rewatch'; rwBtn.disabled = false; }, 2000);
+              // Update local data and flip button state
+              entry[myRewatchKey] = !entry[myRewatchKey];
+              const nowActive = entry[myRewatchKey];
+              rwBtn.className = 'panel-action-btn' + (nowActive ? ' active' : '');
+              rwBtn.textContent = nowActive ? '\u21BB Rewatching' : '\u21BB Rewatch';
+              // Update or add/remove banner
+              const existingBanner = content.querySelector('.rewatch-banner');
+              if (entry.gregRewatch || entry.peerRewatch) {
+                const who = [entry.gregRewatch ? 'G' : '', entry.peerRewatch ? 'P' : ''].filter(Boolean).join(' ');
+                if (existingBanner) {
+                  existingBanner.textContent = 'Rewatch \u00b7 ' + who;
+                } else {
+                  const b = document.createElement('span');
+                  b.className = 'rewatch-banner';
+                  b.textContent = 'Rewatch \u00b7 ' + who;
+                  h2.insertAdjacentElement('afterend', b);
+                }
+              } else if (existingBanner) {
+                existingBanner.remove();
+              }
+              showToast(nowActive ? 'Marked for rewatch' : 'Rewatch cleared', 'success', 1500);
             } catch (err) {
-              showToast('Failed to add to queue', 'error');
-              rwBtn.textContent = '\u21BB Rewatch';
-              rwBtn.disabled = false;
+              showToast('Failed to update rewatch', 'error');
             }
+            rwBtn.disabled = false;
           };
           actions.appendChild(rwBtn);
 
