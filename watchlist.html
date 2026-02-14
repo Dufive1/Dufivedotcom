@@ -58,7 +58,7 @@
     }
 
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { overflow-x: hidden; }
+    html, body { overflow-x: hidden; }
     body {
       font-family: 'Instrument Sans', 'Helvetica Neue', Helvetica, Arial, sans-serif;
       background: var(--bg); color: var(--text);
@@ -278,7 +278,7 @@
 
     .queue-card {
       background: transparent; border: none; border-radius: 0;
-      overflow: visible;
+      overflow: hidden; min-width: 0;
       opacity: 0; transform: translateY(16px);
       transition: opacity 0.5s cubic-bezier(.4,0,.2,1), transform 0.5s cubic-bezier(.4,0,.2,1);
       position: relative;
@@ -402,11 +402,11 @@
     .queue-remove:hover { background: #dc2626; }
 
     /* Info area below poster */
-    .queue-info { padding: 8px 0 0; }
+    .queue-info { padding: 8px 0 0; min-width: 0; overflow: hidden; }
     .queue-title {
       font-size: 0.75rem; font-weight: 500; color: var(--text); line-height: 1.3;
       display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
-      overflow: hidden;
+      overflow: hidden; word-break: break-word;
     }
 
     /* Tags row (assignment + priority) */
@@ -427,14 +427,15 @@
     .queue-note {
       font-size: 0.68rem; color: var(--text-muted); margin-top: 3px; font-style: italic;
       display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
-      overflow: hidden;
+      overflow: hidden; word-break: break-word;
     }
 
     /* Pill toggle buttons (priority + assignment) */
     .pill-controls {
       display: flex; gap: 3px; margin-top: 5px; align-items: center; flex-wrap: wrap;
+      max-width: 100%; overflow: hidden;
     }
-    .pill-group { display: flex; gap: 2px; align-items: center; }
+    .pill-group { display: flex; gap: 2px; align-items: center; flex-wrap: wrap; }
     .pill-group + .pill-group { margin-left: 4px; }
     .pill-btn {
       font-family: var(--mono); font-size: 0.5rem; font-weight: 600;
@@ -472,7 +473,7 @@
 
     /* Position label — below movie info, logged-in only */
     .queue-position-row {
-      margin-top: 4px;
+      margin-top: 4px; max-width: 100%; overflow: hidden;
     }
     .queue-position-label {
       font-family: var(--mono); font-size: 0.55rem; font-weight: 700;
@@ -509,6 +510,21 @@
     /* "REWATCH" tag */
     .card-tag.rewatch {
       color: var(--text-secondary); background: var(--border-light);
+      font-style: italic;
+    }
+
+    /* Rewatch pill toggle in search results */
+    .rewatch-pill-toggle {
+      font-family: var(--mono); font-size: 0.55rem; font-weight: 600;
+      text-transform: uppercase; letter-spacing: 0.06em;
+      padding: 3px 7px; border: 1px solid var(--border); border-radius: 0;
+      background: transparent; color: var(--text-muted);
+      cursor: pointer; transition: var(--transition); white-space: nowrap;
+      margin-right: 4px;
+    }
+    .rewatch-pill-toggle:hover { border-color: var(--text); color: var(--text); }
+    .rewatch-pill-toggle.active {
+      background: var(--text); color: var(--bg); border-color: var(--text);
       font-style: italic;
     }
 
@@ -605,7 +621,7 @@
       padding: 10px 20px; border-radius: 0; font-size: 0.8rem; font-weight: 500;
       letter-spacing: 0.02em;
       z-index: 999; transition: transform 0.3s ease;
-      pointer-events: none;
+      pointer-events: none; max-width: calc(100vw - 48px);
     }
     .toast.show { transform: translateX(-50%) translateY(0); }
 
@@ -697,6 +713,14 @@
       /* Pill buttons: slightly larger on mobile for easier tapping */
       .pill-btn { font-size: 0.55rem; padding: 3px 6px; }
       .queue-watched-btn { font-size: 0.6rem; padding: 5px 10px; }
+
+      /* Position label: bigger tap target + prevent iOS auto-zoom on input */
+      .queue-position-label {
+        font-size: 0.7rem; padding: 6px 4px; display: inline-block;
+      }
+      .queue-position-input {
+        font-size: 16px; width: 48px; padding: 4px 6px;
+      }
 
       /* Position badge + pin always visible on mobile (no hover) */
       .queue-pin-btn { display: flex; }
@@ -1087,13 +1111,14 @@
           else if (assignedTo === 'both') { const t = document.createElement('span'); t.className = 'card-tag both'; t.textContent = 'For Both'; tags.appendChild(t); }
           if (priority === 'high') { const t = document.createElement('span'); t.className = 'card-tag high'; t.textContent = 'High'; tags.appendChild(t); }
           else if (priority === 'low') { const t = document.createElement('span'); t.className = 'card-tag low'; t.textContent = 'Low'; tags.appendChild(t); }
-          if (item.is_rewatch) { const t = document.createElement('span'); t.className = 'card-tag rewatch'; t.textContent = 'Rewatch'; tags.appendChild(t); }
+          if (item.is_rewatch) { const t = document.createElement('span'); t.className = 'card-tag rewatch'; const rwWho = (item.suggested_by || '')[0]?.toUpperCase() || ''; t.textContent = 'Rewatch' + (rwWho ? ' \u00b7 ' + rwWho : ''); tags.appendChild(t); }
           if (tags.childElementCount > 0) info.appendChild(tags);
         } else if (item.is_rewatch) {
           // Logged-in view: show rewatch tag above pills
           const tags = document.createElement('div');
           tags.className = 'card-tags';
-          const t = document.createElement('span'); t.className = 'card-tag rewatch'; t.textContent = 'Rewatch';
+          const rwWho = (item.suggested_by || '')[0]?.toUpperCase() || '';
+          const t = document.createElement('span'); t.className = 'card-tag rewatch'; t.textContent = 'Rewatch' + (rwWho ? ' \u00b7 ' + rwWho : '');
           tags.appendChild(t);
           info.appendChild(tags);
         }
@@ -1183,7 +1208,7 @@
           else if (assignedTo === 'peer') { const t = document.createElement('span'); t.className = 'card-tag peer'; t.textContent = 'For Peer'; tags.appendChild(t); }
           else if (assignedTo === 'both') { const t = document.createElement('span'); t.className = 'card-tag both'; t.textContent = 'For Both'; tags.appendChild(t); }
           if (priority === 'high') { const t = document.createElement('span'); t.className = 'card-tag high'; t.textContent = 'High'; tags.appendChild(t); }
-          if (item.is_rewatch) { const t = document.createElement('span'); t.className = 'card-tag rewatch'; t.textContent = 'Rewatch'; tags.appendChild(t); }
+          if (item.is_rewatch) { const t = document.createElement('span'); t.className = 'card-tag rewatch'; const rwWho = (item.suggested_by || '')[0]?.toUpperCase() || ''; t.textContent = 'Rewatch' + (rwWho ? ' \u00b7 ' + rwWho : ''); tags.appendChild(t); }
           if (tags.childElementCount > 0) info.appendChild(tags);
         } else if (canAct()) {
           const controls = document.createElement('div');
@@ -1336,13 +1361,24 @@
       tag.style.borderColor = 'var(--border)';
       actions.appendChild(tag);
     } else if (canAct()) {
-      // Logged-in users: G / P / Both assignment buttons
+      // Logged-in users: Rewatch pill toggle + G / P / Both assignment buttons
+      const rwPill = document.createElement('button');
+      rwPill.className = 'rewatch-pill-toggle';
+      rwPill.textContent = '\u21BB Rewatch';
+      rwPill.title = 'Toggle rewatch flag';
+      rwPill.onclick = (e) => { e.stopPropagation(); rwPill.classList.toggle('active'); };
+      actions.appendChild(rwPill);
+
       [['greg', 'G'], ['peer', 'P'], ['both', 'Both']].forEach(([who, label]) => {
         const btn = document.createElement('button');
         btn.className = 'search-result-add ' + (who === 'both' ? '' : who);
         btn.textContent = '+ ' + label;
         btn.title = who === 'both' ? 'For both' : 'For ' + who;
-        btn.onclick = (e) => { e.stopPropagation(); addToQueue(film, who); };
+        btn.onclick = (e) => {
+          e.stopPropagation();
+          const isRewatch = rwPill.classList.contains('active');
+          addToQueue(film, who, isRewatch);
+        };
         actions.appendChild(btn);
       });
     } else {
@@ -1438,7 +1474,7 @@
   }
 
   // ───── Actions ─────
-  async function addToQueue(film, assignedTo) {
+  async function addToQueue(film, assignedTo, isRewatch = false) {
     try {
       const headers = { 'Content-Type': 'application/json' };
       // Only include auth if logged in
@@ -1455,6 +1491,7 @@
             posterUrl: film.poster_url || null,
             note: null,
             assignedTo: assignedTo,
+            isRewatch: isRewatch,
           }
         })
       });
