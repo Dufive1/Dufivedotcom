@@ -1,5 +1,5 @@
 // DUFIVE Service Worker — offline fallback + caching
-const CACHE_NAME = 'dufive-v1';
+const CACHE_NAME = 'dufive-v2';
 const OFFLINE_URL = '/offline.html';
 
 // Assets to pre-cache on install

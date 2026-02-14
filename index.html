@@ -26,8 +26,6 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Instrument+Sans:wght@400;500;600;700&family=Lora:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,600&display=swap" rel="stylesheet">
 
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
   <style>
     /* ───── Theme Variables — Criterion Editorial ───── */
     :root,
@@ -2166,6 +2164,7 @@
     </div>
   </div>
 
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
     /* ═══════════════════════════════════════════
        CONFIG
@@ -2275,6 +2274,11 @@
       } catch (e) { return null; }
     }
 
+    if (!window.supabase) {
+      document.getElementById('ledger-grid').innerHTML =
+        '<p style="text-align:center;padding:40px;color:var(--text-muted);">Loading failed — please refresh the page.</p>';
+      throw new Error('Supabase library not loaded');
+    }
     const supabaseClient = window.supabase.createClient(SB_URL, SB_KEY);
     const elGrid = document.getElementById('ledger-grid');
     const elAuthBtn = document.getElementById('auth-btn');

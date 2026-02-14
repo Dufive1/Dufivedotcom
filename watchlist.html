@@ -25,8 +25,6 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Instrument+Sans:wght@400;500;600;700&family=Lora:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,600&display=swap" rel="stylesheet">
 
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
   <style>
     :root, [data-theme="light"] {
       --bg: #f5f0eb; --bg-secondary: #ece7e1; --card-bg: transparent;
@@ -713,12 +711,18 @@
 
 <div class="toast" id="toast"></div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
   // ───── Config ─────
   const SB_URL = 'https://brgxorrpfberfcyeugzq.supabase.co';
   const SB_KEY = 'sb_publishable_VbVFBh-gtIBAbr9Qtp240w_GS8Kn4Jf';
   const ACTIONS_URL = 'https://brgxorrpfberfcyeugzq.supabase.co/functions/v1/bright-function';
   const SEARCH_URL = 'https://brgxorrpfberfcyeugzq.supabase.co/functions/v1/search-films';
+  if (!window.supabase) {
+    document.getElementById('queue-grid').innerHTML =
+      '<p style="text-align:center;padding:40px;color:var(--text-muted);">Loading failed — please refresh the page.</p>';
+    throw new Error('Supabase library not loaded');
+  }
   const supabaseClient = window.supabase.createClient(SB_URL, SB_KEY);
 
   const TMDB_KEY = 'bfb6e869cd271ba3ac952a29f9279f09';
