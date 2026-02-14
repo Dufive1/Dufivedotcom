@@ -430,16 +430,24 @@
       overflow: hidden; word-break: break-word;
     }
 
-    /* Pill toggle buttons (priority + assignment) */
+    /* ───── Pill Controls (logged-in reviewer tools) ───── */
     .pill-controls {
-      display: flex; gap: 3px; margin-top: 5px; align-items: center; flex-wrap: wrap;
+      display: flex; flex-direction: column; gap: 4px; margin-top: 6px;
       max-width: 100%; overflow: hidden;
     }
-    .pill-group { display: flex; gap: 2px; align-items: center; flex-wrap: wrap; }
-    .pill-group + .pill-group { margin-left: 4px; }
+    .pill-row {
+      display: flex; align-items: center; gap: 3px;
+    }
+    .pill-row-label {
+      font-family: var(--mono); font-size: 0.45rem; font-weight: 600;
+      text-transform: uppercase; letter-spacing: 0.08em;
+      color: var(--text-muted); min-width: 20px; flex-shrink: 0;
+      opacity: 0.6;
+    }
+    .pill-group { display: flex; gap: 1px; align-items: center; }
     .pill-btn {
       font-family: var(--mono); font-size: 0.5rem; font-weight: 600;
-      text-transform: uppercase; letter-spacing: 0.06em;
+      text-transform: uppercase; letter-spacing: 0.04em;
       padding: 2px 5px; border: 1px solid var(--border); border-radius: 0;
       background: transparent; color: var(--text-muted);
       cursor: pointer; transition: var(--transition); white-space: nowrap;
@@ -448,6 +456,14 @@
     .pill-btn.active {
       background: var(--text); color: var(--bg); border-color: var(--text);
     }
+    /* Connected pill look: merge adjacent borders */
+    .pill-group .pill-btn + .pill-btn { margin-left: -1px; }
+
+    /* ───── Reviewer Panel (logged-in controls box) ───── */
+    .reviewer-panel {
+      border: 1px solid var(--border); padding: 6px 8px; margin-top: 6px;
+    }
+    .reviewer-panel .pill-controls { margin-top: 0; }
 
     /* "Watched" button */
     .queue-watched-btn {
@@ -527,20 +543,6 @@
       background: var(--text); color: var(--bg); border-color: var(--text);
       font-style: italic;
     }
-
-    /* "Next Up" pin button */
-    .queue-pin-btn {
-      position: absolute; bottom: 6px; right: 6px;
-      width: 22px; height: 22px; border-radius: 0;
-      background: rgba(0,0,0,0.7); color: #fff; border: none;
-      font-size: 0.65rem; cursor: pointer; display: none;
-      align-items: center; justify-content: center;
-      transition: var(--transition); z-index: 4;
-      line-height: 1;
-    }
-    .queue-card:hover .queue-pin-btn { display: flex; }
-    .queue-pin-btn:hover { background: var(--text); }
-    .queue-pin-btn.is-first { display: none !important; }
 
     /* Pinned card — subtle visual distinction */
     .queue-card.is-pinned .queue-poster {
@@ -711,7 +713,8 @@
       .search-row { max-width: 100%; flex: 1; }
 
       /* Pill buttons: slightly larger on mobile for easier tapping */
-      .pill-btn { font-size: 0.55rem; padding: 3px 6px; }
+      .pill-btn { font-size: 0.55rem; padding: 3px 6px; min-height: 24px; }
+      .pill-row-label { font-size: 0.4rem; min-width: 16px; }
       .queue-watched-btn { font-size: 0.6rem; padding: 5px 10px; }
 
       /* Position label: bigger tap target + prevent iOS auto-zoom on input */
@@ -722,9 +725,7 @@
         font-size: 16px; width: 48px; padding: 4px 6px;
       }
 
-      /* Position badge + pin always visible on mobile (no hover) */
-      .queue-pin-btn { display: flex; }
-      .queue-pin-btn.is-first { display: none !important; }
+      /* Remove button always visible on mobile (no hover) */
       .queue-remove { display: flex; }
     }
   </style>
@@ -1055,19 +1056,6 @@
         const isPinned = item.pinned === true;
         if (isPinned) card.classList.add('is-pinned');
 
-        // "Next Up" pin button on poster (logged-in only, not on pinned or #1 items)
-        if (canAct() && !isPinned) {
-          const pin = document.createElement('button');
-          pin.className = 'queue-pin-btn' + (displayPos === 1 ? ' is-first' : '');
-          pin.innerHTML = '&#9650;'; // ▲ up arrow
-          pin.title = 'Move to #1 (Next Up)';
-          pin.onclick = (e) => {
-            e.stopPropagation();
-            updateItem(item.movie_key, { sortOrder: 1 });
-          };
-          poster.appendChild(pin);
-        }
-
         // Remove button (logged-in only; pinned items only removable by admin)
         if (canAct() && (!isPinned || isAdmin())) {
           const rm = document.createElement('button');
@@ -1211,59 +1199,75 @@
           if (item.is_rewatch) { const t = document.createElement('span'); t.className = 'card-tag rewatch'; const rwWho = (item.suggested_by || '')[0]?.toUpperCase() || ''; t.textContent = 'Rewatch' + (rwWho ? ' \u00b7 ' + rwWho : ''); tags.appendChild(t); }
           if (tags.childElementCount > 0) info.appendChild(tags);
         } else if (canAct()) {
+          const panel = document.createElement('div');
+          panel.className = 'reviewer-panel';
+
           const controls = document.createElement('div');
           controls.className = 'pill-controls';
 
-          // Priority pill group
+          // Row 1: Priority + Rewatch
+          const priRow = document.createElement('div');
+          priRow.className = 'pill-row';
+          const priLabel = document.createElement('span');
+          priLabel.className = 'pill-row-label';
+          priLabel.textContent = 'Pri';
+          priRow.appendChild(priLabel);
           const priGroup = document.createElement('div');
           priGroup.className = 'pill-group';
-          ['high', 'medium', 'low'].forEach(v => {
+          [['high', 'H'], ['medium', 'M'], ['low', 'L']].forEach(([v, label]) => {
             const btn = document.createElement('button');
             btn.className = 'pill-btn' + (v === priority ? ' active' : '');
-            btn.textContent = v === 'medium' ? 'Norm' : v.charAt(0).toUpperCase() + v.slice(1);
+            btn.textContent = label;
+            btn.title = v.charAt(0).toUpperCase() + v.slice(1);
             btn.onclick = (e) => {
               e.stopPropagation();
-              if (v === priority) return; // already active — no-op
+              if (v === priority) return;
               updateItem(item.movie_key, { priority: v });
             };
             priGroup.appendChild(btn);
           });
-          controls.appendChild(priGroup);
+          priRow.appendChild(priGroup);
 
-          // Assignment pill group (includes 'None' to unassign)
-          const asnGroup = document.createElement('div');
-          asnGroup.className = 'pill-group';
-          [['greg', 'G'], ['peer', 'P'], ['both', 'Both'], ['none', '\u2013']].forEach(([v, label]) => {
-            const btn = document.createElement('button');
-            btn.className = 'pill-btn' + (v === (assignedTo || 'none') ? ' active' : '');
-            btn.textContent = label;
-            btn.title = v === 'none' ? 'Unassigned' : v.charAt(0).toUpperCase() + v.slice(1);
-            btn.onclick = (e) => {
-              e.stopPropagation();
-              if (v === (assignedTo || 'none')) return; // already active — no-op
-              updateItem(item.movie_key, { assignedTo: v });
-            };
-            asnGroup.appendChild(btn);
-          });
-          controls.appendChild(asnGroup);
-
-          // Rewatch pill toggle
-          const rwGroup = document.createElement('div');
-          rwGroup.className = 'pill-group';
+          // Rewatch toggle (on same row as priority)
           const rwBtn = document.createElement('button');
           rwBtn.className = 'pill-btn' + (item.is_rewatch ? ' active' : '');
-          rwBtn.textContent = '\u21BB RW';
+          rwBtn.textContent = 'RW';
           rwBtn.title = item.is_rewatch ? 'Remove rewatch flag' : 'Mark as rewatch';
+          rwBtn.style.marginLeft = '4px';
           rwBtn.onclick = (e) => {
             e.stopPropagation();
             updateItem(item.movie_key, { isRewatch: !item.is_rewatch });
           };
-          rwGroup.appendChild(rwBtn);
-          controls.appendChild(rwGroup);
+          priRow.appendChild(rwBtn);
+          controls.appendChild(priRow);
 
-          info.appendChild(controls);
+          // Row 2: Assignment
+          const asnRow = document.createElement('div');
+          asnRow.className = 'pill-row';
+          const asnLabel = document.createElement('span');
+          asnLabel.className = 'pill-row-label';
+          asnLabel.textContent = 'For';
+          asnRow.appendChild(asnLabel);
+          const asnGroup = document.createElement('div');
+          asnGroup.className = 'pill-group';
+          [['greg', 'G'], ['peer', 'P'], ['both', '\u00b7\u00b7'], ['none', '\u2013']].forEach(([v, label]) => {
+            const btn = document.createElement('button');
+            btn.className = 'pill-btn' + (v === (assignedTo || 'none') ? ' active' : '');
+            btn.textContent = label;
+            btn.title = v === 'none' ? 'Unassigned' : v === 'both' ? 'Both' : v.charAt(0).toUpperCase() + v.slice(1);
+            btn.onclick = (e) => {
+              e.stopPropagation();
+              if (v === (assignedTo || 'none')) return;
+              updateItem(item.movie_key, { assignedTo: v });
+            };
+            asnGroup.appendChild(btn);
+          });
+          asnRow.appendChild(asnGroup);
+          controls.appendChild(asnRow);
 
-          // "Watched" button
+          panel.appendChild(controls);
+
+          // "Watched" button inside panel
           const watchedBtn = document.createElement('button');
           watchedBtn.className = 'queue-watched-btn';
           watchedBtn.textContent = 'Watched';
@@ -1275,7 +1279,9 @@
               () => markAsWatched(item)
             );
           };
-          info.appendChild(watchedBtn);
+          panel.appendChild(watchedBtn);
+
+          info.appendChild(panel);
         }
 
         card.appendChild(info);

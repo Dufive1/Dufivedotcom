@@ -761,40 +761,25 @@
       letter-spacing: 0.04em;
     }
 
-    /* ───── Delete Film Button ───── */
-    .delete-film-btn {
-      font-family: var(--mono);
-      font-size: 0.55rem; font-weight: 600;
+    /* ───── Reviewer Panel (logged-in controls box) ───── */
+    .reviewer-panel {
+      border: 1px solid var(--border); padding: 8px 10px; margin-top: 8px;
+    }
+    .reviewer-panel .ratings-container { padding-bottom: 6px; margin-bottom: 0; border-bottom: none; }
+    .reviewer-panel .reaction-pills { margin-top: 4px; }
+    .panel-actions {
+      display: flex; gap: 6px; margin-top: 6px; border-top: 1px solid var(--border); padding-top: 6px;
+    }
+    .panel-action-btn {
+      font-family: var(--mono); font-size: 0.5rem; font-weight: 600;
       text-transform: uppercase; letter-spacing: 0.06em;
-      padding: 4px 8px; margin-top: 6px;
-      border: 1px solid var(--border); border-radius: 0;
+      padding: 3px 8px; border: 1px solid var(--border); border-radius: 0;
       background: transparent; color: var(--text-muted);
-      cursor: pointer; transition: var(--transition);
-      display: block; width: 100%; text-align: center;
-      opacity: 0;
+      cursor: pointer; transition: var(--transition); flex: 1; text-align: center;
     }
-    .entry:hover .delete-film-btn { opacity: 1; }
-    .delete-film-btn:hover {
-      border-color: #dc2626; color: #dc2626;
-    }
-
-    /* ───── Add to Queue Button ───── */
-    .add-queue-btn {
-      font-family: var(--mono);
-      font-size: 0.55rem; font-weight: 600;
-      text-transform: uppercase; letter-spacing: 0.06em;
-      padding: 4px 8px; margin-top: 4px;
-      border: 1px solid var(--border); border-radius: 0;
-      background: transparent; color: var(--text-muted);
-      cursor: pointer; transition: var(--transition);
-      display: block; width: 100%; text-align: center;
-      opacity: 0;
-    }
-    .entry:hover .add-queue-btn { opacity: 1; }
-    .add-queue-btn:hover {
-      border-color: var(--text); color: var(--text);
-    }
-    .add-queue-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .panel-action-btn:hover { border-color: var(--text); color: var(--text); }
+    .panel-action-btn.danger:hover { border-color: #dc2626; color: #dc2626; }
+    .panel-action-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
     /* ───── Confirmation Modal (shared) ───── */
     .confirm-overlay {
@@ -1925,7 +1910,7 @@
 
       .rating-value.editable { padding: 8px 12px; margin: -8px -12px; }
       .reaction-pills { margin-top: 8px; }
-      .delete-film-btn, .add-queue-btn { opacity: 1; }
+      .panel-action-btn { font-size: 0.55rem; padding: 5px 8px; min-height: 28px; }
       .note-delete { opacity: 0.5; padding: 8px 12px; }
 
       .login-modal { padding: 24px 20px; }
@@ -1956,7 +1941,7 @@
       .poster-info, .star-picker-overlay, .reveal-overlay, .reviewer-picker-overlay,
       .shortcuts-overlay, .reaction-picker-modal, #error-log, .new-badge,
       .search-wrapper, .sort-select, .search-clear, .log-film-btn, .log-film-overlay,
-      .delete-film-btn, .add-queue-btn, .backup-btn, .confirm-overlay { display: none !important; }
+      .reviewer-panel, .backup-btn, .confirm-overlay { display: none !important; }
 
       .container { max-width: 100%; padding: 0; }
 
@@ -3217,14 +3202,66 @@
         /* comparison bars removed – stars already convey the rating */
 
         content.appendChild(h2);
-        content.appendChild(ratingsContainer);
 
-        // Inline reaction pills (always visible when logged in)
-        if (canActAs('peer')) {
-          content.appendChild(buildReactionPills('React to Greg', movieKey, 'peer', peerReactionToGreg));
-        }
-        if (canActAs('greg')) {
-          content.appendChild(buildReactionPills('React to Peer', movieKey, 'greg', gregReactionToPeer));
+        if (currentUser) {
+          // Logged-in: wrap ratings, reactions, and actions in a reviewer panel
+          const panel = document.createElement('div');
+          panel.className = 'reviewer-panel';
+          panel.appendChild(ratingsContainer);
+
+          if (canActAs('peer')) {
+            panel.appendChild(buildReactionPills('React to Greg', movieKey, 'peer', peerReactionToGreg));
+          }
+          if (canActAs('greg')) {
+            panel.appendChild(buildReactionPills('React to Peer', movieKey, 'greg', gregReactionToPeer));
+          }
+
+          // Action buttons row
+          const actions = document.createElement('div');
+          actions.className = 'panel-actions';
+
+          const rwBtn = document.createElement('button');
+          rwBtn.className = 'panel-action-btn';
+          rwBtn.textContent = '\u21BB Rewatch';
+          rwBtn.onclick = async (e) => {
+            e.stopPropagation();
+            rwBtn.disabled = true;
+            rwBtn.textContent = 'Adding\u2026';
+            try {
+              const assignTo = isAdmin() ? 'both' : currentUser;
+              const res = await authenticatedRequest('watchlist_add', movieKey, {
+                title: title,
+                posterUrl: entry.posterUrl || null,
+                assignedTo: assignTo,
+                priority: 'medium',
+                isRewatch: true
+              });
+              if (!res) throw new Error('Request failed');
+              showToast('Added to The Queue for rewatch', 'success', 2000);
+              rwBtn.textContent = '\u2713 Queued';
+              setTimeout(() => { rwBtn.textContent = '\u21BB Rewatch'; rwBtn.disabled = false; }, 2000);
+            } catch (err) {
+              showToast('Failed to add to queue', 'error');
+              rwBtn.textContent = '\u21BB Rewatch';
+              rwBtn.disabled = false;
+            }
+          };
+          actions.appendChild(rwBtn);
+
+          const delBtn = document.createElement('button');
+          delBtn.className = 'panel-action-btn danger';
+          delBtn.textContent = 'Delete';
+          delBtn.onclick = (e) => {
+            e.stopPropagation();
+            showDeleteFilmModal(title, movieKey);
+          };
+          actions.appendChild(delBtn);
+
+          panel.appendChild(actions);
+          content.appendChild(panel);
+        } else {
+          // Visitor: show ratings and no controls
+          content.appendChild(ratingsContainer);
         }
 
         // Discussion
@@ -3348,50 +3385,6 @@
         } else {
           card.appendChild(posterFrame);
           card.appendChild(content);
-        }
-
-        // Delete film button (logged-in only)
-        if (currentUser) {
-          const delBtn = document.createElement('button');
-          delBtn.className = 'delete-film-btn';
-          delBtn.textContent = 'Delete';
-          delBtn.onclick = (e) => {
-            e.stopPropagation();
-            showDeleteFilmModal(title, movieKey);
-          };
-          card.appendChild(delBtn);
-        }
-
-        // Add to Queue / Rewatch button (logged-in only)
-        // Films on The Ledger have already been watched, so this is a "Rewatch" action
-        if (currentUser) {
-          const queueBtn = document.createElement('button');
-          queueBtn.className = 'add-queue-btn';
-          queueBtn.textContent = '\u21BB Rewatch';
-          queueBtn.onclick = async (e) => {
-            e.stopPropagation();
-            queueBtn.disabled = true;
-            queueBtn.textContent = 'Adding\u2026';
-            try {
-              const assignTo = isAdmin() ? 'both' : currentUser;
-              const res = await authenticatedRequest('watchlist_add', movieKey, {
-                title: title,
-                posterUrl: entry.posterUrl || null,
-                assignedTo: assignTo,
-                priority: 'medium',
-                isRewatch: true
-              });
-              if (!res) throw new Error('Request failed');
-              showToast('Added to The Queue for rewatch', 'success', 2000);
-              queueBtn.textContent = '\u2713 Queued';
-              setTimeout(() => { queueBtn.textContent = '\u21BB Rewatch'; queueBtn.disabled = false; }, 2000);
-            } catch (err) {
-              showToast('Failed to add to queue', 'error');
-              queueBtn.textContent = '\u21BB Rewatch';
-              queueBtn.disabled = false;
-            }
-          };
-          card.appendChild(queueBtn);
         }
 
         // Click poster to reveal TMDB info (fade dissolve)
