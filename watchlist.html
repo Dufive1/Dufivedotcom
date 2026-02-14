@@ -436,7 +436,7 @@
       max-width: 100%; overflow: hidden;
     }
     .pill-row {
-      display: flex; align-items: center; gap: 3px;
+      display: flex; align-items: center; gap: 3px; flex-wrap: wrap;
     }
     .pill-row-label {
       font-family: var(--mono); font-size: 0.45rem; font-weight: 600;
@@ -712,10 +712,12 @@
       .add-row { flex-direction: column; align-items: stretch; gap: 12px; }
       .search-row { max-width: 100%; flex: 1; }
 
-      /* Pill buttons: slightly larger on mobile for easier tapping */
-      .pill-btn { font-size: 0.55rem; padding: 3px 6px; min-height: 24px; }
-      .pill-row-label { font-size: 0.4rem; min-width: 16px; }
-      .queue-watched-btn { font-size: 0.6rem; padding: 5px 10px; }
+      /* Pill buttons: stack-friendly on mobile */
+      .pill-controls { gap: 3px; }
+      .pill-row { gap: 2px; }
+      .pill-row-label { font-size: 0.4rem; min-width: 14px; }
+      .pill-btn { font-size: 0.5rem; padding: 3px 5px; min-height: 22px; }
+      .queue-watched-btn { font-size: 0.55rem; padding: 4px 8px; }
 
       /* Position label: bigger tap target + prevent iOS auto-zoom on input */
       .queue-position-label {
@@ -1205,7 +1207,7 @@
           const controls = document.createElement('div');
           controls.className = 'pill-controls';
 
-          // Row 1: Priority + Rewatch
+          // Row 1: Priority
           const priRow = document.createElement('div');
           priRow.className = 'pill-row';
           const priLabel = document.createElement('span');
@@ -1227,18 +1229,6 @@
             priGroup.appendChild(btn);
           });
           priRow.appendChild(priGroup);
-
-          // Rewatch toggle (on same row as priority)
-          const rwBtn = document.createElement('button');
-          rwBtn.className = 'pill-btn' + (item.is_rewatch ? ' active' : '');
-          rwBtn.textContent = 'RW';
-          rwBtn.title = item.is_rewatch ? 'Remove rewatch flag' : 'Mark as rewatch';
-          rwBtn.style.marginLeft = '4px';
-          rwBtn.onclick = (e) => {
-            e.stopPropagation();
-            updateItem(item.movie_key, { isRewatch: !item.is_rewatch });
-          };
-          priRow.appendChild(rwBtn);
           controls.appendChild(priRow);
 
           // Row 2: Assignment
@@ -1264,6 +1254,24 @@
           });
           asnRow.appendChild(asnGroup);
           controls.appendChild(asnRow);
+
+          // Row 3: Rewatch toggle
+          const rwRow = document.createElement('div');
+          rwRow.className = 'pill-row';
+          const rwLabel = document.createElement('span');
+          rwLabel.className = 'pill-row-label';
+          rwLabel.textContent = '';
+          rwRow.appendChild(rwLabel);
+          const rwBtn = document.createElement('button');
+          rwBtn.className = 'pill-btn' + (item.is_rewatch ? ' active' : '');
+          rwBtn.textContent = item.is_rewatch ? '\u21BB RW' : 'RW';
+          rwBtn.title = item.is_rewatch ? 'Remove rewatch flag' : 'Mark as rewatch';
+          rwBtn.onclick = (e) => {
+            e.stopPropagation();
+            updateItem(item.movie_key, { isRewatch: !item.is_rewatch });
+          };
+          rwRow.appendChild(rwBtn);
+          controls.appendChild(rwRow);
 
           panel.appendChild(controls);
 

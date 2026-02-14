@@ -785,12 +785,20 @@
     }
     .panel-action-btn.active:hover { opacity: 0.85; }
 
-    /* ───── Rewatch Banner ───── */
-    .rewatch-banner {
-      font-family: var(--mono); font-size: 0.55rem; font-weight: 700;
-      text-transform: uppercase; letter-spacing: 0.08em;
-      color: var(--text-muted); border: 1px solid var(--border);
-      padding: 2px 6px; margin-top: 6px; display: inline-block;
+    /* ───── Rewatch Poster Badge (Criterion sash) ───── */
+    .rewatch-sash {
+      position: absolute; top: 0; right: 0; z-index: 5;
+      font-family: var(--mono); font-size: 0.45rem; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.1em;
+      color: #fff; background: rgba(0,0,0,0.75);
+      padding: 4px 8px; line-height: 1;
+      border-bottom: 1px solid rgba(255,255,255,0.2);
+      border-left: 1px solid rgba(255,255,255,0.2);
+      pointer-events: none;
+    }
+    .rewatch-sash .sash-who {
+      display: block; text-align: center; margin-top: 2px;
+      font-size: 0.55rem; letter-spacing: 0.15em; opacity: 0.8;
     }
 
     /* ───── Confirmation Modal (shared) ───── */
@@ -3217,13 +3225,13 @@
 
         content.appendChild(h2);
 
-        // Rewatch banner — visible to everyone when flagged
+        // Rewatch sash on poster — visible to everyone when flagged
         if (entry.gregRewatch || entry.peerRewatch) {
-          const banner = document.createElement('span');
-          banner.className = 'rewatch-banner';
+          const sash = document.createElement('div');
+          sash.className = 'rewatch-sash';
           const who = [entry.gregRewatch ? 'G' : '', entry.peerRewatch ? 'P' : ''].filter(Boolean).join(' ');
-          banner.textContent = 'Rewatch \u00b7 ' + who;
-          content.appendChild(banner);
+          sash.innerHTML = 'Rewatch<span class="sash-who">' + who + '</span>';
+          posterFrame.appendChild(sash);
         }
 
         if (currentUser) {
@@ -3261,20 +3269,20 @@
               const nowActive = entry[myRewatchKey];
               rwBtn.className = 'panel-action-btn' + (nowActive ? ' active' : '');
               rwBtn.textContent = nowActive ? '\u21BB Rewatching' : '\u21BB Rewatch';
-              // Update or add/remove banner
-              const existingBanner = content.querySelector('.rewatch-banner');
+              // Update or add/remove poster sash
+              const existingSash = posterFrame.querySelector('.rewatch-sash');
               if (entry.gregRewatch || entry.peerRewatch) {
                 const who = [entry.gregRewatch ? 'G' : '', entry.peerRewatch ? 'P' : ''].filter(Boolean).join(' ');
-                if (existingBanner) {
-                  existingBanner.textContent = 'Rewatch \u00b7 ' + who;
+                if (existingSash) {
+                  existingSash.innerHTML = 'Rewatch<span class="sash-who">' + who + '</span>';
                 } else {
-                  const b = document.createElement('span');
-                  b.className = 'rewatch-banner';
-                  b.textContent = 'Rewatch \u00b7 ' + who;
-                  h2.insertAdjacentElement('afterend', b);
+                  const s = document.createElement('div');
+                  s.className = 'rewatch-sash';
+                  s.innerHTML = 'Rewatch<span class="sash-who">' + who + '</span>';
+                  posterFrame.appendChild(s);
                 }
-              } else if (existingBanner) {
-                existingBanner.remove();
+              } else if (existingSash) {
+                existingSash.remove();
               }
               showToast(nowActive ? 'Marked for rewatch' : 'Rewatch cleared', 'success', 1500);
             } catch (err) {
