@@ -788,17 +788,24 @@
     /* ───── Rewatch Poster Badge (Criterion sash) ───── */
     .rewatch-sash {
       position: absolute; top: 0; right: 0; z-index: 5;
+      display: flex; align-items: center; gap: 5px;
       font-family: var(--mono); font-size: 0.45rem; font-weight: 700;
       text-transform: uppercase; letter-spacing: 0.1em;
-      color: #fff; background: rgba(0,0,0,0.75);
-      padding: 4px 8px; line-height: 1;
-      border-bottom: 1px solid rgba(255,255,255,0.2);
-      border-left: 1px solid rgba(255,255,255,0.2);
+      color: #fff; background: rgba(0,0,0,0.78);
+      padding: 4px 7px 4px 8px; line-height: 1;
+      border-bottom: 1px solid rgba(255,255,255,0.15);
+      border-left: 1px solid rgba(255,255,255,0.15);
       pointer-events: none;
     }
-    .rewatch-sash .sash-who {
-      display: block; text-align: center; margin-top: 2px;
-      font-size: 0.55rem; letter-spacing: 0.15em; opacity: 0.8;
+    .rewatch-sash .sash-monograms {
+      display: flex; gap: 3px; align-items: center;
+    }
+    .rewatch-sash .sash-mono {
+      width: 16px; height: 16px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'Lora', serif; font-size: 0.5rem; font-weight: 700;
+      color: #fff; border: 1px solid rgba(255,255,255,0.5);
+      letter-spacing: 0; line-height: 1;
     }
 
     /* ───── Confirmation Modal (shared) ───── */
@@ -3229,8 +3236,11 @@
         if (entry.gregRewatch || entry.peerRewatch) {
           const sash = document.createElement('div');
           sash.className = 'rewatch-sash';
-          const who = [entry.gregRewatch ? 'G' : '', entry.peerRewatch ? 'P' : ''].filter(Boolean).join(' ');
-          sash.innerHTML = 'Rewatch<span class="sash-who">' + who + '</span>';
+          let sashHTML = 'Rewatch<span class="sash-monograms">';
+          if (entry.gregRewatch) sashHTML += '<span class="sash-mono">G</span>';
+          if (entry.peerRewatch) sashHTML += '<span class="sash-mono">P</span>';
+          sashHTML += '</span>';
+          sash.innerHTML = sashHTML;
           posterFrame.appendChild(sash);
         }
 
@@ -3269,16 +3279,19 @@
               const nowActive = entry[myRewatchKey];
               rwBtn.className = 'panel-action-btn' + (nowActive ? ' active' : '');
               rwBtn.textContent = nowActive ? '\u21BB Rewatching' : '\u21BB Rewatch';
-              // Update or add/remove poster sash
+              // Update or add/remove poster sash with monograms
               const existingSash = posterFrame.querySelector('.rewatch-sash');
               if (entry.gregRewatch || entry.peerRewatch) {
-                const who = [entry.gregRewatch ? 'G' : '', entry.peerRewatch ? 'P' : ''].filter(Boolean).join(' ');
+                let sashHTML = 'Rewatch<span class="sash-monograms">';
+                if (entry.gregRewatch) sashHTML += '<span class="sash-mono">G</span>';
+                if (entry.peerRewatch) sashHTML += '<span class="sash-mono">P</span>';
+                sashHTML += '</span>';
                 if (existingSash) {
-                  existingSash.innerHTML = 'Rewatch<span class="sash-who">' + who + '</span>';
+                  existingSash.innerHTML = sashHTML;
                 } else {
                   const s = document.createElement('div');
                   s.className = 'rewatch-sash';
-                  s.innerHTML = 'Rewatch<span class="sash-who">' + who + '</span>';
+                  s.innerHTML = sashHTML;
                   posterFrame.appendChild(s);
                 }
               } else if (existingSash) {

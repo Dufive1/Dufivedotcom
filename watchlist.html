@@ -523,10 +523,33 @@
       display: inline-block; margin-left: 4px;
     }
 
-    /* "REWATCH" tag */
+    /* "REWATCH" tag (text fallback for non-sash contexts) */
     .card-tag.rewatch {
       color: var(--text-secondary); background: var(--border-light);
       font-style: italic;
+    }
+
+    /* ───── Rewatch Poster Sash (Criterion style) ───── */
+    .rewatch-sash {
+      position: absolute; top: 0; right: 0; z-index: 5;
+      display: flex; align-items: center; gap: 4px;
+      font-family: var(--mono); font-size: 0.4rem; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.1em;
+      color: #fff; background: rgba(0,0,0,0.78);
+      padding: 3px 5px 3px 6px; line-height: 1;
+      border-bottom: 1px solid rgba(255,255,255,0.15);
+      border-left: 1px solid rgba(255,255,255,0.15);
+      pointer-events: none;
+    }
+    .rewatch-sash .sash-monograms {
+      display: flex; gap: 2px; align-items: center;
+    }
+    .rewatch-sash .sash-mono {
+      width: 14px; height: 14px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'Lora', serif; font-size: 0.45rem; font-weight: 700;
+      color: #fff; border: 1px solid rgba(255,255,255,0.5);
+      letter-spacing: 0; line-height: 1;
     }
 
     /* Rewatch pill toggle in search results */
@@ -1053,6 +1076,18 @@
         stamp.textContent = daysOnQueue + 'd on queue';
         poster.appendChild(stamp);
 
+        // Rewatch sash on poster (top-right corner) — visible to everyone
+        if (item.is_rewatch) {
+          const sash = document.createElement('div');
+          sash.className = 'rewatch-sash';
+          const rwWho = (item.suggested_by || '')[0]?.toUpperCase() || '';
+          let sashHTML = 'Rewatch<span class="sash-monograms">';
+          if (rwWho) sashHTML += '<span class="sash-mono">' + rwWho + '</span>';
+          sashHTML += '</span>';
+          sash.innerHTML = sashHTML;
+          poster.appendChild(sash);
+        }
+
         // Track position and pinned state for use in info area below
         const displayPos = idx + 1;
         const isPinned = item.pinned === true;
@@ -1101,16 +1136,7 @@
           else if (assignedTo === 'both') { const t = document.createElement('span'); t.className = 'card-tag both'; t.textContent = 'For Both'; tags.appendChild(t); }
           if (priority === 'high') { const t = document.createElement('span'); t.className = 'card-tag high'; t.textContent = 'High'; tags.appendChild(t); }
           else if (priority === 'low') { const t = document.createElement('span'); t.className = 'card-tag low'; t.textContent = 'Low'; tags.appendChild(t); }
-          if (item.is_rewatch) { const t = document.createElement('span'); t.className = 'card-tag rewatch'; const rwWho = (item.suggested_by || '')[0]?.toUpperCase() || ''; t.textContent = 'Rewatch' + (rwWho ? ' \u00b7 ' + rwWho : ''); tags.appendChild(t); }
           if (tags.childElementCount > 0) info.appendChild(tags);
-        } else if (item.is_rewatch) {
-          // Logged-in view: show rewatch tag above pills
-          const tags = document.createElement('div');
-          tags.className = 'card-tags';
-          const rwWho = (item.suggested_by || '')[0]?.toUpperCase() || '';
-          const t = document.createElement('span'); t.className = 'card-tag rewatch'; t.textContent = 'Rewatch' + (rwWho ? ' \u00b7 ' + rwWho : '');
-          tags.appendChild(t);
-          info.appendChild(tags);
         }
 
         // Note
@@ -1198,7 +1224,6 @@
           else if (assignedTo === 'peer') { const t = document.createElement('span'); t.className = 'card-tag peer'; t.textContent = 'For Peer'; tags.appendChild(t); }
           else if (assignedTo === 'both') { const t = document.createElement('span'); t.className = 'card-tag both'; t.textContent = 'For Both'; tags.appendChild(t); }
           if (priority === 'high') { const t = document.createElement('span'); t.className = 'card-tag high'; t.textContent = 'High'; tags.appendChild(t); }
-          if (item.is_rewatch) { const t = document.createElement('span'); t.className = 'card-tag rewatch'; const rwWho = (item.suggested_by || '')[0]?.toUpperCase() || ''; t.textContent = 'Rewatch' + (rwWho ? ' \u00b7 ' + rwWho : ''); tags.appendChild(t); }
           if (tags.childElementCount > 0) info.appendChild(tags);
         } else if (canAct()) {
           const panel = document.createElement('div');
