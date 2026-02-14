@@ -3361,11 +3361,12 @@
           card.appendChild(delBtn);
         }
 
-        // Add to Queue button (logged-in only)
+        // Add to Queue / Rewatch button (logged-in only)
+        // Films on The Ledger have already been watched, so this is a "Rewatch" action
         if (currentUser) {
           const queueBtn = document.createElement('button');
           queueBtn.className = 'add-queue-btn';
-          queueBtn.textContent = '+ Queue';
+          queueBtn.textContent = '\u21BB Rewatch';
           queueBtn.onclick = async (e) => {
             e.stopPropagation();
             queueBtn.disabled = true;
@@ -3376,15 +3377,16 @@
                 title: title,
                 posterUrl: entry.posterUrl || null,
                 assignedTo: assignTo,
-                priority: 'medium'
+                priority: 'medium',
+                isRewatch: true
               });
               if (!res) throw new Error('Request failed');
-              showToast('Added to The Queue', 'success', 2000);
+              showToast('Added to The Queue for rewatch', 'success', 2000);
               queueBtn.textContent = '\u2713 Queued';
-              setTimeout(() => { queueBtn.textContent = '+ Queue'; queueBtn.disabled = false; }, 2000);
+              setTimeout(() => { queueBtn.textContent = '\u21BB Rewatch'; queueBtn.disabled = false; }, 2000);
             } catch (err) {
               showToast('Failed to add to queue', 'error');
-              queueBtn.textContent = '+ Queue';
+              queueBtn.textContent = '\u21BB Rewatch';
               queueBtn.disabled = false;
             }
           };
