@@ -1230,17 +1230,18 @@
           });
           controls.appendChild(priGroup);
 
-          // Assignment pill group (click active pill to unassign)
+          // Assignment pill group (includes 'None' to unassign)
           const asnGroup = document.createElement('div');
           asnGroup.className = 'pill-group';
-          [['greg', 'Greg'], ['peer', 'Peer'], ['both', 'Both']].forEach(([v, label]) => {
+          [['greg', 'G'], ['peer', 'P'], ['both', 'Both'], ['none', '\u2013']].forEach(([v, label]) => {
             const btn = document.createElement('button');
-            btn.className = 'pill-btn' + (v === (assignedTo || '') ? ' active' : '');
+            btn.className = 'pill-btn' + (v === (assignedTo || 'none') ? ' active' : '');
             btn.textContent = label;
+            btn.title = v === 'none' ? 'Unassigned' : v.charAt(0).toUpperCase() + v.slice(1);
             btn.onclick = (e) => {
               e.stopPropagation();
-              const newVal = (v === (assignedTo || '')) ? null : v; // toggle off if already active
-              updateItem(item.movie_key, { assignedTo: newVal });
+              if (v === (assignedTo || 'none')) return; // already active — no-op
+              updateItem(item.movie_key, { assignedTo: v });
             };
             asnGroup.appendChild(btn);
           });
