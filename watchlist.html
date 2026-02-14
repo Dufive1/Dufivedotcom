@@ -1223,13 +1223,14 @@
             btn.textContent = v === 'medium' ? 'Norm' : v.charAt(0).toUpperCase() + v.slice(1);
             btn.onclick = (e) => {
               e.stopPropagation();
+              if (v === priority) return; // already active — no-op
               updateItem(item.movie_key, { priority: v });
             };
             priGroup.appendChild(btn);
           });
           controls.appendChild(priGroup);
 
-          // Assignment pill group
+          // Assignment pill group (click active pill to unassign)
           const asnGroup = document.createElement('div');
           asnGroup.className = 'pill-group';
           [['greg', 'Greg'], ['peer', 'Peer'], ['both', 'Both']].forEach(([v, label]) => {
@@ -1238,11 +1239,26 @@
             btn.textContent = label;
             btn.onclick = (e) => {
               e.stopPropagation();
-              updateItem(item.movie_key, { assignedTo: v });
+              const newVal = (v === (assignedTo || '')) ? null : v; // toggle off if already active
+              updateItem(item.movie_key, { assignedTo: newVal });
             };
             asnGroup.appendChild(btn);
           });
           controls.appendChild(asnGroup);
+
+          // Rewatch pill toggle
+          const rwGroup = document.createElement('div');
+          rwGroup.className = 'pill-group';
+          const rwBtn = document.createElement('button');
+          rwBtn.className = 'pill-btn' + (item.is_rewatch ? ' active' : '');
+          rwBtn.textContent = '\u21BB RW';
+          rwBtn.title = item.is_rewatch ? 'Remove rewatch flag' : 'Mark as rewatch';
+          rwBtn.onclick = (e) => {
+            e.stopPropagation();
+            updateItem(item.movie_key, { isRewatch: !item.is_rewatch });
+          };
+          rwGroup.appendChild(rwBtn);
+          controls.appendChild(rwGroup);
 
           info.appendChild(controls);
 
