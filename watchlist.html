@@ -432,25 +432,25 @@
 
     /* ───── Pill Controls (logged-in reviewer tools) ───── */
     .pill-controls {
-      display: flex; flex-direction: column; gap: 4px; margin-top: 6px;
+      display: flex; flex-direction: column; gap: 6px; margin-top: 6px;
       max-width: 100%; overflow: hidden;
     }
     .pill-row {
-      display: flex; align-items: center; gap: 3px; flex-wrap: wrap;
+      display: flex; align-items: center; gap: 4px; flex-wrap: wrap;
     }
     .pill-row-label {
-      font-family: var(--mono); font-size: 0.45rem; font-weight: 600;
-      text-transform: uppercase; letter-spacing: 0.08em;
-      color: var(--text-muted); min-width: 20px; flex-shrink: 0;
-      opacity: 0.6;
+      font-family: var(--mono); font-size: 0.55rem; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.06em;
+      color: var(--text-muted); min-width: 36px; flex-shrink: 0;
     }
-    .pill-group { display: flex; gap: 1px; align-items: center; }
+    .pill-group { display: flex; gap: 0; align-items: center; }
     .pill-btn {
-      font-family: var(--mono); font-size: 0.5rem; font-weight: 600;
+      font-family: var(--mono); font-size: 0.6rem; font-weight: 700;
       text-transform: uppercase; letter-spacing: 0.04em;
-      padding: 2px 5px; border: 1px solid var(--border); border-radius: 0;
+      padding: 5px 9px; border: 1px solid var(--border); border-radius: 0;
       background: transparent; color: var(--text-muted);
       cursor: pointer; transition: var(--transition); white-space: nowrap;
+      min-height: 30px; min-width: 30px; text-align: center;
     }
     .pill-btn:hover { border-color: var(--text); color: var(--text); }
     .pill-btn.active {
@@ -461,18 +461,19 @@
 
     /* ───── Reviewer Panel (logged-in controls box) ───── */
     .reviewer-panel {
-      border: 1px solid var(--border); padding: 6px 8px; margin-top: 6px;
+      border: 1px solid var(--border); padding: 10px 12px; margin-top: 8px;
     }
     .reviewer-panel .pill-controls { margin-top: 0; }
 
     /* "Watched" button */
     .queue-watched-btn {
-      font-family: var(--mono); font-size: 0.55rem; font-weight: 700;
+      font-family: var(--mono); font-size: 0.65rem; font-weight: 700;
       text-transform: uppercase; letter-spacing: 0.08em;
-      padding: 4px 10px; margin-top: 6px;
+      padding: 8px 12px; margin-top: 8px;
       border: 1px solid var(--text); border-radius: 0;
       background: transparent; color: var(--text);
       cursor: pointer; transition: var(--transition); width: 100%;
+      min-height: 38px;
     }
     .queue-watched-btn:hover { background: var(--text); color: var(--bg); }
 
@@ -752,12 +753,14 @@
       .search-row { max-width: 100%; flex: 1; }
       .search-input { font-size: 16px; } /* prevent iOS auto-zoom */
 
-      /* Pill buttons: stack-friendly on mobile */
-      .pill-controls { gap: 3px; }
-      .pill-row { gap: 2px; }
-      .pill-row-label { font-size: 0.4rem; min-width: 14px; }
-      .pill-btn { font-size: 0.5rem; padding: 3px 5px; min-height: 22px; }
-      .queue-watched-btn { font-size: 0.55rem; padding: 4px 8px; }
+      /* Pill buttons: full-width stacked rows on mobile */
+      .pill-controls { gap: 5px; }
+      .pill-row { gap: 4px; }
+      .pill-row-label { font-size: 0.45rem; min-width: 38px; }
+      .pill-btn { font-size: 0.55rem; padding: 6px 6px; min-height: 32px; min-width: 28px; }
+      .pill-group { flex: 1; }
+      .pill-group .pill-btn { flex: 1; }
+      .queue-watched-btn { font-size: 0.6rem; padding: 8px 10px; }
 
       /* Position label: bigger tap target + prevent iOS auto-zoom on input */
       .queue-position-label {
@@ -770,9 +773,9 @@
       /* Remove button always visible + bigger tap target on mobile */
       .queue-remove { display: flex; width: 28px; height: 28px; font-size: 0.85rem; }
 
-      /* Reviewer panel: ensure buttons are tappable */
-      .queue-watched-btn { min-height: 36px; }
-      .reviewer-panel { padding: 5px 6px; }
+      /* Reviewer panel: comfortable mobile sizing */
+      .queue-watched-btn { min-height: 40px; }
+      .reviewer-panel { padding: 8px 8px; }
 
       /* Rewatch section: match queue grid */
       .rewatch-header { font-size: 0.95rem; }
@@ -1272,11 +1275,11 @@
           priRow.className = 'pill-row';
           const priLabel = document.createElement('span');
           priLabel.className = 'pill-row-label';
-          priLabel.textContent = 'Pri';
+          priLabel.textContent = 'Priority';
           priRow.appendChild(priLabel);
           const priGroup = document.createElement('div');
           priGroup.className = 'pill-group';
-          [['high', 'H'], ['medium', 'M'], ['low', 'L']].forEach(([v, label]) => {
+          [['high', 'High'], ['medium', 'Med'], ['low', 'Low']].forEach(([v, label]) => {
             const btn = document.createElement('button');
             btn.className = 'pill-btn' + (v === priority ? ' active' : '');
             btn.textContent = label;
@@ -1300,7 +1303,7 @@
           asnRow.appendChild(asnLabel);
           const asnGroup = document.createElement('div');
           asnGroup.className = 'pill-group';
-          [['greg', 'G'], ['peer', 'P'], ['both', '\u00b7\u00b7'], ['none', '\u2013']].forEach(([v, label]) => {
+          [['greg', 'Greg'], ['peer', 'Peer'], ['both', 'Both'], ['none', '\u2013']].forEach(([v, label]) => {
             const btn = document.createElement('button');
             btn.className = 'pill-btn' + (v === (assignedTo || 'none') ? ' active' : '');
             btn.textContent = label;
@@ -1315,16 +1318,14 @@
           asnRow.appendChild(asnGroup);
           controls.appendChild(asnRow);
 
-          // Row 3: Rewatch toggle
+          // Row 3: Rewatch toggle (full-width)
           const rwRow = document.createElement('div');
           rwRow.className = 'pill-row';
-          const rwLabel = document.createElement('span');
-          rwLabel.className = 'pill-row-label';
-          rwLabel.textContent = '';
-          rwRow.appendChild(rwLabel);
+          rwRow.style.marginTop = '2px';
           const rwBtn = document.createElement('button');
           rwBtn.className = 'pill-btn' + (item.is_rewatch ? ' active' : '');
-          rwBtn.textContent = item.is_rewatch ? '\u21BB RW' : 'RW';
+          rwBtn.style.flex = '1';
+          rwBtn.textContent = item.is_rewatch ? '\u21BB Rewatch' : '\u21BB Rewatch';
           rwBtn.title = item.is_rewatch ? 'Remove rewatch flag' : 'Mark as rewatch';
           rwBtn.onclick = (e) => {
             e.stopPropagation();
