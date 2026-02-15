@@ -622,6 +622,22 @@
     }
     .empty-text { font-size: 0.85rem; max-width: 300px; margin: 0 auto; }
 
+    /* ───── The Rewatch Section ───── */
+    .rewatch-section { margin-top: 48px; }
+    .rewatch-header {
+      font-family: 'Playfair Display', serif; font-size: 1.1rem; font-weight: 400;
+      color: var(--text); letter-spacing: -0.02em; margin-bottom: 16px;
+      padding-bottom: 8px; border-bottom: 1px solid var(--border);
+    }
+    .rewatch-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+      gap: 24px 16px;
+    }
+    @media (max-width: 480px) {
+      .rewatch-grid { grid-template-columns: repeat(3, 1fr); gap: 16px 10px; }
+    }
+
     /* ───── Recently Watched (cleared from queue) ───── */
     .watched-section { margin-top: 48px; }
     .watched-header {
@@ -734,6 +750,7 @@
 
       .add-row { flex-direction: column; align-items: stretch; gap: 12px; }
       .search-row { max-width: 100%; flex: 1; }
+      .search-input { font-size: 16px; } /* prevent iOS auto-zoom */
 
       /* Pill buttons: stack-friendly on mobile */
       .pill-controls { gap: 3px; }
@@ -750,8 +767,15 @@
         font-size: 16px; width: 48px; padding: 4px 6px;
       }
 
-      /* Remove button always visible on mobile (no hover) */
-      .queue-remove { display: flex; }
+      /* Remove button always visible + bigger tap target on mobile */
+      .queue-remove { display: flex; width: 28px; height: 28px; font-size: 0.85rem; }
+
+      /* Reviewer panel: ensure buttons are tappable */
+      .queue-watched-btn { min-height: 36px; }
+      .reviewer-panel { padding: 5px 6px; }
+
+      /* Rewatch section: match queue grid */
+      .rewatch-header { font-size: 0.95rem; }
     }
   </style>
 </head>
@@ -813,6 +837,12 @@
     </div>
   </div>
 
+  <!-- The Rewatch section -->
+  <div class="rewatch-section" id="rewatch-section" style="display:none">
+    <div class="rewatch-header">The Rewatch.</div>
+    <div class="rewatch-grid" id="rewatch-grid"></div>
+  </div>
+
   <!-- Recently watched (auto-completed) -->
   <div class="watched-section" id="watched-section" style="display:none">
     <div class="watched-header">Recently cleared</div>
@@ -849,6 +879,7 @@
   let authToken = null;
   let allGregFilms = [];
   let queueItems = [];
+  let rewatchItems = [];
   let watchedItems = [];
   let activeFilter = 'all';
 
@@ -928,7 +959,9 @@
     }
 
     const items = resp.data || [];
-    queueItems = items.filter(i => i.status === 'queued');
+    const queued = items.filter(i => i.status === 'queued');
+    queueItems = queued.filter(i => !i.is_rewatch);
+    rewatchItems = queued.filter(i => i.is_rewatch);
     watchedItems = items.filter(i => i.status === 'watched').slice(0, 10);
   }
 
@@ -994,6 +1027,8 @@
     const empty = document.getElementById('empty-state');
     const loading = document.getElementById('loading');
     const countEl = document.getElementById('queue-tagline');
+    const rewatchSection = document.getElementById('rewatch-section');
+    const rewatchGrid = document.getElementById('rewatch-grid');
     const watchedSection = document.getElementById('watched-section');
     const watchedList = document.getElementById('watched-list');
 
@@ -1330,6 +1365,78 @@
       });
     }
 
+    // The Rewatch section
+    if (rewatchItems.length > 0) {
+      rewatchSection.style.display = '';
+      rewatchGrid.innerHTML = '';
+      rewatchItems.forEach((item, idx) => {
+        const card = document.createElement('div');
+        card.className = 'queue-card';
+
+        const poster = document.createElement('div');
+        poster.className = 'queue-poster';
+        if (item.poster_url) {
+          const img = document.createElement('img');
+          img.src = item.poster_url; img.alt = item.title; img.loading = 'lazy';
+          img.onerror = function() { this.style.display = 'none'; const fb = document.createElement('div'); fb.className = 'queue-poster-fallback'; fb.innerHTML = '<span>' + escHtml(item.title) + '</span>'; poster.appendChild(fb); };
+          poster.appendChild(img);
+        } else {
+          const fb = document.createElement('div'); fb.className = 'queue-poster-fallback'; fb.innerHTML = '<span>' + escHtml(item.title) + '</span>'; poster.appendChild(fb);
+        }
+
+        // Rewatch sash
+        const sash = document.createElement('div');
+        sash.className = 'rewatch-sash';
+        const rwWho = (item.suggested_by || '')[0]?.toUpperCase() || '';
+        sash.innerHTML = 'Rewatch<span class="sash-monograms">' + (rwWho ? '<span class="sash-mono">' + rwWho + '</span>' : '') + '</span>';
+        poster.appendChild(sash);
+
+        // Remove button (logged-in only)
+        if (canAct()) {
+          const rm = document.createElement('button');
+          rm.className = 'queue-remove'; rm.innerHTML = '&times;'; rm.title = 'Clear rewatch';
+          rm.onclick = async (e) => {
+            e.stopPropagation();
+            if (!confirm('Clear rewatch for "' + item.title + '"?')) return;
+            try {
+              await authenticatedRequest('clear_rewatch_from_queue', item.movie_key, {});
+              showToast('Rewatch cleared');
+              await fetchWatchlist(); render();
+            } catch (err) { showToast('Error clearing rewatch'); }
+          };
+          poster.appendChild(rm);
+        }
+
+        card.appendChild(poster);
+
+        const info = document.createElement('div');
+        info.className = 'queue-info';
+        const titleEl = document.createElement('div');
+        titleEl.className = 'queue-title';
+        titleEl.textContent = item.title;
+        info.appendChild(titleEl);
+
+        const sugTag = document.createElement('div');
+        sugTag.className = 'suggested-tag';
+        sugTag.textContent = 'added by ' + (item.suggested_by || 'visitor');
+        info.appendChild(sugTag);
+
+        card.appendChild(info);
+
+        // Click poster for TMDB overlay
+        poster.style.cursor = 'pointer';
+        poster.addEventListener('click', async () => {
+          const year = item.title?.match(/\((\d{4})\)/)?.[1] || '';
+          const clean = item.title?.replace(/\s*\(\d{4}\)/, '') || item.title;
+          window.open('https://www.themoviedb.org/search?query=' + encodeURIComponent(clean), '_blank');
+        });
+
+        rewatchGrid.appendChild(card);
+      });
+    } else {
+      rewatchSection.style.display = 'none';
+    }
+
     // Recently watched
     if (watchedItems.length > 0) {
       watchedSection.style.display = '';
@@ -1551,6 +1658,11 @@
           }
         })
       });
+      if (res.status === 409) {
+        const data = await res.json();
+        showToast(data.message || 'Film already exists');
+        return;
+      }
       if (!res.ok) throw new Error('Failed');
       showToast('Added "' + film.title + '"');
       searchInput.value = '';
